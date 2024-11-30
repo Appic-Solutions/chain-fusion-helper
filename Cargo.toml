@@ -1,5 +1,5 @@
 [workspace]
 members = [
-    "src/transaction_logger_backend"
+    "transaction_logger"
 ]
 resolver = "2"

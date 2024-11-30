@@ -1,6 +1,6 @@
 {
   "canisters": {
-    "transaction_logger_backend": {
+    "transaction_logger": {
       "candid": "src/transaction_logger_backend/transaction_logger_backend.did",
       "package": "transaction_logger_backend",
       "type": "rust"
