@@ -1,0 +1,17 @@
+{
+  "canisters": {
+    "transaction_logger_backend": {
+      "candid": "src/transaction_logger_backend/transaction_logger_backend.did",
+      "package": "transaction_logger_backend",
+      "type": "rust"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
