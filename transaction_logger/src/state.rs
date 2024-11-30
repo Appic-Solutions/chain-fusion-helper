@@ -134,6 +134,43 @@ impl State {
     }
 }
 
+pub fn read_state<R>(f: impl FnOnce(&State) -> R) -> R {
+    STATE.with(|cell| f(cell.borrow().get().expect_initialized()))
+}
+
+/// Mutates (part of) the current state using `f`.
+///
+/// Panics if there is no state.
+pub fn mutate_state<F, R>(f: F) -> R
+where
+    F: FnOnce(&mut State) -> R,
+{
+    STATE.with(|cell| {
+        let mut borrowed = cell.borrow_mut();
+        let mut state = borrowed.get().expect_initialized().clone();
+        let result = f(&mut state);
+        borrowed
+            .set(ConfigState::Initialized(state))
+            .expect("failed to write state in stable cell");
+        result
+    })
+}
+
+pub fn init_state(state: State) {
+    STATE.with(|cell| {
+        let mut borrowed = cell.borrow_mut();
+        assert_eq!(
+            borrowed.get(),
+            &ConfigState::Uninitialized,
+            "BUG: State is already initialized and has value {:?}",
+            borrowed.get()
+        );
+        borrowed
+            .set(ConfigState::Initialized(state))
+            .expect("failed to initialize state in stable cell")
+    });
+}
+
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct Erc20Token(ChainId, Address);
 
@@ -228,41 +265,4 @@ impl std::str::FromStr for Hash {
             .map_err(|e| format!("failed to decode hash from hex: {}", e))?;
         Ok(Self(bytes))
     }
-}
-
-pub fn read_state<R>(f: impl FnOnce(&State) -> R) -> R {
-    STATE.with(|cell| f(cell.borrow().get().expect_initialized()))
-}
-
-/// Mutates (part of) the current state using `f`.
-///
-/// Panics if there is no state.
-pub fn mutate_state<F, R>(f: F) -> R
-where
-    F: FnOnce(&mut State) -> R,
-{
-    STATE.with(|cell| {
-        let mut borrowed = cell.borrow_mut();
-        let mut state = borrowed.get().expect_initialized().clone();
-        let result = f(&mut state);
-        borrowed
-            .set(ConfigState::Initialized(state))
-            .expect("failed to write state in stable cell");
-        result
-    })
-}
-
-pub fn init_state(state: State) {
-    STATE.with(|cell| {
-        let mut borrowed = cell.borrow_mut();
-        assert_eq!(
-            borrowed.get(),
-            &ConfigState::Uninitialized,
-            "BUG: State is already initialized and has value {:?}",
-            borrowed.get()
-        );
-        borrowed
-            .set(ConfigState::Initialized(state))
-            .expect("failed to initialize state in stable cell")
-    });
 }
