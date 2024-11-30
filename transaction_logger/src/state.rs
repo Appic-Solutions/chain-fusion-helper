@@ -7,18 +7,19 @@ use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::{storable::Bound, Cell, Storable};
 use minicbor::{Decode, Encode};
 use num_traits::ToPrimitive;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use std::cell::RefCell;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter, LowerHex, UpperHex};
 
 use std::fmt::Debug;
-use std::ops::Sub;
 
-use icrc_ledger_types::icrc1::account::Account;
-
+use crate::bridge_tx::{
+    EvmToIcpSource, EvmToIcpStatus, EvmToIcpTransaction, IcpToEvmSource, IcpToEvmStatus,
+    IcpToEvmTransaction,
+};
 use crate::checked_amount::Erc20Value;
 
 pub type StableMemory = VirtualMemory<DefaultMemoryImpl>;
@@ -89,79 +90,48 @@ fn decode<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> T {
         .unwrap_or_else(|e| panic!("failed to decode state bytes {}: {e}", hex::encode(bytes)))
 }
 
-#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
-pub enum TransactionStrategy {
-    EVMtoICP,
-    ICPtoEVM,
-}
-
-#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
-pub enum EvmToIcpStatus {
-    TransactionMined,
-    TransactionScrapedByMinter,
-    TransactionFailed,
-}
-
-#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
-pub enum IcpToEvmStatus {
-    TransactionCreated,
-    TransactionSigned,
-    TransactionSent,
-    TransactionFinalized,
-    TransactionReimbursed,
-    TransactionFailed,
-}
-
-#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
-pub enum Oprator {
-    Dfinity,
-    Appic,
-}
-
-type Subaccount = [u8; 32];
-
-type NativeBurnIndex = Nat;
-
-#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
-pub struct EvmToIcpTransaction {
-    pub transaction_hash: Hash,
-    pub from_token: Erc20Token,
-    pub to_token: IcrcToken,
-    pub time: u64,
-    pub erc20_value: Erc20Value,
-    pub received_icrc_value: Nat,
-    pub deposit_status: EvmToIcpStatus,
-    pub from: Address,
-    pub destintion: Account,
-    pub oprator: Oprator,
-}
-
-#[derive(Clone, PartialEq, Debug, Deserialize, Serialize, Eq, PartialOrd, Ord)]
-pub struct EvmToIcpSource(Hash, ChainId);
-
-#[derive(Clone, PartialEq, Debug, Deserialize, Serialize, Eq, PartialOrd, Ord)]
-pub struct IcpToEvmSource(NativeBurnIndex, Account, ChainId);
-
-#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
-pub struct IcpToEvmTransaction {
-    pub transaction_hash: Option<Hash>,
-    pub from_token: IcrcToken,
-    pub to_token: Erc20Token,
-    pub time: u64,
-    pub icrc_value: Erc20Value,
-    pub received_erc20_value: Nat,
-    pub deposit_status: IcpToEvmStatus,
-    pub from: Account,
-    pub destintion: Principal,
-    pub oprator: Oprator,
-}
-
 // State Definition,
 // All types of transactions will be sotred in this stable state
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
 pub struct State {
     pub evm_to_icp_transactions: BTreeMap<EvmToIcpSource, EvmToIcpTransaction>,
     pub icp_to_evm_transactions: BTreeMap<IcpToEvmSource, IcpToEvmTransaction>,
+    pub appic_minters: BTreeMap<ChainId, Principal>,
+}
+
+impl State {
+    // Adds a new Evm To Icp Tx
+    pub fn record_evm_to_icp_tx(&mut self, tx: EvmToIcpTransaction) {
+        self.evm_to_icp_transactions.insert(tx.clone().into(), tx);
+    }
+    pub fn update_evm_to_ic_tx_status(
+        &mut self,
+        tx: &EvmToIcpSource,
+        tx_status: EvmToIcpStatus,
+        received_icrc_value: Option<Nat>,
+    ) {
+        if let Some(tx) = self.evm_to_icp_transactions.get_mut(tx) {
+            tx.status = tx_status;
+            tx.received_icrc_value = received_icrc_value;
+        }
+    }
+
+    // Adds a new Icp To Evm Tx
+    pub fn record_icp_to_evm_tx(&mut self, tx: IcpToEvmTransaction) {
+        self.icp_to_evm_transactions.insert(tx.clone().into(), tx);
+    }
+
+    pub fn update_icp_to_evm_tx_status(
+        &mut self,
+        tx: &IcpToEvmSource,
+        tx_status: IcpToEvmStatus,
+        received_erc20_value: Option<Erc20Value>,
+    ) {
+        if let Some(tx) = self.icp_to_evm_transactions.get_mut(tx) {
+            tx.status = tx_status;
+            tx.received_erc20_value = received_erc20_value;
+        }
+    }
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
@@ -258,4 +228,41 @@ impl std::str::FromStr for Hash {
             .map_err(|e| format!("failed to decode hash from hex: {}", e))?;
         Ok(Self(bytes))
     }
+}
+
+pub fn read_state<R>(f: impl FnOnce(&State) -> R) -> R {
+    STATE.with(|cell| f(cell.borrow().get().expect_initialized()))
+}
+
+/// Mutates (part of) the current state using `f`.
+///
+/// Panics if there is no state.
+pub fn mutate_state<F, R>(f: F) -> R
+where
+    F: FnOnce(&mut State) -> R,
+{
+    STATE.with(|cell| {
+        let mut borrowed = cell.borrow_mut();
+        let mut state = borrowed.get().expect_initialized().clone();
+        let result = f(&mut state);
+        borrowed
+            .set(ConfigState::Initialized(state))
+            .expect("failed to write state in stable cell");
+        result
+    })
+}
+
+pub fn init_state(state: State) {
+    STATE.with(|cell| {
+        let mut borrowed = cell.borrow_mut();
+        assert_eq!(
+            borrowed.get(),
+            &ConfigState::Uninitialized,
+            "BUG: State is already initialized and has value {:?}",
+            borrowed.get()
+        );
+        borrowed
+            .set(ConfigState::Initialized(state))
+            .expect("failed to initialize state in stable cell")
+    });
 }
