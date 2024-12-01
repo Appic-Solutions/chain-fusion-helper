@@ -17,6 +17,7 @@ icrc-ledger-types={ git = "https://github.com/dfinity/ic.git"}
 ic-ethereum-types = { git = "https://github.com/dfinity/ic.git"}
 
 
+async-trait = "0.1.81"
 
 
 serde = { version = "1.0.203", features = ["derive"] }

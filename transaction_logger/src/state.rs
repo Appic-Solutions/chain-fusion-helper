@@ -1,4 +1,4 @@
-use candid::{Nat, Principal};
+use candid::{CandidType, Nat, Principal};
 use ic_cdk::trap;
 use ic_ethereum_types;
 use ic_ethereum_types::Address;
@@ -97,13 +97,44 @@ pub struct State {
     pub evm_to_icp_transactions: BTreeMap<EvmToIcpSource, EvmToIcpTransaction>,
     pub icp_to_evm_transactions: BTreeMap<IcpToEvmSource, IcpToEvmTransaction>,
     pub appic_minters: BTreeMap<ChainId, Principal>,
+    pub dfinity_minters: BTreeMap<ChainId, Principal>,
 }
 
 impl State {
+    pub fn get_appic_minter(&self, chain_id: &ChainId) -> Option<Principal> {
+        match self.appic_minters.get(chain_id) {
+            Some(minter_id) => Some(minter_id.clone()),
+            None => None,
+        }
+    }
+
+    pub fn get_dfinity_minter(&self, chain_id: &ChainId) -> Option<Principal> {
+        match self.dfinity_minters.get(chain_id) {
+            Some(minter_id) => Some(minter_id.clone()),
+            None => None,
+        }
+    }
+
+    pub fn record_appic_minter(&mut self, chain_id: ChainId, minter_id: Principal) {
+        self.appic_minters.insert(chain_id, minter_id);
+    }
+
+    pub fn record_dfinity_minter(&mut self, chain_id: ChainId, minter_id: Principal) {
+        self.appic_minters.insert(chain_id, minter_id);
+    }
+
     // Adds a new Evm To Icp Tx
     pub fn record_evm_to_icp_tx(&mut self, tx: EvmToIcpTransaction) {
         self.evm_to_icp_transactions.insert(tx.clone().into(), tx);
     }
+
+    pub fn get_evm_to_icp_tx(&self, source: &EvmToIcpSource) -> Option<EvmToIcpTransaction> {
+        match self.evm_to_icp_transactions.get(source) {
+            Some(tx) => Some(tx.clone()),
+            None => None,
+        }
+    }
+
     pub fn update_evm_to_ic_tx_status(
         &mut self,
         tx: &EvmToIcpSource,
@@ -119,6 +150,13 @@ impl State {
     // Adds a new Icp To Evm Tx
     pub fn record_icp_to_evm_tx(&mut self, tx: IcpToEvmTransaction) {
         self.icp_to_evm_transactions.insert(tx.clone().into(), tx);
+    }
+
+    pub fn get_icp_to_evm_tx(&self, source: &IcpToEvmSource) -> Option<IcpToEvmTransaction> {
+        match self.icp_to_evm_transactions.get(source) {
+            Some(tx) => Some(tx.clone()),
+            None => None,
+        }
     }
 
     pub fn update_icp_to_evm_tx_status(
@@ -174,7 +212,7 @@ pub fn init_state(state: State) {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct Erc20Token(ChainId, Address);
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize, CandidType)]
 pub struct IcrcToken(Principal);
 
 impl Erc20Token {
