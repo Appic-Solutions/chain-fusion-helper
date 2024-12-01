@@ -24,11 +24,11 @@ pub enum Oprator {
 
 #[derive(Clone, PartialEq, Ord, PartialOrd, Eq, Debug, Deserialize, Serialize)]
 pub struct Minter {
-    id: Principal,
-    last_observed_event: u64,
-    last_scraped_event: u64,
-    oprator: Oprator,
-    chain_id: ChainId,
+    pub id: Principal,
+    pub last_observed_event: u64,
+    pub last_scraped_event: u64,
+    pub oprator: Oprator,
+    pub chain_id: ChainId,
 }
 
 impl Minter {
@@ -64,8 +64,18 @@ impl State {
         }
     }
 
+    pub fn get_minter_mut(&mut self, minter_key: &MinterKey) -> Option<&mut Minter> {
+        self.minters.get_mut(minter_key)
+    }
+
     pub fn get_minters_iter(&self) -> std::collections::btree_map::IntoIter<MinterKey, Minter> {
         self.minters.clone().into_iter()
+    }
+
+    pub fn get_minters_mut_iter(
+        &mut self,
+    ) -> std::collections::btree_map::IterMut<'_, MinterKey, Minter> {
+        self.minters.iter_mut()
     }
 
     pub fn record_minter(&mut self, minter: Minter) {

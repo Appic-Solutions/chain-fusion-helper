@@ -1,3 +1,6 @@
+pub mod appic_minter_types;
+pub mod dfinity_ck_minter_types;
+
 use async_trait::async_trait;
 use candid::Principal;
 
@@ -11,8 +14,18 @@ use std::fmt::Debug;
 
 use num_traits::ToPrimitive;
 
-pub mod appic_minter_types;
-pub mod dfinity_ck_minter_types;
+use crate::state::Oprator;
+
+use crate::state::Minter;
+
+use appic_minter_types::{
+    events::GetEventsArg as AppicGetEventsArg, events::GetEventsResult as AppicGetEventsResult,
+};
+
+use appic_minter_types::{
+    events::GetEventsArg as DfinityCkGetEventsArg,
+    events::GetEventsResult as DfinityCkGetEventsResult,
+};
 
 #[async_trait]
 pub trait Runtime {
@@ -58,14 +71,96 @@ impl Runtime for IcRunTime {
 pub struct MinterClient {
     runtime: IcRunTime,
     minter_id: Principal,
+    oprator: Oprator,
+}
+
+impl From<&Minter> for MinterClient {
+    fn from(value: &Minter) -> Self {
+        Self {
+            runtime: IcRunTime(),
+            minter_id: value.id,
+            oprator: value.oprator.clone(),
+        }
+    }
 }
 
 impl MinterClient {
-    pub fn new(minter_id: Principal) -> Self {
+    pub fn new(minter_id: &Principal, oprator: &Oprator) -> Self {
         Self {
             runtime: IcRunTime(),
-            minter_id,
+            minter_id: *minter_id,
+            oprator: oprator.clone(),
         }
+    }
+
+    pub async fn get_total_events_count(&self) -> u64 {
+        // Get total events count
+        let toatl_events_count = match self.oprator {
+            Oprator::DfinityCkEthMinter => {
+                self.runtime
+                    .call_canister::<DfinityCkGetEventsArg, DfinityCkGetEventsResult>(
+                        self.minter_id,
+                        "get_events",
+                        DfinityCkGetEventsArg {
+                            start: 0,
+                            length: 0,
+                        },
+                    )
+                    .await
+                    .expect("Call should not fail. will retry in next interval")
+                    .total_event_count
+            }
+            Oprator::AppicMinter => {
+                self.runtime
+                    .call_canister::<AppicGetEventsArg, AppicGetEventsResult>(
+                        self.minter_id,
+                        "get_events",
+                        AppicGetEventsArg {
+                            start: 0,
+                            length: 0,
+                        },
+                    )
+                    .await
+                    .expect("Call should not fail. will retry in next interval")
+                    .total_event_count
+            }
+        };
+
+        toatl_events_count
+    }
+
+    pub async fn scrape_appic_events(
+        &self,
+        from_event: u64,
+        length: u64,
+    ) -> Result<AppicGetEventsResult, CallError> {
+        self.runtime
+            .call_canister::<AppicGetEventsArg, AppicGetEventsResult>(
+                self.minter_id,
+                "get_events",
+                AppicGetEventsArg {
+                    start: from_event,
+                    length,
+                },
+            )
+            .await
+    }
+
+    pub async fn scrape_dfinity_ck_events(
+        &self,
+        from_event: u64,
+        length: u64,
+    ) -> Result<DfinityCkGetEventsResult, CallError> {
+        self.runtime
+            .call_canister::<DfinityCkGetEventsArg, DfinityCkGetEventsResult>(
+                self.minter_id,
+                "get_events",
+                DfinityCkGetEventsArg {
+                    start: from_event,
+                    length,
+                },
+            )
+            .await
     }
 }
 

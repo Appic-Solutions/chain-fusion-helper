@@ -8,7 +8,7 @@ pub enum CandidBlockTag {
     Finalized,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default, CandidType, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, CandidType, Deserialize)]
 pub enum EthereumNetwork {
     Mainnet,
     Sepolia,
