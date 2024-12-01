@@ -1,50 +1,281 @@
-// Appic minter types
-
 use candid::{CandidType, Deserialize, Nat, Principal};
-use icrc_ledger_types::icrc1::account::Account;
+use serde::Serialize;
 
-#[derive(CandidType, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
-pub struct WithdrawalDetail {
-    pub withdrawal_id: u64,
-    pub recipient_address: String,
-    pub from: Principal,
-    pub from_subaccount: Option<[u8; 32]>,
-    pub token_symbol: String,
-    pub withdrawal_amount: Nat,
-    pub max_transaction_fee: Option<Nat>,
-    pub status: WithdrawalStatus,
+#[derive(CandidType, Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub enum CandidBlockTag {
+    Latest,
+    Safe,
+    Finalized,
 }
 
-#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
-pub enum WithdrawalSearchParameter {
-    ByWithdrawalId(u64),
-    ByRecipient(String),
-    BySenderAccount(Account),
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct InitArg {
+    pub evm_network: EvmNetwork,
+    pub ecdsa_key_name: String,
+    pub helper_contract_address: Option<String>,
+    pub native_ledger_id: Principal,
+    pub native_index_id: Principal,
+    pub native_symbol: String,
+    pub block_height: CandidBlockTag,
+    pub native_minimum_withdrawal_amount: Nat,
+    pub native_ledger_transfer_fee: Nat,
+    pub next_transaction_nonce: Nat,
+    pub last_scraped_block_number: Nat,
+    pub min_max_priority_fee_per_gas: Nat,
+    pub ledger_suite_manager_id: Principal,
+}
+#[derive(CandidType, Clone, Copy, Deserialize, Debug, Eq, PartialEq, Hash, Serialize)]
+pub enum EvmNetwork {
+    Ethereum,
+    Sepolia,
+    ArbitrumOne,
+    BSC,
+    BSCTestnet,
+    Polygon,
+    Optimism,
+    Base,
+    Avalanche,
+    Fantom,
 }
 
-#[derive(CandidType, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
-pub struct Transaction {
-    pub transaction_hash: String,
+impl EvmNetwork {
+    pub fn chain_id(&self) -> u64 {
+        match self {
+            EvmNetwork::Ethereum => 1,
+            EvmNetwork::Sepolia => 11155111,
+            EvmNetwork::ArbitrumOne => 42161,
+            EvmNetwork::BSC => 56,
+            EvmNetwork::Polygon => 137,
+            EvmNetwork::Optimism => 10,
+            EvmNetwork::Base => 8453,
+            EvmNetwork::Avalanche => 43114,
+            EvmNetwork::Fantom => 250,
+            EvmNetwork::BSCTestnet => 97,
+        }
+    }
 }
 
-#[derive(CandidType, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
-pub enum WithdrawalStatus {
-    Pending,
-    TxCreated,
-    TxSent(Transaction),
-    TxFinalized(TxFinalizedStatus),
+impl TryFrom<u64> for EvmNetwork {
+    type Error = String;
+
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
+        match value {
+            1 => Ok(EvmNetwork::Ethereum),
+            11155111 => Ok(EvmNetwork::Sepolia),
+            42161 => Ok(EvmNetwork::ArbitrumOne),
+            56 => Ok(EvmNetwork::BSC),
+            137 => Ok(EvmNetwork::Polygon),
+            10 => Ok(EvmNetwork::Optimism),
+            8453 => Ok(EvmNetwork::Base),
+            43114 => Ok(EvmNetwork::Avalanche),
+            250 => Ok(EvmNetwork::Fantom),
+            97 => Ok(EvmNetwork::BSCTestnet),
+            _ => Err("Unknown EVM chain id Network".to_string()),
+        }
+    }
 }
 
-#[derive(CandidType, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
-pub enum TxFinalizedStatus {
-    Success {
-        transaction_hash: String,
-        effective_transaction_fee: Option<Nat>,
-    },
-    PendingReimbursement(Transaction),
-    Reimbursed {
-        transaction_hash: String,
-        reimbursed_amount: Nat,
-        reimbursed_in_block: Nat,
-    },
+#[derive(CandidType, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+pub struct UpgradeArg {
+    pub next_transaction_nonce: Option<Nat>,
+    pub native_minimum_withdrawal_amount: Option<Nat>,
+    pub helper_contract_address: Option<String>,
+    pub block_height: Option<CandidBlockTag>,
+    pub last_scraped_block_number: Option<Nat>,
+    pub evm_rpc_id: Option<Principal>,
+    pub native_ledger_transfer_fee: Option<Nat>,
+    pub min_max_priority_fee_per_gas: Option<Nat>,
+}
+
+pub mod events {
+
+    use candid::{CandidType, Deserialize, Nat, Principal};
+    use serde_bytes::ByteBuf;
+
+    use super::*;
+
+    #[derive(CandidType, Deserialize, Debug, Clone)]
+    pub struct GetEventsArg {
+        pub start: u64,
+        pub length: u64,
+    }
+
+    #[derive(CandidType, Deserialize, Debug, Clone)]
+    pub struct GetEventsResult {
+        pub events: Vec<Event>,
+        pub total_event_count: u64,
+    }
+
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    pub struct Event {
+        pub timestamp: u64,
+        pub payload: EventPayload,
+    }
+
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    pub struct EventSource {
+        pub transaction_hash: String,
+        pub log_index: Nat,
+    }
+
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    pub enum ReimbursementIndex {
+        Native {
+            ledger_burn_index: Nat,
+        },
+        Erc20 {
+            native_ledger_burn_index: Nat,
+            ledger_id: Principal,
+            erc20_ledger_burn_index: Nat,
+        },
+    }
+
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    pub struct AccessListItem {
+        pub address: String,
+        pub storage_keys: Vec<ByteBuf>,
+    }
+
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    pub struct UnsignedTransaction {
+        pub chain_id: Nat,
+        pub nonce: Nat,
+        pub max_priority_fee_per_gas: Nat,
+        pub max_fee_per_gas: Nat,
+        pub gas_limit: Nat,
+        pub destination: String,
+        pub value: Nat,
+        pub data: ByteBuf,
+        pub access_list: Vec<AccessListItem>,
+    }
+
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    pub enum TransactionStatus {
+        Success,
+        Failure,
+    }
+
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    pub struct TransactionReceipt {
+        pub block_hash: String,
+        pub block_number: Nat,
+        pub effective_gas_price: Nat,
+        pub gas_used: Nat,
+        pub status: TransactionStatus,
+        pub transaction_hash: String,
+    }
+
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    pub enum EventPayload {
+        Init(InitArg),
+        Upgrade(UpgradeArg),
+        AcceptedDeposit {
+            transaction_hash: String,
+            block_number: Nat,
+            log_index: Nat,
+            from_address: String,
+            value: Nat,
+            principal: Principal,
+            subaccount: Option<[u8; 32]>,
+        },
+        AcceptedErc20Deposit {
+            transaction_hash: String,
+            block_number: Nat,
+            log_index: Nat,
+            from_address: String,
+            value: Nat,
+            principal: Principal,
+            erc20_contract_address: String,
+            subaccount: Option<[u8; 32]>,
+        },
+        InvalidDeposit {
+            event_source: EventSource,
+            reason: String,
+        },
+        MintedNative {
+            event_source: EventSource,
+            mint_block_index: Nat,
+        },
+        SyncedToBlock {
+            block_number: Nat,
+        },
+
+        AcceptedNativeWithdrawalRequest {
+            withdrawal_amount: Nat,
+            destination: String,
+            ledger_burn_index: Nat,
+            from: Principal,
+            from_subaccount: Option<[u8; 32]>,
+            created_at: Option<u64>,
+        },
+        CreatedTransaction {
+            withdrawal_id: Nat,
+            transaction: UnsignedTransaction,
+        },
+        SignedTransaction {
+            withdrawal_id: Nat,
+            raw_transaction: String,
+        },
+        ReplacedTransaction {
+            withdrawal_id: Nat,
+            transaction: UnsignedTransaction,
+        },
+        FinalizedTransaction {
+            withdrawal_id: Nat,
+            transaction_receipt: TransactionReceipt,
+        },
+        ReimbursedNativeWithdrawal {
+            reimbursed_in_block: Nat,
+            withdrawal_id: Nat,
+            reimbursed_amount: Nat,
+            transaction_hash: Option<String>,
+        },
+        ReimbursedErc20Withdrawal {
+            withdrawal_id: Nat,
+            burn_in_block: Nat,
+            reimbursed_in_block: Nat,
+            ledger_id: Principal,
+            reimbursed_amount: Nat,
+            transaction_hash: Option<String>,
+        },
+        SkippedBlock {
+            block_number: Nat,
+        },
+        AddedErc20Token {
+            chain_id: Nat,
+            address: String,
+            erc20_token_symbol: String,
+            erc20_ledger_id: Principal,
+        },
+        AcceptedErc20WithdrawalRequest {
+            max_transaction_fee: Nat,
+            withdrawal_amount: Nat,
+            erc20_contract_address: String,
+            destination: String,
+            native_ledger_burn_index: Nat,
+            erc20_ledger_id: Principal,
+            erc20_ledger_burn_index: Nat,
+            from: Principal,
+            from_subaccount: Option<[u8; 32]>,
+            created_at: u64,
+        },
+        FailedErc20WithdrawalRequest {
+            withdrawal_id: Nat,
+            reimbursed_amount: Nat,
+            to: Principal,
+            to_subaccount: Option<[u8; 32]>,
+        },
+        MintedErc20 {
+            event_source: EventSource,
+            mint_block_index: Nat,
+            erc20_token_symbol: String,
+            erc20_contract_address: String,
+        },
+        QuarantinedDeposit {
+            event_source: EventSource,
+        },
+        QuarantinedReimbursement {
+            index: ReimbursementIndex,
+        },
+    }
 }

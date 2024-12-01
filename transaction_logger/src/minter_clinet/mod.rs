@@ -1,8 +1,6 @@
 use async_trait::async_trait;
 use candid::Principal;
 
-use crate::endpoints::{AddIcpToEvmTx, ValidationError};
-use crate::{bridge_tx::Oprator, state::ChainId};
 use std::fmt;
 
 use candid::utils::{ArgumentDecoder, ArgumentEncoder};
@@ -10,15 +8,6 @@ use candid::CandidType;
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use std::fmt::Debug;
-
-use appic_minter_types::{
-    WithdrawalDetail as AppicWithdrawalDetail,
-    WithdrawalSearchParameter as AppicWithdrawalSearchParameter,
-};
-use dfinity_ck_minter_types::{
-    WithdrawalDetail as DfinityWithdrawalDetail,
-    WithdrawalSearchParameter as DfinityWithdrawalSearchParameter,
-};
 
 use num_traits::ToPrimitive;
 
@@ -77,36 +66,6 @@ impl MinterClient {
             runtime: IcRunTime(),
             minter_id,
         }
-    }
-
-    pub async fn get_appic_witdrawal_status(
-        &self,
-        tx: &AddIcpToEvmTx,
-        minter_id: Principal,
-    ) -> Result<Vec<AppicWithdrawalDetail>, ValidationError> {
-        self.runtime
-            .call_canister::<AppicWithdrawalSearchParameter, Vec<AppicWithdrawalDetail>>(
-                minter_id,
-                "withdrawal_status",
-                AppicWithdrawalSearchParameter::ByWithdrawalId(tx.native_ledger_burn_index),
-            )
-            .await
-            .map_err(|e| ValidationError::InternallError(e.to_string()))
-    }
-
-    pub async fn get_dfinity_ck_witdrawal_status(
-        &self,
-        tx: &AddIcpToEvmTx,
-        minter_id: Principal,
-    ) -> Result<Vec<DfinityWithdrawalDetail>, ValidationError> {
-        self.runtime
-            .call_canister::<DfinityWithdrawalSearchParameter, Vec<DfinityWithdrawalDetail>>(
-                minter_id,
-                "withdrawal_status",
-                DfinityWithdrawalSearchParameter::ByWithdrawalId(tx.native_ledger_burn_index),
-            )
-            .await
-            .map_err(|e| ValidationError::InternallError(e.to_string()))
     }
 }
 
