@@ -1,6 +1,10 @@
+use crate::minter_clinet::appic_minter_types::events::{
+    TransactionReceipt as AppicTransactionReceipt, TransactionStatus as AppicTransactionStatus,
+    UnsignedTransaction as AppicUnsignedTransaction,
+};
+
 use candid::{CandidType, Deserialize, Nat, Principal};
 use serde::Serialize;
-
 #[derive(CandidType, Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub enum CandidBlockTag {
     Latest,
@@ -41,6 +45,7 @@ pub struct UpgradeArg {
 }
 
 pub mod events {
+
     use super::*;
     use candid::{CandidType, Deserialize, Nat, Principal};
     use serde_bytes::ByteBuf;
@@ -100,10 +105,35 @@ pub mod events {
         pub access_list: Vec<AccessListItem>,
     }
 
+    impl From<UnsignedTransaction> for AppicUnsignedTransaction {
+        fn from(value: UnsignedTransaction) -> Self {
+            Self {
+                chain_id: value.chain_id,
+                nonce: value.nonce,
+                max_priority_fee_per_gas: value.max_priority_fee_per_gas,
+                max_fee_per_gas: value.max_fee_per_gas,
+                gas_limit: value.gas_limit,
+                destination: value.destination,
+                value: value.value,
+                data: value.data,
+                access_list: vec![],
+            }
+        }
+    }
+
     #[derive(Clone, Eq, PartialEq, Debug, CandidType, Deserialize)]
     pub enum TransactionStatus {
         Success,
         Failure,
+    }
+
+    impl From<TransactionStatus> for AppicTransactionStatus {
+        fn from(value: TransactionStatus) -> Self {
+            match value {
+                TransactionStatus::Success => Self::Success,
+                TransactionStatus::Failure => Self::Failure,
+            }
+        }
     }
 
     #[derive(Clone, Eq, PartialEq, Debug, CandidType, Deserialize)]
@@ -114,6 +144,19 @@ pub mod events {
         pub gas_used: Nat,
         pub status: TransactionStatus,
         pub transaction_hash: String,
+    }
+
+    impl From<TransactionReceipt> for AppicTransactionReceipt {
+        fn from(value: TransactionReceipt) -> Self {
+            Self {
+                block_hash: value.block_hash,
+                block_number: value.block_number,
+                effective_gas_price: value.effective_gas_price,
+                gas_used: value.gas_used,
+                status: value.status.into(),
+                transaction_hash: value.transaction_hash,
+            }
+        }
     }
 
     #[derive(Clone, Eq, PartialEq, Debug, CandidType, Deserialize)]

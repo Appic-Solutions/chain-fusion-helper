@@ -1,14 +1,14 @@
 use candid::{CandidType, Deserialize, Nat, Principal};
 use serde::Serialize;
 
-#[derive(CandidType, Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(CandidType, Debug, Serialize, Deserialize, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CandidBlockTag {
     Latest,
     Safe,
     Finalized,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct InitArg {
     pub evm_network: EvmNetwork,
     pub ecdsa_key_name: String,
@@ -24,7 +24,9 @@ pub struct InitArg {
     pub min_max_priority_fee_per_gas: Nat,
     pub ledger_suite_manager_id: Principal,
 }
-#[derive(CandidType, Clone, Copy, Deserialize, Debug, Eq, PartialEq, Hash, Serialize)]
+#[derive(
+    CandidType, Clone, Copy, Deserialize, Debug, Eq, PartialEq, Hash, Serialize, PartialOrd, Ord,
+)]
 pub enum EvmNetwork {
     Ethereum,
     Sepolia,
@@ -75,7 +77,9 @@ impl TryFrom<u64> for EvmNetwork {
     }
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+#[derive(
+    CandidType, Deserialize, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Serialize,
+)]
 pub struct UpgradeArg {
     pub next_transaction_nonce: Option<Nat>,
     pub native_minimum_withdrawal_amount: Option<Nat>,
@@ -94,31 +98,31 @@ pub mod events {
 
     use super::*;
 
-    #[derive(CandidType, Deserialize, Debug, Clone)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
     pub struct GetEventsArg {
         pub start: u64,
         pub length: u64,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
     pub struct GetEventsResult {
         pub events: Vec<Event>,
         pub total_event_count: u64,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
     pub struct Event {
         pub timestamp: u64,
         pub payload: EventPayload,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
     pub struct EventSource {
         pub transaction_hash: String,
         pub log_index: Nat,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
     pub enum ReimbursementIndex {
         Native {
             ledger_burn_index: Nat,
@@ -130,13 +134,13 @@ pub mod events {
         },
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
     pub struct AccessListItem {
         pub address: String,
         pub storage_keys: Vec<ByteBuf>,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
     pub struct UnsignedTransaction {
         pub chain_id: Nat,
         pub nonce: Nat,
@@ -149,13 +153,13 @@ pub mod events {
         pub access_list: Vec<AccessListItem>,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
     pub enum TransactionStatus {
         Success,
         Failure,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
     pub struct TransactionReceipt {
         pub block_hash: String,
         pub block_number: Nat,
@@ -165,7 +169,7 @@ pub mod events {
         pub transaction_hash: String,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
     pub enum EventPayload {
         Init(InitArg),
         Upgrade(UpgradeArg),

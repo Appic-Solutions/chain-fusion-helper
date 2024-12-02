@@ -1,6 +1,6 @@
 pub mod appic_minter_types;
 pub mod dfinity_ck_minter_types;
-
+pub mod event_conversion;
 use async_trait::async_trait;
 use candid::Principal;
 
@@ -21,11 +21,11 @@ use crate::state::Minter;
 use appic_minter_types::{
     events::GetEventsArg as AppicGetEventsArg, events::GetEventsResult as AppicGetEventsResult,
 };
-
-use appic_minter_types::{
+use dfinity_ck_minter_types::{
     events::GetEventsArg as DfinityCkGetEventsArg,
     events::GetEventsResult as DfinityCkGetEventsResult,
 };
+use event_conversion::{Events, Reduce};
 
 #[async_trait]
 pub trait Runtime {
@@ -129,38 +129,33 @@ impl MinterClient {
         toatl_events_count
     }
 
-    pub async fn scrape_appic_events(
-        &self,
-        from_event: u64,
-        length: u64,
-    ) -> Result<AppicGetEventsResult, CallError> {
-        self.runtime
-            .call_canister::<AppicGetEventsArg, AppicGetEventsResult>(
-                self.minter_id,
-                "get_events",
-                AppicGetEventsArg {
-                    start: from_event,
-                    length,
-                },
-            )
-            .await
-    }
-
-    pub async fn scrape_dfinity_ck_events(
-        &self,
-        from_event: u64,
-        length: u64,
-    ) -> Result<DfinityCkGetEventsResult, CallError> {
-        self.runtime
-            .call_canister::<DfinityCkGetEventsArg, DfinityCkGetEventsResult>(
-                self.minter_id,
-                "get_events",
-                DfinityCkGetEventsArg {
-                    start: from_event,
-                    length,
-                },
-            )
-            .await
+    pub async fn scrape_events(&self, from_event: u64, length: u64) -> Result<Events, CallError> {
+        match self.oprator {
+            Oprator::DfinityCkEthMinter => self
+                .runtime
+                .call_canister::<DfinityCkGetEventsArg, DfinityCkGetEventsResult>(
+                    self.minter_id,
+                    "get_events",
+                    DfinityCkGetEventsArg {
+                        start: from_event,
+                        length,
+                    },
+                )
+                .await
+                .map(|response| response.reduce()),
+            Oprator::AppicMinter => self
+                .runtime
+                .call_canister::<AppicGetEventsArg, AppicGetEventsResult>(
+                    self.minter_id,
+                    "get_events",
+                    AppicGetEventsArg {
+                        start: from_event,
+                        length,
+                    },
+                )
+                .await
+                .map(|response| response.reduce()),
+        }
     }
 }
 

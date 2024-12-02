@@ -3,6 +3,8 @@ use crate::{
     state::{mutate_state, read_state},
 };
 
+const MAX_EVENTS_PER_RESPONSE: u64 = 100;
+
 pub async fn update_latest_events_count() {
     let minters_iter = read_state(|s| s.get_minters_iter());
 
@@ -26,3 +28,5 @@ pub async fn update_latest_events_count() {
         });
     }
 }
+
+pub async fn scrape_events_range() {}
