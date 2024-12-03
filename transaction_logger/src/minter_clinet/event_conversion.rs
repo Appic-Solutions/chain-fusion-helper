@@ -29,7 +29,7 @@ pub struct Events {
     pub events: Vec<AppicEvent>,
 }
 
-// A trait for filtering and mapping EventResults into Standard Event type
+// A trait for filtering and mapping EventResults form both appic and dfinity cketh minters into a Standard Event type
 pub trait Reduce {
     fn reduce(self) -> Events;
 }
@@ -119,7 +119,13 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                     DfinityEventPayload::InvalidDeposit {
                         event_source,
                         reason,
-                    } => None,
+                    } => Some(AppicEventPayload::InvalidDeposit {
+                        event_source: AppicEventSource {
+                            log_index: event_source.log_index,
+                            transaction_hash: event_source.transaction_hash,
+                        },
+                        reason,
+                    }),
                     DfinityEventPayload::MintedCkEth {
                         event_source,
                         mint_block_index,
@@ -262,8 +268,19 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         erc20_token_symbol: ckerc20_token_symbol,
                         erc20_contract_address,
                     }),
-                    DfinityEventPayload::QuarantinedDeposit { event_source } => None,
-                    DfinityEventPayload::QuarantinedReimbursement { index } => None,
+                    DfinityEventPayload::QuarantinedDeposit { event_source } => {
+                        Some(AppicEventPayload::QuarantinedDeposit {
+                            event_source: AppicEventSource {
+                                log_index: event_source.log_index,
+                                transaction_hash: event_source.transaction_hash,
+                            },
+                        })
+                    }
+                    DfinityEventPayload::QuarantinedReimbursement { index } => {
+                        Some(AppicEventPayload::QuarantinedReimbursement {
+                            index: index.into(),
+                        })
+                    }
                 };
                 match event_payload {
                     Some(e) => Some(AppicEvent {

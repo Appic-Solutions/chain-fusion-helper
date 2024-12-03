@@ -1,8 +1,9 @@
 use crate::{
     minter_clinet::MinterClient,
-    state::{mutate_state, read_state},
+    state::{mutate_state, read_state, Oprator},
 };
 
+use crate::minter_clinet::event_conversion::Events;
 const MAX_EVENTS_PER_RESPONSE: u64 = 100;
 
 pub async fn update_latest_events_count() {
@@ -30,3 +31,7 @@ pub async fn update_latest_events_count() {
 }
 
 pub async fn scrape_events_range() {}
+
+fn apply_state_transition(events: Events, oprator: Oprator) {
+    for event in events.events.iter() {}
+}

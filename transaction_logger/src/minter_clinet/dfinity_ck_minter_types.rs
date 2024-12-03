@@ -1,6 +1,6 @@
 use crate::minter_clinet::appic_minter_types::events::{
-    TransactionReceipt as AppicTransactionReceipt, TransactionStatus as AppicTransactionStatus,
-    UnsignedTransaction as AppicUnsignedTransaction,
+    ReimbursementIndex as AppicReimbursementIndex, TransactionReceipt as AppicTransactionReceipt,
+    TransactionStatus as AppicTransactionStatus, UnsignedTransaction as AppicUnsignedTransaction,
 };
 
 use candid::{CandidType, Deserialize, Nat, Principal};
@@ -84,6 +84,25 @@ pub mod events {
             ledger_id: Principal,
             ckerc20_ledger_burn_index: Nat,
         },
+    }
+
+    impl From<ReimbursementIndex> for AppicReimbursementIndex {
+        fn from(value: ReimbursementIndex) -> Self {
+            match value {
+                ReimbursementIndex::CkErc20 {
+                    cketh_ledger_burn_index,
+                    ledger_id,
+                    ckerc20_ledger_burn_index,
+                } => Self::Erc20 {
+                    native_ledger_burn_index: cketh_ledger_burn_index,
+                    ledger_id,
+                    erc20_ledger_burn_index: ckerc20_ledger_burn_index,
+                },
+                ReimbursementIndex::CkEth { ledger_burn_index } => {
+                    Self::Native { ledger_burn_index }
+                }
+            }
+        }
     }
 
     #[derive(Clone, Eq, PartialEq, Debug, CandidType, Deserialize)]

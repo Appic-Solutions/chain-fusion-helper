@@ -93,6 +93,7 @@ impl MinterClient {
         }
     }
 
+    // Get total evetns count
     pub async fn get_total_events_count(&self) -> u64 {
         // Get total events count
         let toatl_events_count = match self.oprator {
@@ -129,6 +130,7 @@ impl MinterClient {
         toatl_events_count
     }
 
+    // scrape events
     pub async fn scrape_events(&self, from_event: u64, length: u64) -> Result<Events, CallError> {
         match self.oprator {
             Oprator::DfinityCkEthMinter => self

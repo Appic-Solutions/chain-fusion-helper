@@ -1,20 +1,21 @@
 use candid::{CandidType, Nat, Principal};
 use ic_cdk::trap;
 use ic_ethereum_types;
-use ic_ethereum_types::Address;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::{storable::Bound, Cell, Storable};
-use minicbor::{Decode, Encode};
 use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use std::cell::RefCell;
 use std::collections::BTreeMap;
-use std::fmt::{Display, Formatter, LowerHex, UpperHex};
 
 use std::fmt::Debug;
+
+use crate::minter_clinet::appic_minter_types::events::{
+    EventSource, TransactionReceipt, TransactionStatus,
+};
 
 #[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug, Deserialize, Serialize)]
 pub enum Oprator {
@@ -49,11 +50,92 @@ impl From<&Minter> for MinterKey {
         Self(value.chain_id.clone(), value.oprator.clone())
     }
 }
+
+type TransactionHash = String;
+
+#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+pub struct EvmToIcpTxIdentifier(TransactionHash, ChainId);
+
+#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+pub enum EvmToIcpStatus {
+    PendingVerification,
+    Accepted,
+    Minted,
+    Invalid(String),
+    Quarantined,
+}
+
+#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+pub struct EvmToIcpTx {
+    pub from_address: String,
+    pub transaction_hash: TransactionHash,
+    pub value: Nat,
+    pub block_number: Option<Nat>,
+    pub actual_received: Option<Nat>,
+    pub event_source: Option<EventSource>,
+    pub principal: Principal,
+    pub subaccount: Option<[u8; 32]>,
+    pub chain_id: ChainId,
+    pub total_gas_spent: Nat,
+    pub erc20_contract_address: String,
+    pub icrc_ledger_id: Option<Principal>,
+    pub status: EvmToIcpStatus,
+    pub verified: bool,
+    pub time: u64,
+    pub oprator: Oprator,
+}
+
+type NativeLedgerBurnIndex = Nat;
+
+#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+pub struct IcpToEvmIdentifier(NativeLedgerBurnIndex, ChainId);
+
+#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+pub enum IcpToEvmStatus {
+    PendingVerification,
+    Accepted,
+    Created,
+    SignedTransaction,
+    FinalizedTransaction,
+    ReplacedTransaction,
+    Reimbursed,
+    QuarantinedReimbursement,
+    Successful,
+    Failed,
+}
+
+#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+pub struct IcpToEvmTx {
+    pub transaction_hash: Option<TransactionHash>,
+    pub native_ledger_burn_index: NativeLedgerBurnIndex,
+    pub withdrawal_amount: Nat,
+    pub destination: String,
+    pub from: Principal,
+    pub from_subaccount: Option<[u8; 32]>,
+    pub time: u64,
+    pub max_transaction_fee: Option<Nat>,
+    pub effective_gas_price: Option<Nat>,
+    pub gas_used: Option<Nat>,
+    pub toatal_gas_spent: Option<Nat>,
+    pub erc20_ledger_id: Principal,
+    pub erc20_ledger_burn_index: Option<Nat>,
+    pub erc20_contract_address: String,
+    pub icrc_ledger_id: Option<Principal>,
+    pub verified: bool,
+    pub status: IcpToEvmStatus,
+    pub oprator: Oprator,
+}
+
+type Erc20Contract = String;
 // State Definition,
 // All types of transactions will be sotred in this stable state
 #[derive(Clone, PartialEq, Debug, PartialOrd, Eq, Ord, Deserialize, Serialize)]
 pub struct State {
     pub minters: BTreeMap<MinterKey, Minter>,
+    pub evm_to_icp_txs: BTreeMap<EvmToIcpTxIdentifier, EvmToIcpTx>,
+    pub icp_to_evm_txs: BTreeMap<IcpToEvmIdentifier, IcpToEvmTx>,
+    pub supported_ckerc20_tokens: BTreeMap<Erc20Contract, Principal>,
+    pub supported_twin_appic_tokens: BTreeMap<Erc20Contract, Principal>,
 }
 
 impl State {
@@ -80,6 +162,224 @@ impl State {
 
     pub fn record_minter(&mut self, minter: Minter) {
         self.minters.insert(MinterKey::from(&minter), minter);
+    }
+
+    pub fn get_icrc_twin_for_erc20(
+        &self,
+        erc20_contract_address: &Erc20Contract,
+        oprator: &Oprator,
+    ) -> Option<Principal> {
+        match oprator {
+            Oprator::AppicMinter => self
+                .supported_twin_appic_tokens
+                .get(erc20_contract_address)
+                .map(|token_principal| token_principal.clone()),
+            Oprator::DfinityCkEthMinter => self
+                .supported_ckerc20_tokens
+                .get(erc20_contract_address)
+                .map(|token_principal| token_principal.clone()),
+        }
+    }
+
+    pub fn record_evm_to_icp_tx(&mut self) {}
+
+    pub fn if_evm_to_icp_tx_exists(&self, identifier: &EvmToIcpTxIdentifier) -> bool {
+        self.evm_to_icp_txs.get(identifier).is_some()
+    }
+
+    pub fn record_new_deposit(&mut self, identifier: EvmToIcpTxIdentifier, tx: EvmToIcpTx) {
+        self.evm_to_icp_txs.insert(identifier, tx);
+    }
+
+    pub fn record_accepted_evm_to_icp(
+        &mut self,
+        identifier: &EvmToIcpTxIdentifier,
+        block_number: Nat,
+        from_address: String,
+        value: Nat,
+        principal: Principal,
+        erc20_contract_address: String,
+        subaccount: Option<[u8; 32]>,
+    ) {
+        if let Some(tx) = self.evm_to_icp_txs.get_mut(identifier) {
+            *tx = EvmToIcpTx {
+                verified: true,
+                block_number: Some(block_number),
+                from_address,
+                value,
+                principal,
+                erc20_contract_address,
+                subaccount,
+                status: EvmToIcpStatus::Accepted,
+                ..tx.clone() // Copies the remaining fields
+            };
+        }
+    }
+
+    pub fn record_minted_evm_to_icp(
+        &mut self,
+        identifier: &EvmToIcpTxIdentifier,
+        event_source: EventSource,
+        erc20_contract_address: String,
+    ) {
+        if let Some(tx) = self.evm_to_icp_txs.get_mut(identifier) {
+            *tx = EvmToIcpTx {
+                event_source: Some(event_source),
+                erc20_contract_address,
+                status: EvmToIcpStatus::Minted,
+                ..tx.clone() // Copies the remaining fields
+            };
+        }
+    }
+
+    pub fn record_invalid_evm_to_icp(&mut self, identifier: &EvmToIcpTxIdentifier, reason: String) {
+        if let Some(tx) = self.evm_to_icp_txs.get_mut(identifier) {
+            *tx = EvmToIcpTx {
+                status: EvmToIcpStatus::Invalid(reason),
+                ..tx.clone() // Copies the remaining fields
+            };
+        }
+    }
+
+    pub fn record_quarantined_evm_to_icp(&mut self, identifier: &EvmToIcpTxIdentifier) {
+        if let Some(tx) = self.evm_to_icp_txs.get_mut(identifier) {
+            *tx = EvmToIcpTx {
+                status: EvmToIcpStatus::Quarantined,
+                ..tx.clone() // Copies the remaining fields
+            };
+        }
+    }
+
+    pub fn record_new_icp_to_evm(&mut self, identifier: IcpToEvmIdentifier, tx: IcpToEvmTx) {
+        self.icp_to_evm_txs.insert(identifier, tx);
+    }
+
+    pub fn record_accepted_icp_to_evm(
+        &mut self,
+        identifier: &IcpToEvmIdentifier,
+        max_transaction_fee: Nat,
+        withdrawal_amount: Nat,
+        erc20_contract_address: String,
+        destination: String,
+        native_ledger_burn_index: Nat,
+        erc20_ledger_id: Principal,
+        erc20_ledger_burn_index: Option<Nat>,
+        from: Principal,
+        from_subaccount: Option<[u8; 32]>,
+        created_at: u64,
+        oprator: Oprator,
+    ) {
+        if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
+            *tx = IcpToEvmTx {
+                verified: true,
+                max_transaction_fee: Some(max_transaction_fee),
+                withdrawal_amount,
+                erc20_contract_address,
+                destination,
+                native_ledger_burn_index,
+                erc20_ledger_id,
+                erc20_ledger_burn_index,
+                from,
+                from_subaccount,
+                status: IcpToEvmStatus::Accepted,
+                ..tx.clone()
+            }
+        } else {
+            match oprator {
+                Oprator::AppicMinter => {
+                    let new_tx = IcpToEvmTx {
+                        native_ledger_burn_index,
+                        withdrawal_amount,
+                        destination,
+                        from,
+                        from_subaccount,
+                        time: created_at,
+                        max_transaction_fee: Some(max_transaction_fee),
+                        erc20_ledger_id,
+                        erc20_ledger_burn_index,
+                        icrc_ledger_id: self
+                            .get_icrc_twin_for_erc20(&erc20_contract_address, &oprator),
+                        erc20_contract_address,
+                        verified: true,
+                        status: IcpToEvmStatus::Accepted,
+                        oprator,
+                        effective_gas_price: None,
+                        gas_used: None,
+                        toatal_gas_spent: None,
+                        transaction_hash: None,
+                    };
+
+                    self.record_new_icp_to_evm(identifier.clone(), new_tx);
+                }
+                Oprator::DfinityCkEthMinter => {}
+            }
+        }
+    }
+
+    pub fn record_created_icp_to_evm(&mut self, identifier: &IcpToEvmIdentifier) {
+        if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
+            *tx = IcpToEvmTx {
+                status: IcpToEvmStatus::Created,
+                ..tx.clone()
+            }
+        }
+    }
+
+    pub fn record_signed_icp_to_evm(&mut self, identifier: &IcpToEvmIdentifier) {
+        if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
+            *tx = IcpToEvmTx {
+                status: IcpToEvmStatus::SignedTransaction,
+                ..tx.clone()
+            }
+        }
+    }
+
+    pub fn record_replaced_icp_to_evm(&mut self, identifier: &IcpToEvmIdentifier) {
+        if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
+            *tx = IcpToEvmTx {
+                status: IcpToEvmStatus::ReplacedTransaction,
+                ..tx.clone()
+            }
+        }
+    }
+
+    pub fn record_finalized_icp_to_evm(
+        &mut self,
+        identifier: &IcpToEvmIdentifier,
+        receipt: TransactionReceipt,
+    ) {
+        if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
+            let status = match receipt.status {
+                TransactionStatus::Success => IcpToEvmStatus::Successful,
+                TransactionStatus::Failure => IcpToEvmStatus::Failed,
+            };
+            *tx = IcpToEvmTx {
+                status,
+                transaction_hash: Some(receipt.transaction_hash),
+                gas_used: Some(receipt.gas_used.clone()),
+                effective_gas_price: Some(receipt.effective_gas_price.clone()),
+                toatal_gas_spent: Some(receipt.gas_used * receipt.effective_gas_price),
+                ..tx.clone()
+            }
+        }
+    }
+
+    pub fn record_reimbursed_icp_to_evm(&mut self, identifier: &IcpToEvmIdentifier) {
+        if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
+            *tx = IcpToEvmTx {
+                status: IcpToEvmStatus::Reimbursed,
+                ..tx.clone()
+            }
+        }
+    }
+
+    pub fn record_quarantined_reimbursed_icp_to_evm(&mut self, identifier: &IcpToEvmIdentifier) {
+        if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
+            *tx = IcpToEvmTx {
+                status: IcpToEvmStatus::QuarantinedReimbursement,
+                ..tx.clone()
+            }
+        }
     }
 
     // pub fn get_dfinity_minter(&self, chain_id: &ChainId) -> Option<Principal> {
