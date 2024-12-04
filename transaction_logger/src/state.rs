@@ -28,6 +28,7 @@ pub struct Minter {
     pub id: Principal,
     pub last_observed_event: u64,
     pub last_scraped_event: u64,
+    pub last_scraped_event_time: u64,
     pub oprator: Oprator,
     pub chain_id: ChainId,
 }
@@ -39,6 +40,10 @@ impl Minter {
 
     pub fn update_last_scraped_event(&mut self, event: u64) {
         self.last_scraped_event = event
+    }
+
+    pub fn update_last_scraped_event_time(&mut self, time: u64) {
+        self.last_scraped_event_time = time
     }
 }
 
@@ -424,6 +429,26 @@ impl State {
                 ..tx.clone()
             }
         }
+    }
+
+    pub fn all_icp_to_evm_iter(
+        &self,
+    ) -> std::collections::btree_map::IntoIter<IcpToEvmIdentifier, IcpToEvmTx> {
+        self.icp_to_evm_txs.clone().into_iter()
+    }
+
+    pub fn remove_unverified_icp_to_evm(&mut self, identifier: &IcpToEvmIdentifier) {
+        self.icp_to_evm_txs.remove(identifier);
+    }
+
+    pub fn all_evm_to_icp_iter(
+        &self,
+    ) -> std::collections::btree_map::IntoIter<EvmToIcpTxIdentifier, EvmToIcpTx> {
+        self.evm_to_icp_txs.clone().into_iter()
+    }
+
+    pub fn remove_unverified_evm_to_icp(&mut self, identifier: &EvmToIcpTxIdentifier) {
+        self.evm_to_icp_txs.remove(identifier);
     }
 }
 

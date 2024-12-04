@@ -81,11 +81,21 @@ pub async fn scrape_events_range(
             let events_result = minter_client.scrape_events(start, 100).await;
             match events_result {
                 Ok(events) => {
-                    apply_state_transition(events, minter_key.oprator(), minter_key.chain_id());
+                    apply_state_transition(&events, minter_key.oprator(), minter_key.chain_id());
                     mutate_state(|s| {
                         s.get_minter_mut(minter_key)
                             .unwrap()
-                            .update_last_scraped_event(chunk_end)
+                            .update_last_scraped_event(chunk_end);
+
+                        // Updating last events timestamp
+                        match events.last_event_time {
+                            Some(time) => {
+                                s.get_minter_mut(minter_key)
+                                    .unwrap()
+                                    .update_last_scraped_event_time(time);
+                            }
+                            None => {}
+                        }
                     });
                     success = true; // Mark as successful
                     break; // Exit retry loop
@@ -118,10 +128,10 @@ pub async fn scrape_events_range(
     }
 }
 
-fn apply_state_transition(events: Events, oprator: Oprator, chain_id: ChainId) {
-    for event in events.events.into_iter() {
+fn apply_state_transition(events: &Events, oprator: Oprator, chain_id: ChainId) {
+    for event in events.events.iter() {
         // Applying the state transition
-        mutate_state(|s| match event.payload {
+        mutate_state(|s| match event.payload.clone() {
             AppicEventPayload::Init(_init_arg) => {}
             AppicEventPayload::Upgrade(_upgrade_arg) => {}
             AppicEventPayload::AcceptedDeposit {
