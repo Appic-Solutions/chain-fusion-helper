@@ -2,6 +2,7 @@ use ic_cdk::{query, update};
 use ic_cdk_timers;
 use transaction_logger::{
     remove_unverified_tx::remove_unverified_tx, scrape_events::scrape_events,
+    update_token_pairs::update_token_pairs, CHECK_NEW_ICRC_TWIN_TOKENS,
     REMOVE_UNVERIFIED_TX_INTERVAL, SCRAPE_EVENTS_INTERVAL,
 };
 // Setup timers
@@ -11,6 +12,12 @@ fn setup_timers() {
 
     // Remove unverified transactions
     ic_cdk_timers::set_timer_interval(REMOVE_UNVERIFIED_TX_INTERVAL, || remove_unverified_tx());
+
+    // Check new supported twin tokens
+    ic_cdk_timers::set_timer_interval(
+        CHECK_NEW_ICRC_TWIN_TOKENS,
+        || ic_cdk::spawn(scrape_events()),
+    );
 }
 
 // Everyone should be able to call this
