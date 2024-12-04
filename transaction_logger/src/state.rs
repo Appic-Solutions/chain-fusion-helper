@@ -1,6 +1,5 @@
 use candid::{CandidType, Nat, Principal};
 use ic_cdk::trap;
-use ic_ethereum_types;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::{storable::Bound, Cell, Storable};
@@ -9,13 +8,15 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use std::cell::RefCell;
+
 use std::collections::BTreeMap;
 
+use crate::guard::TaskType;
+
+use std::collections::HashSet;
 use std::fmt::Debug;
 
-use crate::minter_clinet::appic_minter_types::events::{
-    EventSource, TransactionReceipt, TransactionStatus,
-};
+use crate::minter_clinet::appic_minter_types::events::{TransactionReceipt, TransactionStatus};
 
 #[derive(Clone, CandidType, PartialEq, PartialOrd, Eq, Ord, Debug, Deserialize, Serialize)]
 pub enum Oprator {
@@ -151,15 +152,28 @@ pub struct IcpToEvmTx {
 }
 
 type Erc20Contract = String;
+
+#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+pub struct Erc20Identifier(pub Erc20Contract, pub ChainId);
+
 // State Definition,
 // All types of transactions will be sotred in this stable state
-#[derive(Clone, PartialEq, Debug, PartialOrd, Eq, Ord, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Debug, Eq, Deserialize, Serialize)]
 pub struct State {
+    /// Locks preventing concurrent execution timer tasks
+    pub active_tasks: HashSet<TaskType>,
+
+    // List of all minters including (cketh dfinity and appic minters)
     pub minters: BTreeMap<MinterKey, Minter>,
+
+    // List of all evm_to_icp transactions
     pub evm_to_icp_txs: BTreeMap<EvmToIcpTxIdentifier, EvmToIcpTx>,
+
+    // list of all icp_to_evm transactions
     pub icp_to_evm_txs: BTreeMap<IcpToEvmIdentifier, IcpToEvmTx>,
-    pub supported_ckerc20_tokens: BTreeMap<Erc20Contract, Principal>,
-    pub supported_twin_appic_tokens: BTreeMap<Erc20Contract, Principal>,
+
+    pub supported_ckerc20_tokens: BTreeMap<Erc20Identifier, Principal>,
+    pub supported_twin_appic_tokens: BTreeMap<Erc20Identifier, Principal>,
 }
 
 impl State {
@@ -190,17 +204,17 @@ impl State {
 
     pub fn get_icrc_twin_for_erc20(
         &self,
-        erc20_contract_address: &Erc20Contract,
+        erc20_identifier: &Erc20Identifier,
         oprator: &Oprator,
     ) -> Option<Principal> {
         match oprator {
             Oprator::AppicMinter => self
                 .supported_twin_appic_tokens
-                .get(erc20_contract_address)
+                .get(erc20_identifier)
                 .map(|token_principal| token_principal.clone()),
             Oprator::DfinityCkEthMinter => self
                 .supported_ckerc20_tokens
-                .get(erc20_contract_address)
+                .get(erc20_identifier)
                 .map(|token_principal| token_principal.clone()),
         }
     }
@@ -257,8 +271,10 @@ impl State {
                             chain_id: chain_id.clone(),
                             total_gas_spent: None,
                             erc20_contract_address: erc20_contract_address.clone(),
-                            icrc_ledger_id: self
-                                .get_icrc_twin_for_erc20(&erc20_contract_address, oprator),
+                            icrc_ledger_id: self.get_icrc_twin_for_erc20(
+                                &Erc20Identifier(erc20_contract_address, chain_id.clone()),
+                                oprator,
+                            ),
                             status: EvmToIcpStatus::Accepted,
                             verified: true,
                             time: ic_cdk::api::time(),
@@ -319,6 +335,7 @@ impl State {
         from_subaccount: Option<[u8; 32]>,
         created_at: Option<u64>,
         oprator: Oprator,
+        chain_id: ChainId,
     ) {
         if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
             *tx = IcpToEvmTx {
@@ -346,8 +363,10 @@ impl State {
                         time: created_at.unwrap_or(ic_cdk::api::time()),
                         max_transaction_fee: max_transaction_fee,
                         erc20_ledger_burn_index,
-                        icrc_ledger_id: self
-                            .get_icrc_twin_for_erc20(&erc20_contract_address, &oprator),
+                        icrc_ledger_id: self.get_icrc_twin_for_erc20(
+                            &Erc20Identifier(erc20_contract_address.clone(), chain_id.clone()),
+                            &oprator,
+                        ),
                         erc20_contract_address,
                         verified: true,
                         status: IcpToEvmStatus::Accepted,
@@ -497,7 +516,7 @@ impl From<Nat> for ChainId {
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
-pub struct ChainId(u64);
+pub struct ChainId(pub u64);
 
 impl AsRef<u64> for ChainId {
     fn as_ref(&self) -> &u64 {

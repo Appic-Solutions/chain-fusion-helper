@@ -1,4 +1,7 @@
-use crate::state::{mutate_state, read_state, ChainId};
+use crate::{
+    guard::TimerGuard,
+    state::{mutate_state, read_state},
+};
 
 // If the transaction time is older than one hour and it is still unverified,
 // Tx should be removed
@@ -6,6 +9,12 @@ use crate::state::{mutate_state, read_state, ChainId};
 const ONE_HOUR_IN_NS: u64 = 3_600_000_000_000;
 
 pub fn remove_unverified_tx() {
+    // Issue a timer gaurd
+    let _gaurd = match TimerGuard::new(crate::guard::TaskType::RemoveUnverified) {
+        Ok(gaurd) => gaurd,
+        Err(_) => return,
+    };
+
     let all_unverified_evm_to_icp_tx = read_state(|s| {
         s.all_evm_to_icp_iter()
             .filter(|(_identifier, tx)| tx.verified == false)

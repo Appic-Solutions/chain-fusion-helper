@@ -1,4 +1,5 @@
 use crate::{
+    guard::TimerGuard,
     minter_clinet::MinterClient,
     state::{
         mutate_state, read_state, ChainId, EvmToIcpTxIdentifier, IcpToEvmIdentifier, MinterKey,
@@ -11,9 +12,15 @@ use crate::minter_clinet::appic_minter_types::events::EventPayload as AppicEvent
 use crate::minter_clinet::event_conversion::Events;
 const MAX_EVENTS_PER_RESPONSE: u64 = 100;
 
-const NATIVE_ERC20_ADDRESS: &str = "0x0000000000000000000000000000000000000000";
+pub const NATIVE_ERC20_ADDRESS: &str = "0x0000000000000000000000000000000000000000";
 
-pub async fn update_latest_events_count() {
+pub async fn scrape_events() {
+    // Issue a timer gaurd
+    let _gaurd = match TimerGuard::new(crate::guard::TaskType::ScrapeEvents) {
+        Ok(gaurd) => gaurd,
+        Err(_) => return,
+    };
+
     let minters_iter = read_state(|s| s.get_minters_iter());
 
     for (minter_key, minter) in minters_iter {
@@ -209,6 +216,7 @@ fn apply_state_transition(events: &Events, oprator: Oprator, chain_id: ChainId) 
                 from_subaccount,
                 created_at,
                 oprator.clone(),
+                chain_id.clone(),
             ),
             AppicEventPayload::CreatedTransaction {
                 withdrawal_id,
@@ -277,6 +285,7 @@ fn apply_state_transition(events: &Events, oprator: Oprator, chain_id: ChainId) 
                 from_subaccount,
                 Some(created_at),
                 oprator.clone(),
+                chain_id.clone(),
             ),
             AppicEventPayload::FailedErc20WithdrawalRequest {
                 withdrawal_id,

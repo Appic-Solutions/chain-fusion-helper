@@ -245,15 +245,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60b1af1c220855b6ceac025d3f6ecdd2b7c4894bfe9cd9bda4fbb4bc7c0d4cf0"
 
 [[package]]
-name = "erased-serde"
-version = "0.3.31"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c138974f9d5e7fe373eb04df7cae98833802ae4b11c24ac7039a21d5af4b26c"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "errno"
 version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -261,15 +252,6 @@ checksum = "33d852cb9b869c2a9b3df2f71a3074817f01e1844f839a144f5fcef059a4eb5d"
 dependencies = [
  "libc",
  "windows-sys",
-]
-
-[[package]]
-name = "ethnum"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b90ca2580b73ab6a1f724b76ca11ab632df820fd6040c336200d2c1df7b3c82c"
-dependencies = [
- "serde",
 ]
 
 [[package]]
@@ -473,27 +455,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ic-ethereum-types"
-version = "1.0.0"
-source = "git+https://github.com/dfinity/ic.git#5ce01d0a871d5162d0b2ff0b585d71ef2e644ac9"
-dependencies = [
- "hex",
- "ic-sha3",
- "minicbor",
- "minicbor-derive",
- "serde",
-]
-
-[[package]]
-name = "ic-sha3"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3715f0f4370e8ce6aa9805b81e915ef4420c9dfb5209c71489c27e6f98bd5d65"
-dependencies = [
- "sha3",
-]
-
-[[package]]
 name = "ic-stable-structures"
 version = "0.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -569,15 +530,6 @@ name = "itoa"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d75a2a4b1b190afb6f5425f10f6a8f959d2ea0b9c2b1d79553551850539e4674"
-
-[[package]]
-name = "keccak"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecc2af9a1119c51f12a14607e783cb977bde58bc069ff0c3da1095e635d70654"
-dependencies = [
- "cpufeatures",
-]
 
 [[package]]
 name = "lazy_static"
@@ -682,17 +634,6 @@ name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
-
-[[package]]
-name = "phantom_newtype"
-version = "0.9.0"
-source = "git+https://github.com/dfinity/ic.git#5ce01d0a871d5162d0b2ff0b585d71ef2e644ac9"
-dependencies = [
- "candid",
- "num-traits",
- "serde",
- "slog",
-]
 
 [[package]]
 name = "pin-project-lite"
@@ -958,16 +899,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sha3"
-version = "0.10.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75872d278a8f37ef87fa0ddbda7802605cb18344497949862c0d4dcb291eba60"
-dependencies = [
- "digest",
- "keccak",
-]
-
-[[package]]
 name = "shlex"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -980,15 +911,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f92a496fb766b417c996b9c5e57daf2f7ad3b0bebe1ccfca4856390e3d3bb67"
 dependencies = [
  "autocfg",
-]
-
-[[package]]
-name = "slog"
-version = "2.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8347046d4ebd943127157b94d63abb990fcf729dc4e9978927fdf4ac3c998d06"
-dependencies = [
- "erased-serde",
 ]
 
 [[package]]
@@ -1134,25 +1056,24 @@ dependencies = [
  "async-trait",
  "candid",
  "ciborium",
- "ethnum",
  "hex",
  "hex-literal",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-ethereum-types",
  "ic-stable-structures",
  "icrc-ledger-types",
  "minicbor",
  "minicbor-derive",
  "num-bigint",
  "num-traits",
- "phantom_newtype",
  "proptest",
  "rlp",
  "serde",
  "serde_bytes",
  "serde_cbor",
  "serde_json",
+ "strum",
+ "strum_macros",
  "thousands",
 ]
 
