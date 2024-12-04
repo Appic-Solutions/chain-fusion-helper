@@ -63,6 +63,9 @@ impl Reduce for AppicGetEventsResult {
                         | AppicEventPayload::ReimbursedErc20Withdrawal { .. }
                         | AppicEventPayload::AcceptedErc20WithdrawalRequest { .. }
                         | AppicEventPayload::FailedErc20WithdrawalRequest { .. }
+                        | AppicEventPayload::InvalidDeposit { .. }
+                        | AppicEventPayload::QuarantinedDeposit { .. }
+                        | AppicEventPayload::QuarantinedReimbursement { .. }
                 )
             })
             .collect();

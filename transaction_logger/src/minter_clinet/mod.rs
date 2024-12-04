@@ -14,7 +14,7 @@ use std::fmt::Debug;
 
 use num_traits::ToPrimitive;
 
-use crate::state::Oprator;
+use crate::state::{ChainId, Oprator};
 
 use crate::state::Minter;
 

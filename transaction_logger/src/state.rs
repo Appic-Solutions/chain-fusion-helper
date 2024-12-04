@@ -45,6 +45,16 @@ impl Minter {
 #[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct MinterKey(ChainId, Oprator);
 
+impl MinterKey {
+    pub fn oprator(&self) -> Oprator {
+        self.1.clone()
+    }
+
+    pub fn chain_id(&self) -> ChainId {
+        self.0.clone()
+    }
+}
+
 impl From<&Minter> for MinterKey {
     fn from(value: &Minter) -> Self {
         Self(value.chain_id.clone(), value.oprator.clone())
@@ -55,6 +65,12 @@ type TransactionHash = String;
 
 #[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct EvmToIcpTxIdentifier(TransactionHash, ChainId);
+
+impl EvmToIcpTxIdentifier {
+    pub fn new(transaction_hash: &TransactionHash, chain_id: &ChainId) -> Self {
+        EvmToIcpTxIdentifier(transaction_hash.clone(), chain_id.clone())
+    }
+}
 
 #[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub enum EvmToIcpStatus {
@@ -72,7 +88,6 @@ pub struct EvmToIcpTx {
     pub value: Nat,
     pub block_number: Option<Nat>,
     pub actual_received: Option<Nat>,
-    pub event_source: Option<EventSource>,
     pub principal: Principal,
     pub subaccount: Option<[u8; 32]>,
     pub chain_id: ChainId,
@@ -85,10 +100,15 @@ pub struct EvmToIcpTx {
     pub oprator: Oprator,
 }
 
-type NativeLedgerBurnIndex = Nat;
+pub type NativeLedgerBurnIndex = Nat;
 
 #[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct IcpToEvmIdentifier(NativeLedgerBurnIndex, ChainId);
+impl IcpToEvmIdentifier {
+    pub fn new(native_ledger_burn_index: &NativeLedgerBurnIndex, chain_id: &ChainId) -> Self {
+        IcpToEvmIdentifier(native_ledger_burn_index.clone(), chain_id.clone())
+    }
+}
 
 #[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub enum IcpToEvmStatus {
@@ -117,7 +137,6 @@ pub struct IcpToEvmTx {
     pub effective_gas_price: Option<Nat>,
     pub gas_used: Option<Nat>,
     pub toatal_gas_spent: Option<Nat>,
-    pub erc20_ledger_id: Principal,
     pub erc20_ledger_burn_index: Option<Nat>,
     pub erc20_contract_address: String,
     pub icrc_ledger_id: Option<Principal>,
@@ -219,12 +238,10 @@ impl State {
     pub fn record_minted_evm_to_icp(
         &mut self,
         identifier: &EvmToIcpTxIdentifier,
-        event_source: EventSource,
         erc20_contract_address: String,
     ) {
         if let Some(tx) = self.evm_to_icp_txs.get_mut(identifier) {
             *tx = EvmToIcpTx {
-                event_source: Some(event_source),
                 erc20_contract_address,
                 status: EvmToIcpStatus::Minted,
                 ..tx.clone() // Copies the remaining fields
@@ -257,27 +274,25 @@ impl State {
     pub fn record_accepted_icp_to_evm(
         &mut self,
         identifier: &IcpToEvmIdentifier,
-        max_transaction_fee: Nat,
+        max_transaction_fee: Option<Nat>,
         withdrawal_amount: Nat,
         erc20_contract_address: String,
         destination: String,
         native_ledger_burn_index: Nat,
-        erc20_ledger_id: Principal,
         erc20_ledger_burn_index: Option<Nat>,
         from: Principal,
         from_subaccount: Option<[u8; 32]>,
-        created_at: u64,
+        created_at: Option<u64>,
         oprator: Oprator,
     ) {
         if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
             *tx = IcpToEvmTx {
                 verified: true,
-                max_transaction_fee: Some(max_transaction_fee),
+                max_transaction_fee: max_transaction_fee,
                 withdrawal_amount,
                 erc20_contract_address,
                 destination,
                 native_ledger_burn_index,
-                erc20_ledger_id,
                 erc20_ledger_burn_index,
                 from,
                 from_subaccount,
@@ -293,9 +308,8 @@ impl State {
                         destination,
                         from,
                         from_subaccount,
-                        time: created_at,
-                        max_transaction_fee: Some(max_transaction_fee),
-                        erc20_ledger_id,
+                        time: created_at.unwrap_or(ic_cdk::api::time()),
+                        max_transaction_fee: max_transaction_fee,
                         erc20_ledger_burn_index,
                         icrc_ledger_id: self
                             .get_icrc_twin_for_erc20(&erc20_contract_address, &oprator),

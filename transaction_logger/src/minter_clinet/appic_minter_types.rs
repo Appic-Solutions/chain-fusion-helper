@@ -96,6 +96,8 @@ pub mod events {
     use candid::{CandidType, Deserialize, Nat, Principal};
     use serde_bytes::ByteBuf;
 
+    use crate::state::NativeLedgerBurnIndex;
+
     use super::*;
 
     #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -132,6 +134,19 @@ pub mod events {
             ledger_id: Principal,
             erc20_ledger_burn_index: Nat,
         },
+    }
+
+    impl From<ReimbursementIndex> for NativeLedgerBurnIndex {
+        fn from(value: ReimbursementIndex) -> Self {
+            match value {
+                ReimbursementIndex::Native { ledger_burn_index } => ledger_burn_index,
+                ReimbursementIndex::Erc20 {
+                    native_ledger_burn_index,
+                    ledger_id,
+                    erc20_ledger_burn_index,
+                } => native_ledger_burn_index,
+            }
+        }
     }
 
     #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
