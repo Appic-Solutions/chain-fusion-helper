@@ -1,5 +1,5 @@
 use candid::Principal;
-use lsm_types::{Erc20Contract, LedgerManagerInfo};
+use lsm_types::LedgerManagerInfo;
 use lso_types::OrchestratorInfo;
 
 use crate::{

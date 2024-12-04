@@ -14,10 +14,9 @@ fn setup_timers() {
     ic_cdk_timers::set_timer_interval(REMOVE_UNVERIFIED_TX_INTERVAL, || remove_unverified_tx());
 
     // Check new supported twin tokens
-    ic_cdk_timers::set_timer_interval(
-        CHECK_NEW_ICRC_TWIN_TOKENS,
-        || ic_cdk::spawn(scrape_events()),
-    );
+    ic_cdk_timers::set_timer_interval(CHECK_NEW_ICRC_TWIN_TOKENS, || {
+        ic_cdk::spawn(update_token_pairs())
+    });
 }
 
 // Everyone should be able to call this
