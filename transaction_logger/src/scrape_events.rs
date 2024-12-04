@@ -134,12 +134,15 @@ fn apply_state_transition(events: Events, oprator: Oprator, chain_id: ChainId) {
                 subaccount,
             } => s.record_accepted_evm_to_icp(
                 &EvmToIcpTxIdentifier::new(&transaction_hash, &chain_id),
+                transaction_hash,
                 block_number,
                 from_address,
                 value,
                 principal,
                 NATIVE_ERC20_ADDRESS.to_string(),
                 subaccount,
+                &chain_id,
+                &oprator,
             ),
             AppicEventPayload::AcceptedErc20Deposit {
                 transaction_hash,
@@ -152,12 +155,15 @@ fn apply_state_transition(events: Events, oprator: Oprator, chain_id: ChainId) {
                 subaccount,
             } => s.record_accepted_evm_to_icp(
                 &EvmToIcpTxIdentifier::new(&transaction_hash, &chain_id),
+                transaction_hash,
                 block_number,
                 from_address,
                 value,
                 principal,
                 erc20_contract_address,
                 subaccount,
+                &chain_id,
+                &oprator,
             ),
             AppicEventPayload::InvalidDeposit {
                 event_source,

@@ -17,7 +17,7 @@ use crate::minter_clinet::appic_minter_types::events::{
     EventSource, TransactionReceipt, TransactionStatus,
 };
 
-#[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug, Deserialize, Serialize)]
+#[derive(Clone, CandidType, PartialEq, PartialOrd, Eq, Ord, Debug, Deserialize, Serialize)]
 pub enum Oprator {
     DfinityCkEthMinter,
     AppicMinter,
@@ -91,7 +91,7 @@ pub struct EvmToIcpTx {
     pub principal: Principal,
     pub subaccount: Option<[u8; 32]>,
     pub chain_id: ChainId,
-    pub total_gas_spent: Nat,
+    pub total_gas_spent: Option<Nat>,
     pub erc20_contract_address: String,
     pub icrc_ledger_id: Option<Principal>,
     pub status: EvmToIcpStatus,
@@ -206,19 +206,22 @@ impl State {
         self.evm_to_icp_txs.get(identifier).is_some()
     }
 
-    pub fn record_new_deposit(&mut self, identifier: EvmToIcpTxIdentifier, tx: EvmToIcpTx) {
+    pub fn record_new_evm_to_icp(&mut self, identifier: EvmToIcpTxIdentifier, tx: EvmToIcpTx) {
         self.evm_to_icp_txs.insert(identifier, tx);
     }
 
     pub fn record_accepted_evm_to_icp(
         &mut self,
         identifier: &EvmToIcpTxIdentifier,
+        transaction_hash: TransactionHash,
         block_number: Nat,
         from_address: String,
         value: Nat,
         principal: Principal,
         erc20_contract_address: String,
         subaccount: Option<[u8; 32]>,
+        chain_id: &ChainId,
+        oprator: &Oprator,
     ) {
         if let Some(tx) = self.evm_to_icp_txs.get_mut(identifier) {
             *tx = EvmToIcpTx {
@@ -232,6 +235,33 @@ impl State {
                 status: EvmToIcpStatus::Accepted,
                 ..tx.clone() // Copies the remaining fields
             };
+        } else {
+            match oprator {
+                Oprator::DfinityCkEthMinter => {}
+                Oprator::AppicMinter => {
+                    self.record_new_evm_to_icp(
+                        identifier.clone(),
+                        EvmToIcpTx {
+                            from_address,
+                            transaction_hash: transaction_hash,
+                            value,
+                            block_number: Some(block_number),
+                            actual_received: None,
+                            principal,
+                            subaccount,
+                            chain_id: chain_id.clone(),
+                            total_gas_spent: None,
+                            erc20_contract_address: erc20_contract_address.clone(),
+                            icrc_ledger_id: self
+                                .get_icrc_twin_for_erc20(&erc20_contract_address, oprator),
+                            status: EvmToIcpStatus::Accepted,
+                            verified: true,
+                            time: ic_cdk::api::time(),
+                            oprator: oprator.clone(),
+                        },
+                    );
+                }
+            }
         }
     }
 
@@ -395,21 +425,6 @@ impl State {
             }
         }
     }
-
-    // pub fn get_dfinity_minter(&self, chain_id: &ChainId) -> Option<Principal> {
-    //     match self.dfinity_minters.get(chain_id) {
-    //         Some(minter_id) => Some(minter_id.clone()),
-    //         None => None,
-    //     }
-    // }
-
-    // pub fn record_appic_minter(&mut self, chain_id: ChainId, minter_id: Principal) {
-    //     self.appic_minters.insert(chain_id, minter_id);
-    // }
-
-    // pub fn record_dfinity_minter(&mut self, chain_id: ChainId, minter_id: Principal) {
-    //     self.appic_minters.insert(chain_id, minter_id);
-    // }
 }
 
 pub fn read_state<R>(f: impl FnOnce(&State) -> R) -> R {
