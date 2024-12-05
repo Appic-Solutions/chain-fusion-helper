@@ -12,6 +12,7 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 
 use crate::guard::TaskType;
+use crate::scrape_events::NATIVE_ERC20_ADDRESS;
 
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -31,6 +32,8 @@ pub struct Minter {
     pub last_scraped_event: u64,
     pub last_scraped_event_time: u64,
     pub oprator: Oprator,
+    pub evm_to_icp_fee: Nat,
+    pub icp_to_evm_fee: Nat,
     pub chain_id: ChainId,
 }
 
@@ -135,6 +138,7 @@ pub struct IcpToEvmTx {
     pub transaction_hash: Option<TransactionHash>,
     pub native_ledger_burn_index: NativeLedgerBurnIndex,
     pub withdrawal_amount: Nat,
+    pub actual_received: Option<Nat>,
     pub destination: String,
     pub from: Principal,
     pub from_subaccount: Option<[u8; 32]>,
@@ -247,7 +251,7 @@ impl State {
                 verified: true,
                 block_number: Some(block_number),
                 from_address,
-                value,
+                value: value.clone(),
                 principal,
                 erc20_contract_address,
                 subaccount,
@@ -262,8 +266,8 @@ impl State {
                         identifier.clone(),
                         EvmToIcpTx {
                             from_address,
-                            transaction_hash: transaction_hash,
-                            value,
+                            transaction_hash,
+                            value: value.clone(),
                             block_number: Some(block_number),
                             actual_received: None,
                             principal,
@@ -290,9 +294,15 @@ impl State {
         &mut self,
         identifier: &EvmToIcpTxIdentifier,
         erc20_contract_address: String,
+        evm_to_icp_fee: Nat,
     ) {
         if let Some(tx) = self.evm_to_icp_txs.get_mut(identifier) {
+            let actual_received: Option<Nat> = match is_native_token(&erc20_contract_address) {
+                true => Some(tx.value.clone() - evm_to_icp_fee),
+                false => Some(tx.value.clone()),
+            };
             *tx = EvmToIcpTx {
+                actual_received,
                 erc20_contract_address,
                 status: EvmToIcpStatus::Minted,
                 ..tx.clone() // Copies the remaining fields
@@ -340,7 +350,7 @@ impl State {
         if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
             *tx = IcpToEvmTx {
                 verified: true,
-                max_transaction_fee: max_transaction_fee,
+                max_transaction_fee,
                 withdrawal_amount,
                 erc20_contract_address,
                 destination,
@@ -357,11 +367,12 @@ impl State {
                     let new_tx = IcpToEvmTx {
                         native_ledger_burn_index,
                         withdrawal_amount,
+                        actual_received: None,
                         destination,
                         from,
                         from_subaccount,
                         time: created_at.unwrap_or(ic_cdk::api::time()),
-                        max_transaction_fee: max_transaction_fee,
+                        max_transaction_fee,
                         erc20_ledger_burn_index,
                         icrc_ledger_id: self.get_icrc_twin_for_erc20(
                             &Erc20Identifier(erc20_contract_address.clone(), chain_id.clone()),
@@ -415,14 +426,24 @@ impl State {
         &mut self,
         identifier: &IcpToEvmIdentifier,
         receipt: TransactionReceipt,
+        icp_to_evm_fee: Nat,
     ) {
         if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
+            let actual_received: Option<Nat> = match is_native_token(&tx.erc20_contract_address) {
+                true => Some(
+                    tx.withdrawal_amount.clone()
+                        - (receipt.gas_used.clone() * receipt.effective_gas_price.clone())
+                        - icp_to_evm_fee,
+                ),
+                false => Some(tx.withdrawal_amount.clone()),
+            };
             let status = match receipt.status {
                 TransactionStatus::Success => IcpToEvmStatus::Successful,
                 TransactionStatus::Failure => IcpToEvmStatus::Failed,
             };
             *tx = IcpToEvmTx {
                 status,
+                actual_received,
                 transaction_hash: Some(receipt.transaction_hash),
                 gas_used: Some(receipt.gas_used.clone()),
                 effective_gas_price: Some(receipt.effective_gas_price.clone()),
@@ -591,4 +612,8 @@ fn encode<S: ?Sized + serde::Serialize>(state: &S) -> Vec<u8> {
 fn decode<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> T {
     ciborium::de::from_reader(bytes)
         .unwrap_or_else(|e| panic!("failed to decode state bytes {}: {e}", hex::encode(bytes)))
+}
+
+pub fn is_native_token(address: &str) -> bool {
+    address == NATIVE_ERC20_ADDRESS
 }

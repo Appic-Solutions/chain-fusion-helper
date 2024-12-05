@@ -8,6 +8,7 @@ use crate::{
 };
 
 use crate::minter_clinet::appic_minter_types::events::EventPayload as AppicEventPayload;
+use candid::Nat;
 
 use crate::minter_clinet::event_conversion::Events;
 const MAX_EVENTS_PER_RESPONSE: u64 = 100;
@@ -56,6 +57,8 @@ pub async fn scrape_events() {
             MAX_EVENTS_PER_RESPONSE,
             &minter_client,
             &minter_key,
+            minter.evm_to_icp_fee,
+            minter.icp_to_evm_fee,
         )
         .await
     }
@@ -67,6 +70,8 @@ pub async fn scrape_events_range(
     max_event_scrap: u64,
     minter_client: &MinterClient,
     minter_key: &MinterKey,
+    evm_to_icp_fee: Nat,
+    icp_to_evm_fee: Nat,
 ) {
     if last_scraped_event >= last_observed_event {
         println!("No events to scrape. All events are already processed.");
@@ -88,7 +93,13 @@ pub async fn scrape_events_range(
             let events_result = minter_client.scrape_events(start, 100).await;
             match events_result {
                 Ok(events) => {
-                    apply_state_transition(&events, minter_key.oprator(), minter_key.chain_id());
+                    apply_state_transition(
+                        &events,
+                        minter_key.oprator(),
+                        minter_key.chain_id(),
+                        evm_to_icp_fee.clone(),
+                        icp_to_evm_fee.clone(),
+                    );
                     mutate_state(|s| {
                         s.get_minter_mut(minter_key)
                             .unwrap()
@@ -135,7 +146,13 @@ pub async fn scrape_events_range(
     }
 }
 
-fn apply_state_transition(events: &Events, oprator: Oprator, chain_id: ChainId) {
+fn apply_state_transition(
+    events: &Events,
+    oprator: Oprator,
+    chain_id: ChainId,
+    evm_to_icp_fee: Nat,
+    icp_to_evm_fee: Nat,
+) {
     for event in events.events.iter() {
         // Applying the state transition
         mutate_state(|s| match event.payload.clone() {
@@ -195,6 +212,7 @@ fn apply_state_transition(events: &Events, oprator: Oprator, chain_id: ChainId) 
             } => s.record_minted_evm_to_icp(
                 &EvmToIcpTxIdentifier::new(&event_source.transaction_hash, &chain_id),
                 NATIVE_ERC20_ADDRESS.to_string(),
+                evm_to_icp_fee.clone(),
             ),
             AppicEventPayload::SyncedToBlock { block_number: _ } => {}
             AppicEventPayload::AcceptedNativeWithdrawalRequest {
@@ -236,6 +254,7 @@ fn apply_state_transition(events: &Events, oprator: Oprator, chain_id: ChainId) 
             } => s.record_finalized_icp_to_evm(
                 &IcpToEvmIdentifier::new(&withdrawal_id, &chain_id),
                 transaction_receipt,
+                icp_to_evm_fee.clone(),
             ),
             AppicEventPayload::ReimbursedNativeWithdrawal {
                 reimbursed_in_block: _,
@@ -303,6 +322,7 @@ fn apply_state_transition(events: &Events, oprator: Oprator, chain_id: ChainId) 
             } => s.record_minted_evm_to_icp(
                 &EvmToIcpTxIdentifier::new(&event_source.transaction_hash, &chain_id),
                 erc20_contract_address,
+                evm_to_icp_fee.clone(),
             ),
             AppicEventPayload::QuarantinedDeposit { event_source } => s
                 .record_quarantined_evm_to_icp(&EvmToIcpTxIdentifier::new(
