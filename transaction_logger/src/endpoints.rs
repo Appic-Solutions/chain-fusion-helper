@@ -47,3 +47,8 @@ pub enum AddIcpToEvmTxError {
     InvalidTokenPairs,
     ChinNotSupported,
 }
+
+pub enum LoggerArgs {
+    Init(),
+    Upgrade(),
+}

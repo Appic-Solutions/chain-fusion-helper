@@ -1,6 +1,11 @@
 use candid::Principal;
+use ic_canister_log::log;
 
-use crate::{ledger_manager_client::LsClient, state::mutate_state};
+use crate::{
+    ledger_manager_client::LsClient,
+    logs::{DEBUG, INFO},
+    state::mutate_state,
+};
 
 const LEDGER_SUITE_ORCHESTRATOR_ID: &str = "vxkom-oyaaa-aaaar-qafda-cai";
 
@@ -14,6 +19,10 @@ pub async fn update_token_pairs() {
         crate::state::Oprator::AppicMinter,
     );
 
+    log!(
+        INFO,
+        "[Scrape new twin tokens] Start scraping new twin tokens from appic lsm",
+    );
     let appic_token_paris = appic_ledger_manager_clinet.get_erc20_list().await;
 
     match appic_token_paris {
@@ -27,18 +36,35 @@ pub async fn update_token_pairs() {
                     )
                     .is_none()
                     {
+                        log!(
+                         INFO,
+                            "[Scrape new twin tokens] Adding new twin token to state with identifier {:?} and principal {:?} from Appic LSM",
+                             erc20_identifier,
+                            principal_id.to_text()
+                        );
                         s.supported_twin_appic_tokens
                             .insert(erc20_identifier, principal_id);
                     }
                 })
             }
         }
-        Err(_err) => {}
+        Err(err) => {
+            log!(
+                DEBUG,
+                "[Scrape new twin tokens] Failed scraping appic lsm reason {:?}",
+                err
+            );
+        }
     }
 
     let dfinity_ledger_manager_clinet = LsClient::new(
         Principal::from_text(LEDGER_SUITE_ORCHESTRATOR_ID).unwrap(),
         crate::state::Oprator::DfinityCkEthMinter,
+    );
+
+    log!(
+        INFO,
+        "[Scrape new twin tokens] Start scraping new twin tokens from dfinity lso",
     );
 
     let dfinity_token_paris = dfinity_ledger_manager_clinet.get_erc20_list().await;
@@ -54,12 +80,24 @@ pub async fn update_token_pairs() {
                     )
                     .is_none()
                     {
+                        log!(
+                            INFO,
+                            "[Scrape new twin tokens] Adding new twin token to state with identifier {:?} and principal {:?} from Dfinity LSO",
+                            erc20_identifier,
+                            principal_id.to_text()
+                        );
                         s.supported_ckerc20_tokens
                             .insert(erc20_identifier, principal_id);
                     }
                 })
             }
         }
-        Err(_err) => {}
+        Err(err) => {
+            log!(
+                DEBUG,
+                "[Scrape new twin tokens] Failed scraping dfinity lso reason {:?}",
+                err
+            );
+        }
     }
 }

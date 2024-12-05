@@ -1,4 +1,4 @@
-use ic_cdk::{query, update};
+use ic_cdk::{init, post_upgrade, query, update};
 use ic_cdk_timers;
 use transaction_logger::{
     remove_unverified_tx::remove_unverified_tx, scrape_events::scrape_events,

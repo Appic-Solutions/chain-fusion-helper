@@ -1,5 +1,6 @@
 use crate::{
     guard::TimerGuard,
+    logs::{DEBUG, INFO},
     minter_clinet::MinterClient,
     state::{
         mutate_state, read_state, ChainId, EvmToIcpTxIdentifier, IcpToEvmIdentifier, MinterKey,
@@ -9,6 +10,7 @@ use crate::{
 
 use crate::minter_clinet::appic_minter_types::events::EventPayload as AppicEventPayload;
 use candid::Nat;
+use ic_canister_log::log;
 
 use crate::minter_clinet::event_conversion::Events;
 const MAX_EVENTS_PER_RESPONSE: u64 = 100;
@@ -27,8 +29,21 @@ pub async fn scrape_events() {
     for (minter_key, minter) in minters_iter {
         let minter_client = MinterClient::from(&minter);
 
+        log!(
+            INFO,
+            "[Latest Events Count] getting the latest_evnt_count from minter {:?}",
+            minter_key
+        );
+
         // Get the latest event count to update last_observed_event;
         let latest_event_count = minter_client.get_total_events_count().await;
+
+        log!(
+            INFO,
+            "[Latest Events Count] received latest_evnt_count from minter {:?} with value {}",
+            minter_key,
+            latest_event_count
+        );
 
         // Check if the previos last_observed_event is greater or equal to latest one;
         // If yes there should be no scraping for events and last_observed_event should not be updated
@@ -74,7 +89,10 @@ pub async fn scrape_events_range(
     icp_to_evm_fee: Nat,
 ) {
     if last_scraped_event >= last_observed_event {
-        println!("No events to scrape. All events are already processed.");
+        log!(
+            INFO,
+            "[Scraping Events] No events to scrape. All events are already processed."
+        );
         return;
     }
 
@@ -84,7 +102,13 @@ pub async fn scrape_events_range(
 
     while start <= end {
         let chunk_end = std::cmp::min(start + max_event_scrap - 1, end); // Define the range limit
-        println!("Scraping events from {} to {}", start, chunk_end);
+        log!(
+            INFO,
+            "[Scraping Events] Scraping events from {} to {} minter {:?}",
+            start,
+            chunk_end,
+            minter_key
+        );
 
         let mut attempts = 0; // Initialize retry counter
         let mut success = false; // Track success status
@@ -120,15 +144,23 @@ pub async fn scrape_events_range(
                 }
                 Err(err) => {
                     attempts += 1;
-                    println!(
-                        "Error scraping events from {} to {}: {:?}. Retrying... ({}/{})",
-                        start, chunk_end, err, attempts, MAX_RETRIES
+                    log!(
+                        DEBUG,
+                        "[Scraping Events] Error scraping events from {} to {}: {:?}. Retrying... ({}/{})",
+                        start,
+                        chunk_end,
+                        err,
+                        attempts,
+                        MAX_RETRIES
                     );
 
                     if attempts >= MAX_RETRIES {
-                        println!(
-                            "Failed to scrape events from {} to {} after {} retries. Skipping...",
-                            start, chunk_end, MAX_RETRIES
+                        log!(
+                            DEBUG,
+                            "[Scraping Events] Failed to scrape events from {} to {} after {} retries. Skipping...",
+                            start,
+                            chunk_end,
+                            MAX_RETRIES
                         );
                     }
                 }
@@ -140,7 +172,10 @@ pub async fn scrape_events_range(
             start = chunk_end + 1;
         } else {
             // If scraping ultimately fails, break to prevent an infinite loop
-            println!("Aborting further scraping due to repeated failures.");
+            log!(
+                DEBUG,
+                "[Scraping Events] Aborting further scraping due to repeated failures."
+            );
             break;
         }
     }

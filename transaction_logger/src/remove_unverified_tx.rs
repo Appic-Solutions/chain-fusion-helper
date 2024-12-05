@@ -1,5 +1,8 @@
+use ic_canister_log::log;
+
 use crate::{
     guard::TimerGuard,
+    logs::INFO,
     state::{mutate_state, read_state},
 };
 
@@ -21,9 +24,17 @@ pub fn remove_unverified_tx() {
     })
     .into_iter();
 
+    log!(INFO, "[Remove Unverified Tx] Removing unverified tx");
+
     let current_time = ic_cdk::api::time();
     for (identifier, tx) in all_unverified_evm_to_icp_tx {
         if tx.time + ONE_HOUR_IN_NS < current_time {
+            log!(
+                INFO,
+                "[Remove Unverified Tx] Removing unverified tx with identifier {:?} and transaction body {:?}",
+                identifier,
+                tx
+            );
             mutate_state(|s| s.remove_unverified_evm_to_icp(&identifier))
         }
     }
@@ -36,6 +47,12 @@ pub fn remove_unverified_tx() {
 
     for (identifier, tx) in all_unverified_icp_to_evm_tx {
         if tx.time + ONE_HOUR_IN_NS < current_time {
+            log!(
+                INFO,
+                "[Remove Unverified Tx] Removing unverified tx with identifier {:?} and transaction body {:?}",
+                identifier,
+                tx
+            );
             mutate_state(|s| s.remove_unverified_icp_to_evm(&identifier))
         }
     }

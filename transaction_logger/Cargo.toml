@@ -10,6 +10,7 @@ edition = "2021"
 [dependencies]
 candid = "0.10"
 ic-cdk = "0.16"
+ic-canister-log = "0.2.0"
 ic-cdk-timers = "0.10" # Feel free to remove this dependency if you don't need timers
 ic-stable-structures="0.6.5"
 icrc-ledger-types={ git = "https://github.com/dfinity/ic.git"}
