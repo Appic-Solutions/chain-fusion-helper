@@ -174,10 +174,12 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
     Ok(())
 }
 
+#[query]
 pub fn get_all_tx_by_address(address: String) -> Vec<Transaction> {
     read_state(|s| s.get_transaction_for_address(address))
 }
 
+#[query]
 pub fn get_all_tx_by_principal(principal_id: Principal) -> Vec<Transaction> {
     read_state(|s| s.get_transaction_for_principal(principal_id))
 }
