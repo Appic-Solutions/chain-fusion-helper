@@ -1,6 +1,5 @@
 use crate::endpoints::UpgradeArg;
 use crate::logs::INFO;
-use crate::state::nat_to_u64;
 use crate::state::ChainId;
 use crate::state::Minter;
 

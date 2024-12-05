@@ -1,24 +1,11 @@
-use candid::{Deserialize, Nat, Principal};
+use candid::Deserialize;
 use serde::Serialize;
 
 use crate::minter_clinet::appic_minter_types::events::Event as AppicEvent;
 
-use crate::minter_clinet::dfinity_ck_minter_types::events::Event as DfintiyEvent;
-
 use crate::minter_clinet::appic_minter_types::events::EventPayload as AppicEventPayload;
 use crate::minter_clinet::dfinity_ck_minter_types::events::EventPayload as DfinityEventPayload;
 
-use crate::minter_clinet::appic_minter_types::events::EventPayload::{
-    AcceptedDeposit as AppicAcceptedDeposit, AcceptedErc20Deposit as AppicAcceptedErc20Deposit,
-    AcceptedErc20WithdrawalRequest as AppicAcceptedErc20WithdrawalRequest,
-    AcceptedNativeWithdrawalRequest as AppicAcceptedNativeWithdrawalRequest,
-    CreatedTransaction as AppicCreatedTransaction,
-    FailedErc20WithdrawalRequest as AppicFailedErc20WithdrawalRequest,
-    FinalizedTransaction as AppicFinalizedTransaction, MintedErc20 as AppicMintedErc20,
-    MintedNative as AppicMintedNative, ReimbursedErc20Withdrawal as AppicReimbursedErc20Withdrawal,
-    ReimbursedNativeWithdrawal as AppicReimbursedNativeWithdrawal,
-    ReplacedTransaction as AppicReplacedTransaction, SignedTransaction as AppicSignedTransaction,
-};
 use crate::minter_clinet::{AppicGetEventsResult, DfinityCkGetEventsResult};
 
 use super::appic_minter_types::events::EventSource as AppicEventSource;
@@ -87,8 +74,8 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
             .filter_map(|event| {
                 let timestamp = event.timestamp;
                 let event_payload = match event.payload.clone() {
-                    DfinityEventPayload::Init(_init_arg) => None,
-                    DfinityEventPayload::Upgrade(_upgrade_arg) => None,
+                    DfinityEventPayload::Init(..) => None,
+                    DfinityEventPayload::Upgrade(..) => None,
                     DfinityEventPayload::AcceptedDeposit {
                         transaction_hash,
                         block_number,
@@ -145,11 +132,9 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         },
                         mint_block_index,
                     }),
-                    DfinityEventPayload::SyncedToBlock { block_number } => None,
-                    DfinityEventPayload::SyncedErc20ToBlock { block_number } => None,
-                    DfinityEventPayload::SyncedDepositWithSubaccountToBlock { block_number } => {
-                        None
-                    }
+                    DfinityEventPayload::SyncedToBlock { .. } => None,
+                    DfinityEventPayload::SyncedErc20ToBlock { .. } => None,
+                    DfinityEventPayload::SyncedDepositWithSubaccountToBlock { .. } => None,
                     DfinityEventPayload::AcceptedEthWithdrawalRequest {
                         withdrawal_amount,
                         destination,
@@ -219,16 +204,8 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         reimbursed_amount,
                         transaction_hash,
                     }),
-                    DfinityEventPayload::SkippedBlock {
-                        contract_address,
-                        block_number,
-                    } => None,
-                    DfinityEventPayload::AddedCkErc20Token {
-                        chain_id,
-                        address,
-                        ckerc20_token_symbol,
-                        ckerc20_ledger_id,
-                    } => None,
+                    DfinityEventPayload::SkippedBlock { .. } => None,
+                    DfinityEventPayload::AddedCkErc20Token { .. } => None,
                     DfinityEventPayload::AcceptedErc20WithdrawalRequest {
                         max_transaction_fee,
                         withdrawal_amount,

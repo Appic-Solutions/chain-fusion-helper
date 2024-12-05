@@ -11,7 +11,7 @@ use std::cell::RefCell;
 
 use std::collections::BTreeMap;
 
-use crate::endpoints::{InitArgs, MinterArgs};
+use crate::endpoints::{AddEvmToIcpTx, AddIcpToEvmTx, InitArgs, MinterArgs};
 use crate::guard::TaskType;
 use crate::scrape_events::NATIVE_ERC20_ADDRESS;
 
@@ -108,6 +108,14 @@ impl EvmToIcpTxIdentifier {
         EvmToIcpTxIdentifier(transaction_hash.clone(), chain_id.clone())
     }
 }
+impl From<&AddEvmToIcpTx> for EvmToIcpTxIdentifier {
+    fn from(value: &AddEvmToIcpTx) -> Self {
+        Self::new(
+            &value.transaction_hash,
+            &ChainId::from(value.chain_id.clone()),
+        )
+    }
+}
 
 #[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub enum EvmToIcpStatus {
@@ -144,6 +152,15 @@ pub struct IcpToEvmIdentifier(NativeLedgerBurnIndex, ChainId);
 impl IcpToEvmIdentifier {
     pub fn new(native_ledger_burn_index: &NativeLedgerBurnIndex, chain_id: &ChainId) -> Self {
         IcpToEvmIdentifier(native_ledger_burn_index.clone(), chain_id.clone())
+    }
+}
+
+impl From<&AddIcpToEvmTx> for IcpToEvmIdentifier {
+    fn from(value: &AddIcpToEvmTx) -> Self {
+        Self::new(
+            &value.native_ledger_burn_index,
+            &ChainId::from(value.chain_id.clone()),
+        )
     }
 }
 
@@ -188,6 +205,11 @@ type Erc20Contract = String;
 #[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct Erc20Identifier(pub Erc20Contract, pub ChainId);
 
+impl Erc20Identifier {
+    pub fn new(contract: &Erc20Contract, chain_id: &ChainId) -> Self {
+        Self(contract.clone(), chain_id.clone())
+    }
+}
 // State Definition,
 // All types of transactions will be sotred in this stable state
 #[derive(Clone, PartialEq, Debug, Eq, Deserialize, Serialize)]
@@ -224,6 +246,15 @@ impl State {
         self.minters.clone().into_iter()
     }
 
+    pub fn if_chain_id_exists(&self, chain_id: &ChainId) -> bool {
+        let chain_ids: Vec<ChainId> = self
+            .get_minters_iter()
+            .map(|minter| minter.1.chain_id)
+            .collect();
+
+        chain_ids.contains(chain_id)
+    }
+
     pub fn get_minters_mut_iter(
         &mut self,
     ) -> std::collections::btree_map::IterMut<'_, MinterKey, Minter> {
@@ -251,10 +282,12 @@ impl State {
         }
     }
 
-    pub fn record_evm_to_icp_tx(&mut self) {}
-
     pub fn if_evm_to_icp_tx_exists(&self, identifier: &EvmToIcpTxIdentifier) -> bool {
         self.evm_to_icp_txs.get(identifier).is_some()
+    }
+
+    pub fn if_icp_to_evm_tx_exists(&self, identifier: &IcpToEvmIdentifier) -> bool {
+        self.icp_to_evm_txs.get(identifier).is_some()
     }
 
     pub fn record_new_evm_to_icp(&mut self, identifier: EvmToIcpTxIdentifier, tx: EvmToIcpTx) {

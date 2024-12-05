@@ -6,15 +6,12 @@ use candid::Principal;
 
 use std::fmt;
 
-use candid::utils::{ArgumentDecoder, ArgumentEncoder};
 use candid::CandidType;
 use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use std::fmt::Debug;
 
-use num_traits::ToPrimitive;
-
-use crate::state::{ChainId, Oprator};
+use crate::state::Oprator;
 
 use crate::state::Minter;
 

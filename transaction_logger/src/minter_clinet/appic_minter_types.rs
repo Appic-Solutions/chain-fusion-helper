@@ -142,8 +142,8 @@ pub mod events {
                 ReimbursementIndex::Native { ledger_burn_index } => ledger_burn_index,
                 ReimbursementIndex::Erc20 {
                     native_ledger_burn_index,
-                    ledger_id,
-                    erc20_ledger_burn_index,
+                    ledger_id: _,
+                    erc20_ledger_burn_index: _,
                 } => native_ledger_burn_index,
             }
         }
