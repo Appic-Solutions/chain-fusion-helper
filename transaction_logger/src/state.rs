@@ -11,6 +11,7 @@ use std::cell::RefCell;
 
 use std::collections::BTreeMap;
 
+use crate::endpoints::{InitArgs, MinterArgs};
 use crate::guard::TaskType;
 use crate::scrape_events::NATIVE_ERC20_ADDRESS;
 
@@ -49,10 +50,33 @@ impl Minter {
     pub fn update_last_scraped_event_time(&mut self, time: u64) {
         self.last_scraped_event_time = time
     }
+
+    pub fn from_minter_args(args: &MinterArgs) -> Self {
+        let MinterArgs {
+            chain_id,
+            minter_id,
+            oprator,
+            last_observed_event,
+            last_scraped_event,
+            last_scraped_event_time,
+            evm_to_icp_fee,
+            icp_to_evm_fee,
+        } = args.clone();
+        Self {
+            id: minter_id,
+            last_observed_event: nat_to_u64(last_observed_event),
+            last_scraped_event: nat_to_u64(last_scraped_event),
+            last_scraped_event_time: nat_to_u64(last_scraped_event_time),
+            oprator,
+            evm_to_icp_fee,
+            icp_to_evm_fee,
+            chain_id: ChainId::from(chain_id),
+        }
+    }
 }
 
 #[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
-pub struct MinterKey(ChainId, Oprator);
+pub struct MinterKey(pub ChainId, pub Oprator);
 
 impl MinterKey {
     pub fn oprator(&self) -> Oprator {
@@ -61,6 +85,10 @@ impl MinterKey {
 
     pub fn chain_id(&self) -> ChainId {
         self.0.clone()
+    }
+
+    pub fn from_minter_args(args: &MinterArgs) -> Self {
+        Self(args.chain_id.clone().into(), args.oprator.clone())
     }
 }
 
@@ -529,10 +557,33 @@ pub fn init_state(state: State) {
     });
 }
 
+impl From<InitArgs> for State {
+    fn from(value: InitArgs) -> Self {
+        let minters = BTreeMap::from_iter(value.minters.iter().map(|minter| {
+            (
+                MinterKey::from_minter_args(&minter),
+                Minter::from_minter_args(&minter),
+            )
+        }));
+        Self {
+            active_tasks: Default::default(),
+            minters,
+            evm_to_icp_txs: Default::default(),
+            icp_to_evm_txs: Default::default(),
+            supported_ckerc20_tokens: Default::default(),
+            supported_twin_appic_tokens: Default::default(),
+        }
+    }
+}
+
 impl From<Nat> for ChainId {
     fn from(value: Nat) -> Self {
         Self(value.0.to_u64().unwrap())
     }
+}
+
+pub fn nat_to_u64(value: Nat) -> u64 {
+    value.0.to_u64().unwrap()
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize)]

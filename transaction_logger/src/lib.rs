@@ -3,6 +3,7 @@ use std::time::Duration;
 pub mod endpoints;
 pub mod guard;
 mod ledger_manager_client;
+pub mod lifecycle;
 pub mod logs;
 pub mod minter_clinet;
 pub mod remove_unverified_tx;
