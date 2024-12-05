@@ -11,7 +11,9 @@ use std::cell::RefCell;
 
 use std::collections::BTreeMap;
 
-use crate::endpoints::{AddEvmToIcpTx, AddIcpToEvmTx, InitArgs, MinterArgs};
+use crate::endpoints::{
+    AddEvmToIcpTx, AddIcpToEvmTx, CandidEvmToIcp, CandidIcpToEvm, InitArgs, MinterArgs, Transaction,
+};
 use crate::guard::TaskType;
 use crate::scrape_events::NATIVE_ERC20_ADDRESS;
 
@@ -117,7 +119,7 @@ impl From<&AddEvmToIcpTx> for EvmToIcpTxIdentifier {
     }
 }
 
-#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+#[derive(Clone, CandidType, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub enum EvmToIcpStatus {
     PendingVerification,
     Accepted,
@@ -164,7 +166,7 @@ impl From<&AddIcpToEvmTx> for IcpToEvmIdentifier {
     }
 }
 
-#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+#[derive(CandidType, Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub enum IcpToEvmStatus {
     PendingVerification,
     Accepted,
@@ -186,6 +188,7 @@ pub struct IcpToEvmTx {
     pub actual_received: Option<Nat>,
     pub destination: String,
     pub from: Principal,
+    pub chain_id: ChainId,
     pub from_subaccount: Option<[u8; 32]>,
     pub time: u64,
     pub max_transaction_fee: Option<Nat>,
@@ -439,6 +442,7 @@ impl State {
                             &Erc20Identifier(erc20_contract_address.clone(), chain_id.clone()),
                             &oprator,
                         ),
+                        chain_id,
                         erc20_contract_address,
                         verified: true,
                         status: IcpToEvmStatus::Accepted,
@@ -550,6 +554,50 @@ impl State {
 
     pub fn remove_unverified_evm_to_icp(&mut self, identifier: &EvmToIcpTxIdentifier) {
         self.evm_to_icp_txs.remove(identifier);
+    }
+
+    pub fn get_transaction_for_address(&self, address: String) -> Vec<Transaction> {
+        let all_tx: Vec<Transaction> = self
+            .all_evm_to_icp_iter()
+            .filter_map(|(_id, tx)| {
+                if tx.from_address == address {
+                    Some(Transaction::from(CandidEvmToIcp::from(tx)))
+                } else {
+                    None
+                }
+            })
+            .chain(self.all_icp_to_evm_iter().filter_map(|(_id, tx)| {
+                if tx.destination == address {
+                    Some(Transaction::from(CandidIcpToEvm::from(tx)))
+                } else {
+                    None
+                }
+            }))
+            .collect();
+
+        all_tx
+    }
+
+    pub fn get_transaction_for_principal(&self, principal_id: Principal) -> Vec<Transaction> {
+        let all_tx: Vec<Transaction> = self
+            .all_evm_to_icp_iter()
+            .filter_map(|(_id, tx)| {
+                if tx.principal == principal_id {
+                    Some(Transaction::from(CandidEvmToIcp::from(tx)))
+                } else {
+                    None
+                }
+            })
+            .chain(self.all_icp_to_evm_iter().filter_map(|(_id, tx)| {
+                if tx.from == principal_id {
+                    Some(Transaction::from(CandidIcpToEvm::from(tx)))
+                } else {
+                    None
+                }
+            }))
+            .collect();
+
+        all_tx
     }
 }
 

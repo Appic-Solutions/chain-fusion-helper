@@ -1,10 +1,11 @@
 use std::io::Chain;
 
+use candid::Principal;
 use ic_canister_log::log;
 use ic_cdk::{init, post_upgrade, query, update};
 use ic_cdk_timers;
 use transaction_logger::endpoints::{
-    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError,
+    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError, Transaction,
 };
 use transaction_logger::lifecycle;
 use transaction_logger::state::{
@@ -90,6 +91,7 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
         }
     })?;
 
+    log!(INFO, "[Add New Icp to Evm Transaction] tx: {:?}", tx);
     mutate_state(|s| {
         s.record_new_icp_to_evm(
             tx_identifier,
@@ -112,6 +114,7 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
                 verified: false,
                 status: IcpToEvmStatus::PendingVerification,
                 oprator: tx.oprator,
+                chain_id,
             },
         )
     });
@@ -143,6 +146,8 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
         }
     })?;
 
+    log!(INFO, "[Add New Evm to Icp Transaction] tx: {:?}", tx);
+
     mutate_state(|s| {
         s.record_new_evm_to_icp(
             tx_identifier,
@@ -169,4 +174,15 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
     Ok(())
 }
 
+pub fn get_all_tx_by_address(address: String) -> Vec<Transaction> {
+    read_state(|s| s.get_transaction_for_address(address))
+}
+
+pub fn get_all_tx_by_principal(principal_id: Principal) -> Vec<Transaction> {
+    read_state(|s| s.get_transaction_for_principal(principal_id))
+}
+
 fn main() {}
+
+// Enable Candid export
+ic_cdk::export_candid!();
