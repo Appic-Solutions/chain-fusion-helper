@@ -4,8 +4,12 @@
       "candid": "transaction_logger.did",
       "wasm": "target/wasm32-unknown-unknown/release/transaction_logger.wasm",
       "type": "custom",
-      "init": "init.did",
-      "build": ["make build"]
+      "build": ["make build"],
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
     }
   },
   "defaults": {

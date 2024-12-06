@@ -316,34 +316,29 @@ impl State {
                 ..tx.clone() // Copies the remaining fields
             };
         } else {
-            match oprator {
-                Oprator::DfinityCkEthMinter => {}
-                Oprator::AppicMinter => {
-                    self.record_new_evm_to_icp(
-                        identifier.clone(),
-                        EvmToIcpTx {
-                            from_address,
-                            transaction_hash,
-                            value: value.clone(),
-                            block_number: Some(block_number),
-                            actual_received: None,
-                            principal,
-                            subaccount,
-                            chain_id: chain_id.clone(),
-                            total_gas_spent: None,
-                            erc20_contract_address: erc20_contract_address.clone(),
-                            icrc_ledger_id: self.get_icrc_twin_for_erc20(
-                                &Erc20Identifier(erc20_contract_address, chain_id.clone()),
-                                oprator,
-                            ),
-                            status: EvmToIcpStatus::Accepted,
-                            verified: true,
-                            time: ic_cdk::api::time(),
-                            oprator: oprator.clone(),
-                        },
-                    );
-                }
-            }
+            self.record_new_evm_to_icp(
+                identifier.clone(),
+                EvmToIcpTx {
+                    from_address,
+                    transaction_hash,
+                    value: value.clone(),
+                    block_number: Some(block_number),
+                    actual_received: None,
+                    principal,
+                    subaccount,
+                    chain_id: chain_id.clone(),
+                    total_gas_spent: None,
+                    erc20_contract_address: erc20_contract_address.clone(),
+                    icrc_ledger_id: self.get_icrc_twin_for_erc20(
+                        &Erc20Identifier(erc20_contract_address, chain_id.clone()),
+                        oprator,
+                    ),
+                    status: EvmToIcpStatus::Accepted,
+                    verified: true,
+                    time: ic_cdk::api::time(),
+                    oprator: oprator.clone(),
+                },
+            );
         }
     }
 
@@ -419,37 +414,32 @@ impl State {
                 ..tx.clone()
             }
         } else {
-            match oprator {
-                Oprator::AppicMinter => {
-                    let new_tx = IcpToEvmTx {
-                        native_ledger_burn_index,
-                        withdrawal_amount,
-                        actual_received: None,
-                        destination,
-                        from,
-                        from_subaccount,
-                        time: created_at.unwrap_or(ic_cdk::api::time()),
-                        max_transaction_fee,
-                        erc20_ledger_burn_index,
-                        icrc_ledger_id: self.get_icrc_twin_for_erc20(
-                            &Erc20Identifier(erc20_contract_address.clone(), chain_id.clone()),
-                            &oprator,
-                        ),
-                        chain_id,
-                        erc20_contract_address,
-                        verified: true,
-                        status: IcpToEvmStatus::Accepted,
-                        oprator,
-                        effective_gas_price: None,
-                        gas_used: None,
-                        toatal_gas_spent: None,
-                        transaction_hash: None,
-                    };
+            let new_tx = IcpToEvmTx {
+                native_ledger_burn_index,
+                withdrawal_amount,
+                actual_received: None,
+                destination,
+                from,
+                from_subaccount,
+                time: created_at.unwrap_or(ic_cdk::api::time()),
+                max_transaction_fee,
+                erc20_ledger_burn_index,
+                icrc_ledger_id: self.get_icrc_twin_for_erc20(
+                    &Erc20Identifier(erc20_contract_address.clone(), chain_id.clone()),
+                    &oprator,
+                ),
+                chain_id,
+                erc20_contract_address,
+                verified: true,
+                status: IcpToEvmStatus::Accepted,
+                oprator,
+                effective_gas_price: None,
+                gas_used: None,
+                toatal_gas_spent: None,
+                transaction_hash: None,
+            };
 
-                    self.record_new_icp_to_evm(identifier.clone(), new_tx);
-                }
-                Oprator::DfinityCkEthMinter => {}
-            }
+            self.record_new_icp_to_evm(identifier.clone(), new_tx);
         }
     }
 
