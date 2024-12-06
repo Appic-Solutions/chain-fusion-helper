@@ -1,6 +1,9 @@
 // Appic icrc ledger suite manager types
 
+use std::str::FromStr;
+
 use candid::{CandidType, Deserialize, Nat, Principal};
+use ic_ethereum_types::Address;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromError;
 
 use crate::state::Erc20Identifier;
@@ -167,7 +170,8 @@ impl From<LedgerManagerInfo> for EvmIcpTwinPairs {
             .filter_map(|canisters| match canisters.ledger {
                 Some(ledger_id) => Some((
                     Erc20Identifier(
-                        canisters.erc20_contract.address,
+                        Address::from_str(&canisters.erc20_contract.address)
+                            .expect("The response comes from the canister and it should not fail"),
                         canisters.erc20_contract.chain_id.into(),
                     ),
                     ledger_id.into(),

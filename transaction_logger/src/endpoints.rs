@@ -1,7 +1,7 @@
 use crate::state::{EvmToIcpStatus, EvmToIcpTx, IcpToEvmStatus, IcpToEvmTx, Oprator};
 use candid::{CandidType, Deserialize, Nat, Principal};
+use ic_ethereum_types::Address;
 use serde::Serialize;
-
 // Transactions for Evm to Icp
 // unique identifier = transaction hash and chain id
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -25,6 +25,8 @@ pub enum AddEvmToIcpTxError {
     TxAlreadyExsits,
     InvalidTokenPairs,
     ChinNotSupported,
+    InvalidTokenContract,
+    InvalidAddress,
 }
 
 // Transactions for icp to evm
@@ -49,6 +51,8 @@ pub enum AddIcpToEvmTxError {
     TxAlreadyExsits,
     InvalidTokenPairs,
     ChinNotSupported,
+    InvalidDestination,
+    InvalidTokenContract,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -159,7 +163,7 @@ impl From<IcpToEvmTx> for CandidIcpToEvm {
             native_ledger_burn_index,
             withdrawal_amount,
             actual_received,
-            destination,
+            destination: destination.to_string(),
             from,
             from_subaccount,
             time,
@@ -168,7 +172,7 @@ impl From<IcpToEvmTx> for CandidIcpToEvm {
             gas_used,
             toatal_gas_spent,
             erc20_ledger_burn_index,
-            erc20_contract_address,
+            erc20_contract_address: erc20_contract_address.to_string(),
             icrc_ledger_id,
             verified,
             status,
@@ -217,7 +221,7 @@ impl From<EvmToIcpTx> for CandidEvmToIcp {
             oprator,
         } = value;
         Self {
-            from_address,
+            from_address: from_address.to_string(),
             transaction_hash,
             value,
             block_number,
@@ -226,7 +230,7 @@ impl From<EvmToIcpTx> for CandidEvmToIcp {
             subaccount,
             chain_id: Nat::from(chain_id.0),
             total_gas_spent,
-            erc20_contract_address,
+            erc20_contract_address: erc20_contract_address.to_string(),
             icrc_ledger_id,
             status,
             verified,

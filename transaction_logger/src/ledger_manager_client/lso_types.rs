@@ -1,10 +1,12 @@
+use std::str::FromStr;
+
+use super::EvmIcpTwinPairs;
 use crate::{
     scrape_events::NATIVE_ERC20_ADDRESS,
     state::{ChainId, Erc20Identifier},
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
-
-use super::EvmIcpTwinPairs;
+use ic_ethereum_types::Address;
 
 // Dfinity cketh ledger suite orchestrator types
 
@@ -158,7 +160,8 @@ impl From<OrchestratorInfo> for EvmIcpTwinPairs {
             .filter_map(|canisters| match canisters.ledger {
                 Some(ledger_id) => Some((
                     Erc20Identifier(
-                        canisters.erc20_contract.address,
+                        Address::from_str(&canisters.erc20_contract.address)
+                            .expect("The response comes from the canister and it should not fail"),
                         canisters.erc20_contract.chain_id.into(),
                     ),
                     ledger_id.into(),
@@ -172,7 +175,12 @@ impl From<OrchestratorInfo> for EvmIcpTwinPairs {
                     .into_iter()
                     .filter_map(|canisters| match canisters.ledger {
                         Some(ledger_id) => Some((
-                            Erc20Identifier(NATIVE_ERC20_ADDRESS.to_string(), ChainId(1_u64)),
+                            Erc20Identifier(
+                                Address::from_str(NATIVE_ERC20_ADDRESS).expect(
+                                    "The response comes from the canister and it should not fail",
+                                ),
+                                ChainId(1_u64),
+                            ),
                             ledger_id.into(),
                         )),
                         None => None,

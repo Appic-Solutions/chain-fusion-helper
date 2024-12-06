@@ -1,15 +1,16 @@
 use candid::{CandidType, Nat, Principal};
 use ic_cdk::trap;
+use ic_ethereum_types::Address;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::{storable::Bound, Cell, Storable};
 use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-
 use std::cell::RefCell;
 
 use std::collections::BTreeMap;
+use std::str::FromStr;
 
 use crate::endpoints::{
     AddEvmToIcpTx, AddIcpToEvmTx, CandidEvmToIcp, CandidIcpToEvm, InitArgs, MinterArgs, Transaction,
@@ -123,7 +124,7 @@ pub enum EvmToIcpStatus {
 
 #[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct EvmToIcpTx {
-    pub from_address: String,
+    pub from_address: Address,
     pub transaction_hash: TransactionHash,
     pub value: Nat,
     pub block_number: Option<Nat>,
@@ -132,7 +133,7 @@ pub struct EvmToIcpTx {
     pub subaccount: Option<[u8; 32]>,
     pub chain_id: ChainId,
     pub total_gas_spent: Option<Nat>,
-    pub erc20_contract_address: String,
+    pub erc20_contract_address: Address,
     pub icrc_ledger_id: Option<Principal>,
     pub status: EvmToIcpStatus,
     pub verified: bool,
@@ -179,7 +180,7 @@ pub struct IcpToEvmTx {
     pub native_ledger_burn_index: NativeLedgerBurnIndex,
     pub withdrawal_amount: Nat,
     pub actual_received: Option<Nat>,
-    pub destination: String,
+    pub destination: Address,
     pub from: Principal,
     pub chain_id: ChainId,
     pub from_subaccount: Option<[u8; 32]>,
@@ -189,20 +190,18 @@ pub struct IcpToEvmTx {
     pub gas_used: Option<Nat>,
     pub toatal_gas_spent: Option<Nat>,
     pub erc20_ledger_burn_index: Option<Nat>,
-    pub erc20_contract_address: String,
+    pub erc20_contract_address: Address,
     pub icrc_ledger_id: Option<Principal>,
     pub verified: bool,
     pub status: IcpToEvmStatus,
     pub oprator: Oprator,
 }
 
-type Erc20Contract = String;
-
 #[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
-pub struct Erc20Identifier(pub Erc20Contract, pub ChainId);
+pub struct Erc20Identifier(pub Address, pub ChainId);
 
 impl Erc20Identifier {
-    pub fn new(contract: &Erc20Contract, chain_id: &ChainId) -> Self {
+    pub fn new(contract: &Address, chain_id: &ChainId) -> Self {
         Self(contract.clone(), chain_id.clone())
     }
 }
@@ -307,10 +306,12 @@ impl State {
             *tx = EvmToIcpTx {
                 verified: true,
                 block_number: Some(block_number),
-                from_address,
+                from_address: Address::from_str(&from_address)
+                    .expect("Should not fail converting minter address to Address"),
                 value: value.clone(),
                 principal,
-                erc20_contract_address,
+                erc20_contract_address: Address::from_str(&erc20_contract_address)
+                    .expect("Should not fail converting minter address to Address"),
                 subaccount,
                 status: EvmToIcpStatus::Accepted,
                 ..tx.clone() // Copies the remaining fields
@@ -319,7 +320,8 @@ impl State {
             self.record_new_evm_to_icp(
                 identifier.clone(),
                 EvmToIcpTx {
-                    from_address,
+                    from_address: Address::from_str(&from_address)
+                        .expect("Should not fail converting minter address to Address"),
                     transaction_hash,
                     value: value.clone(),
                     block_number: Some(block_number),
@@ -328,9 +330,14 @@ impl State {
                     subaccount,
                     chain_id: chain_id.clone(),
                     total_gas_spent: None,
-                    erc20_contract_address: erc20_contract_address.clone(),
+                    erc20_contract_address: Address::from_str(&erc20_contract_address)
+                        .expect("Should not fail converting minter address to Address"),
                     icrc_ledger_id: self.get_icrc_twin_for_erc20(
-                        &Erc20Identifier(erc20_contract_address, chain_id.clone()),
+                        &Erc20Identifier(
+                            Address::from_str(&erc20_contract_address)
+                                .expect("Should not fail converting minter address to Address"),
+                            chain_id.clone(),
+                        ),
                         oprator,
                     ),
                     status: EvmToIcpStatus::Accepted,
@@ -349,13 +356,19 @@ impl State {
         evm_to_icp_fee: Nat,
     ) {
         if let Some(tx) = self.evm_to_icp_txs.get_mut(identifier) {
-            let actual_received: Option<Nat> = match is_native_token(&erc20_contract_address) {
+            // Fee calulation
+            let actual_received: Option<Nat> = match is_native_token(
+                &Address::from_str(&erc20_contract_address)
+                    .expect("Should not fail converting minter address to Address"),
+            ) {
                 true => Some(tx.value.clone() - evm_to_icp_fee),
                 false => Some(tx.value.clone()),
             };
+
             *tx = EvmToIcpTx {
                 actual_received,
-                erc20_contract_address,
+                erc20_contract_address: Address::from_str(&erc20_contract_address)
+                    .expect("Should not fail converting minter address to Address"),
                 status: EvmToIcpStatus::Minted,
                 ..tx.clone() // Copies the remaining fields
             };
@@ -404,8 +417,10 @@ impl State {
                 verified: true,
                 max_transaction_fee,
                 withdrawal_amount,
-                erc20_contract_address,
-                destination,
+                erc20_contract_address: Address::from_str(&erc20_contract_address)
+                    .expect("Should not fail converting minter address to Address"),
+                destination: Address::from_str(&destination)
+                    .expect("Should not fail converting minter address to Address"),
                 native_ledger_burn_index,
                 erc20_ledger_burn_index,
                 from,
@@ -418,18 +433,24 @@ impl State {
                 native_ledger_burn_index,
                 withdrawal_amount,
                 actual_received: None,
-                destination,
+                destination: Address::from_str(&destination)
+                    .expect("Should not fail converting minter address to Address"),
                 from,
                 from_subaccount,
                 time: created_at.unwrap_or(ic_cdk::api::time()),
                 max_transaction_fee,
                 erc20_ledger_burn_index,
                 icrc_ledger_id: self.get_icrc_twin_for_erc20(
-                    &Erc20Identifier(erc20_contract_address.clone(), chain_id.clone()),
+                    &Erc20Identifier(
+                        Address::from_str(&erc20_contract_address)
+                            .expect("Should not fail converting minter address to Address"),
+                        chain_id.clone(),
+                    ),
                     &oprator,
                 ),
                 chain_id,
-                erc20_contract_address,
+                erc20_contract_address: Address::from_str(&erc20_contract_address)
+                    .expect("Should not fail converting minter address to Address"),
                 verified: true,
                 status: IcpToEvmStatus::Accepted,
                 oprator,
@@ -539,7 +560,7 @@ impl State {
         self.evm_to_icp_txs.remove(identifier);
     }
 
-    pub fn get_transaction_for_address(&self, address: String) -> Vec<Transaction> {
+    pub fn get_transaction_for_address(&self, address: Address) -> Vec<Transaction> {
         let all_tx: Vec<Transaction> = self
             .all_evm_to_icp_iter()
             .filter_map(|(_id, tx)| {
@@ -729,6 +750,7 @@ fn decode<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> T {
         .unwrap_or_else(|e| panic!("failed to decode state bytes {}: {e}", hex::encode(bytes)))
 }
 
-pub fn is_native_token(address: &str) -> bool {
-    address == NATIVE_ERC20_ADDRESS
+pub fn is_native_token(address: &Address) -> bool {
+    address
+        == &Address::from_str(NATIVE_ERC20_ADDRESS).expect("Should not fail converintg to address")
 }

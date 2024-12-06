@@ -1,7 +1,10 @@
+use std::str::FromStr;
+
 use candid::Principal;
 use ic_canister_log::log;
 use ic_cdk::{init, post_upgrade, query, update};
 use ic_cdk_timers;
+use ic_ethereum_types::Address;
 use transaction_logger::endpoints::{
     AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError, Transaction,
 };
@@ -79,9 +82,15 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
         return Err(AddIcpToEvmTxError::ChinNotSupported);
     };
 
+    let destination =
+        Address::from_str(&tx.destination).map_err(|_e| AddIcpToEvmTxError::InvalidDestination)?;
+
+    let erc20_contract_address = Address::from_str(&tx.erc20_contract_address)
+        .map_err(|_e| AddIcpToEvmTxError::InvalidTokenContract)?;
+
     let icrc_pair = read_state(|s| {
         match s.get_icrc_twin_for_erc20(
-            &Erc20Identifier::new(&tx.erc20_contract_address, &chain_id),
+            &Erc20Identifier::new(&erc20_contract_address, &chain_id),
             &tx.oprator,
         ) {
             Some(icrc_id) => Ok(icrc_id),
@@ -98,7 +107,7 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
                 native_ledger_burn_index: tx.native_ledger_burn_index,
                 withdrawal_amount: tx.withdrawal_amount,
                 actual_received: None,
-                destination: tx.destination,
+                destination,
                 from: tx.from,
                 from_subaccount: tx.from_subaccount,
                 time: nat_to_u64(tx.time),
@@ -107,7 +116,7 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
                 gas_used: None,
                 toatal_gas_spent: None,
                 erc20_ledger_burn_index: None,
-                erc20_contract_address: tx.erc20_contract_address,
+                erc20_contract_address,
                 icrc_ledger_id: Some(icrc_pair),
                 verified: false,
                 status: IcpToEvmStatus::PendingVerification,
@@ -134,9 +143,15 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
         return Err(AddEvmToIcpTxError::ChinNotSupported);
     };
 
+    let from_address =
+        Address::from_str(&tx.from_address).map_err(|_e| AddEvmToIcpTxError::InvalidAddress)?;
+
+    let erc20_contract_address = Address::from_str(&tx.erc20_contract_address)
+        .map_err(|_e| AddEvmToIcpTxError::InvalidTokenContract)?;
+
     let icrc_pair = read_state(|s| {
         match s.get_icrc_twin_for_erc20(
-            &Erc20Identifier::new(&tx.erc20_contract_address, &chain_id),
+            &Erc20Identifier::new(&erc20_contract_address, &chain_id),
             &tx.oprator,
         ) {
             Some(icrc_id) => Ok(icrc_id),
@@ -153,12 +168,12 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
                 transaction_hash: tx.transaction_hash,
                 actual_received: None,
                 time: ic_cdk::api::time(),
-                erc20_contract_address: tx.erc20_contract_address,
+                erc20_contract_address,
                 icrc_ledger_id: Some(icrc_pair),
                 verified: false,
                 status: EvmToIcpStatus::PendingVerification,
                 oprator: tx.oprator,
-                from_address: tx.from_address,
+                from_address,
                 value: tx.value,
                 block_number: None,
                 principal: tx.principal,
@@ -174,6 +189,7 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
 
 #[query]
 pub fn get_all_tx_by_address(address: String) -> Vec<Transaction> {
+    let address = Address::from_str(&address).expect("Address should be valid");
     read_state(|s| s.get_transaction_for_address(address))
 }
 
