@@ -33,7 +33,6 @@ pub struct Minter {
     pub id: Principal,
     pub last_observed_event: u64,
     pub last_scraped_event: u64,
-    pub last_scraped_event_time: u64,
     pub oprator: Oprator,
     pub evm_to_icp_fee: Nat,
     pub icp_to_evm_fee: Nat,
@@ -49,10 +48,6 @@ impl Minter {
         self.last_scraped_event = event
     }
 
-    pub fn update_last_scraped_event_time(&mut self, time: u64) {
-        self.last_scraped_event_time = time
-    }
-
     pub fn from_minter_args(args: &MinterArgs) -> Self {
         let MinterArgs {
             chain_id,
@@ -60,7 +55,6 @@ impl Minter {
             oprator,
             last_observed_event,
             last_scraped_event,
-            last_scraped_event_time,
             evm_to_icp_fee,
             icp_to_evm_fee,
         } = args.clone();
@@ -68,7 +62,6 @@ impl Minter {
             id: minter_id,
             last_observed_event: nat_to_u64(last_observed_event),
             last_scraped_event: nat_to_u64(last_scraped_event),
-            last_scraped_event_time: nat_to_u64(last_scraped_event_time),
             oprator,
             evm_to_icp_fee,
             icp_to_evm_fee,

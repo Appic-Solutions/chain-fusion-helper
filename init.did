@@ -1,0 +1,17 @@
+(
+  variant {
+    Init = record {
+      minters = vec {
+        record {
+          last_observed_event = 9_800 : nat;
+          last_scraped_event = 9_800 : nat;
+          chain_id = 1 : nat;
+          oprator = variant { DfinityCkEthMinter };
+          icp_to_evm_fee = 0 : nat;
+          evm_to_icp_fee = 0 : nat;
+          minter_id = principal "sv3dd-oaaaa-aaaar-qacoa-cai";
+        }
+      }
+    }
+  }
+)

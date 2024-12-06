@@ -1,9 +1,11 @@
 {
   "canisters": {
     "transaction_logger": {
-      "candid": "src/transaction_logger_backend/transaction_logger_backend.did",
-      "package": "transaction_logger_backend",
-      "type": "rust"
+      "candid": "transaction_logger.did",
+      "wasm": "target/wasm32-unknown-unknown/release/transaction_logger.wasm",
+      "type": "custom",
+      "init": "init.did",
+      "build": ["make build"]
     }
   },
   "defaults": {

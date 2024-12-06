@@ -3,11 +3,10 @@ use crate::{
     state::{ChainId, Erc20Identifier},
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
-use std::fmt::{Display, Formatter};
 
 use super::EvmIcpTwinPairs;
 
-// Dfinity cketh ledger suite manager types
+// Dfinity cketh ledger suite orchestrator types
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum OrchestratorArg {

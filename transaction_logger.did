@@ -1,0 +1,122 @@
+type AddEvmToIcpTx = record {
+  "principal" : principal;
+  transaction_hash : text;
+  value : nat;
+  time : nat;
+  subaccount : opt blob;
+  erc20_contract_address : text;
+  chain_id : nat;
+  from_address : text;
+  oprator : Oprator;
+  icrc_ledger_id : principal;
+  total_gas_spent : nat;
+};
+type AddEvmToIcpTxError = variant {
+  ChinNotSupported;
+  InvalidTokenPairs;
+  TxAlreadyExsits;
+};
+type AddIcpToEvmTx = record {
+  destination : text;
+  withdrawal_amount : nat;
+  from : principal;
+  time : nat;
+  from_subaccount : opt blob;
+  erc20_contract_address : text;
+  chain_id : nat;
+  max_transaction_fee : nat;
+  oprator : Oprator;
+  icrc_ledger_id : principal;
+  native_ledger_burn_index : nat;
+};
+type CandidEvmToIcp = record {
+  status : EvmToIcpStatus;
+  "principal" : principal;
+  verified : bool;
+  transaction_hash : text;
+  value : nat;
+  time : nat64;
+  subaccount : opt blob;
+  block_number : opt nat;
+  erc20_contract_address : text;
+  actual_received : opt nat;
+  chain_id : nat;
+  from_address : text;
+  oprator : Oprator;
+  icrc_ledger_id : opt principal;
+  total_gas_spent : opt nat;
+};
+type CandidIcpToEvm = record {
+  effective_gas_price : opt nat;
+  status : IcpToEvmStatus;
+  erc20_ledger_burn_index : opt nat;
+  destination : text;
+  verified : bool;
+  transaction_hash : opt text;
+  withdrawal_amount : nat;
+  from : principal;
+  time : nat64;
+  from_subaccount : opt blob;
+  erc20_contract_address : text;
+  actual_received : opt nat;
+  chain_id : nat;
+  max_transaction_fee : opt nat;
+  toatal_gas_spent : opt nat;
+  oprator : Oprator;
+  icrc_ledger_id : opt principal;
+  gas_used : opt nat;
+  native_ledger_burn_index : nat;
+};
+type EvmToIcpStatus = variant {
+  Invalid : text;
+  PendingVerification;
+  Minted;
+  Accepted;
+  Quarantined;
+};
+type IcpToEvmStatus = variant {
+  Failed;
+  SignedTransaction;
+  ReplacedTransaction;
+  QuarantinedReimbursement;
+  PendingVerification;
+  Accepted;
+  Reimbursed;
+  Successful;
+  Created;
+  FinalizedTransaction;
+};
+type InitArgs = record { minters : vec MinterArgs };
+type LoggerArgs = variant { Upgrade : UpgradeArg; Init : InitArgs };
+type MinterArgs = record {
+  last_observed_event : nat;
+  last_scraped_event : nat;
+  chain_id : nat;
+  oprator : Oprator;
+  icp_to_evm_fee : nat;
+  evm_to_icp_fee : nat;
+  minter_id : principal;
+};
+type Oprator = variant { AppicMinter; DfinityCkEthMinter };
+type Result = variant { Ok; Err : AddEvmToIcpTxError };
+type Transaction = variant {
+  EvmToIcp : CandidEvmToIcp;
+  IcpToEvm : CandidIcpToEvm;
+};
+type UpdateMinterArgs = record {
+  chain_id : nat;
+  oprator : Oprator;
+  icp_to_evm_fee : nat;
+  evm_to_icp_fee : nat;
+  minter_id : principal;
+};
+type UpgradeArg = record {
+  new_minters : opt vec MinterArgs;
+  update_minters : opt vec UpdateMinterArgs;
+};
+service : (LoggerArgs) -> {
+  get_all_tx_by_address : (text) -> (vec Transaction) query;
+  get_all_tx_by_principal : (principal) -> (vec Transaction) query;
+  new_evm_to_icp_tx : (AddEvmToIcpTx) -> (Result);
+  new_icp_to_evm_tx : (AddIcpToEvmTx) -> (Result);
+}

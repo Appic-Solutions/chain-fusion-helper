@@ -1,4 +1,4 @@
-use crate::state::{ChainId, EvmToIcpStatus, EvmToIcpTx, IcpToEvmStatus, IcpToEvmTx, Oprator};
+use crate::state::{EvmToIcpStatus, EvmToIcpTx, IcpToEvmStatus, IcpToEvmTx, Oprator};
 use candid::{CandidType, Deserialize, Nat, Principal};
 use serde::Serialize;
 
@@ -58,7 +58,6 @@ pub struct MinterArgs {
     pub oprator: Oprator,
     pub last_observed_event: Nat,
     pub last_scraped_event: Nat,
-    pub last_scraped_event_time: Nat,
     pub evm_to_icp_fee: Nat,
     pub icp_to_evm_fee: Nat,
 }

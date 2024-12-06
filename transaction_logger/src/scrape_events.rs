@@ -128,16 +128,6 @@ pub async fn scrape_events_range(
                         s.get_minter_mut(minter_key)
                             .unwrap()
                             .update_last_scraped_event(chunk_end);
-
-                        // Updating last events timestamp
-                        match events.last_event_time {
-                            Some(time) => {
-                                s.get_minter_mut(minter_key)
-                                    .unwrap()
-                                    .update_last_scraped_event_time(time);
-                            }
-                            None => {}
-                        }
                     });
                     success = true; // Mark as successful
                     break; // Exit retry loop

@@ -1,5 +1,3 @@
-use std::io::Chain;
-
 use candid::Principal;
 use ic_canister_log::log;
 use ic_cdk::{init, post_upgrade, query, update};
