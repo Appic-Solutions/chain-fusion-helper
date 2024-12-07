@@ -556,9 +556,9 @@ impl State {
 
     pub fn all_unverified_icp_to_evm(&self) -> Vec<(IcpToEvmIdentifier, IcpToEvmTx)> {
         self.icp_to_evm_txs
-            .clone()
-            .into_iter()
+            .iter()
             .filter(|(_identifier, tx)| tx.verified == false)
+            .map(|(_identifier, tx)| (_identifier.clone(), tx.clone()))
             .collect()
     }
 
@@ -574,9 +574,9 @@ impl State {
 
     pub fn all_unverified_evm_to_icp(&self) -> Vec<(EvmToIcpTxIdentifier, EvmToIcpTx)> {
         self.evm_to_icp_txs
-            .clone()
-            .into_iter()
+            .iter()
             .filter(|(_identifier, tx)| tx.verified == false)
+            .map(|(_identifier, tx)| (_identifier.clone(), tx.clone()))
             .collect()
     }
 

@@ -177,7 +177,7 @@ impl From<IcpToEvmTx> for CandidIcpToEvm {
             verified,
             status,
             oprator,
-            chain_id: Nat::from(chain_id.0),
+            chain_id: Nat::from(chain_id),
         }
     }
 }
@@ -228,7 +228,7 @@ impl From<EvmToIcpTx> for CandidEvmToIcp {
             actual_received,
             principal,
             subaccount,
-            chain_id: Nat::from(chain_id.0),
+            chain_id: Nat::from(chain_id),
             total_gas_spent,
             erc20_contract_address: erc20_contract_address.to_string(),
             icrc_ledger_id,
