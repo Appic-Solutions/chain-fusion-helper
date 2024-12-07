@@ -239,3 +239,11 @@ impl From<EvmToIcpTx> for CandidEvmToIcp {
         }
     }
 }
+
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub struct TokenPair {
+    pub erc20_address: String,
+    pub ledger_id: Principal,
+    pub oprator: Oprator,
+    pub chain_id: Nat,
+}

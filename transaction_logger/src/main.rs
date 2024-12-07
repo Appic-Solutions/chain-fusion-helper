@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::time::Duration;
 
 use candid::Principal;
 use ic_canister_log::log;
@@ -6,7 +7,7 @@ use ic_cdk::{init, post_upgrade, query, update};
 use ic_cdk_timers;
 use ic_ethereum_types::Address;
 use transaction_logger::endpoints::{
-    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError, Transaction,
+    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError, TokenPair, Transaction,
 };
 use transaction_logger::lifecycle;
 use transaction_logger::state::{
@@ -24,6 +25,11 @@ use transaction_logger::{
 };
 // Setup timers
 fn setup_timers() {
+    // Fetch all Twin tokens
+    ic_cdk_timers::set_timer(Duration::from_secs(0), || {
+        ic_cdk::spawn(update_token_pairs())
+    });
+
     // Start scraping events.
     ic_cdk_timers::set_timer_interval(SCRAPE_EVENTS_INTERVAL, || ic_cdk::spawn(scrape_events()));
 
@@ -196,6 +202,11 @@ pub fn get_all_tx_by_address(address: String) -> Vec<Transaction> {
 #[query]
 pub fn get_all_tx_by_principal(principal_id: Principal) -> Vec<Transaction> {
     read_state(|s| s.get_transaction_for_principal(principal_id))
+}
+
+#[query]
+pub fn get_supported_token_pairs() -> Vec<TokenPair> {
+    read_state(|s| s.get_suported_twin_token_pairs())
 }
 
 fn main() {}

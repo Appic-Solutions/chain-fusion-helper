@@ -18,11 +18,7 @@ pub fn remove_unverified_tx() {
         Err(_) => return,
     };
 
-    let all_unverified_evm_to_icp_tx = read_state(|s| {
-        s.all_evm_to_icp_iter()
-            .filter(|(_identifier, tx)| tx.verified == false)
-    })
-    .into_iter();
+    let all_unverified_evm_to_icp_tx = read_state(|s| s.all_unverified_evm_to_icp());
 
     log!(INFO, "[Remove Unverified Tx] Removing unverified tx");
 
@@ -39,11 +35,7 @@ pub fn remove_unverified_tx() {
         }
     }
 
-    let all_unverified_icp_to_evm_tx = read_state(|s| {
-        s.all_icp_to_evm_iter()
-            .filter(|(_identifier, tx)| tx.verified == false)
-    })
-    .into_iter();
+    let all_unverified_icp_to_evm_tx = read_state(|s| s.all_unverified_icp_to_evm());
 
     for (identifier, tx) in all_unverified_icp_to_evm_tx {
         if tx.time + ONE_HOUR_IN_NS < current_time {

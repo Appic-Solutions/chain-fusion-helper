@@ -13,7 +13,8 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use crate::endpoints::{
-    AddEvmToIcpTx, AddIcpToEvmTx, CandidEvmToIcp, CandidIcpToEvm, InitArgs, MinterArgs, Transaction,
+    AddEvmToIcpTx, AddIcpToEvmTx, CandidEvmToIcp, CandidIcpToEvm, InitArgs, MinterArgs, TokenPair,
+    Transaction,
 };
 use crate::guard::TaskType;
 use crate::scrape_events::NATIVE_ERC20_ADDRESS;
@@ -203,6 +204,13 @@ pub struct Erc20Identifier(pub Address, pub ChainId);
 impl Erc20Identifier {
     pub fn new(contract: &Address, chain_id: &ChainId) -> Self {
         Self(contract.clone(), chain_id.clone())
+    }
+
+    pub fn erc20_address(&self) -> Address {
+        self.0
+    }
+    pub fn chain_id(&self) -> ChainId {
+        self.1
     }
 }
 // State Definition,
@@ -542,8 +550,16 @@ impl State {
 
     pub fn all_icp_to_evm_iter(
         &self,
-    ) -> std::collections::btree_map::IntoIter<IcpToEvmIdentifier, IcpToEvmTx> {
-        self.icp_to_evm_txs.clone().into_iter()
+    ) -> std::collections::btree_map::Iter<'_, IcpToEvmIdentifier, IcpToEvmTx> {
+        self.icp_to_evm_txs.iter()
+    }
+
+    pub fn all_unverified_icp_to_evm(&self) -> Vec<(IcpToEvmIdentifier, IcpToEvmTx)> {
+        self.icp_to_evm_txs
+            .clone()
+            .into_iter()
+            .filter(|(_identifier, tx)| tx.verified == false)
+            .collect()
     }
 
     pub fn remove_unverified_icp_to_evm(&mut self, identifier: &IcpToEvmIdentifier) {
@@ -552,8 +568,16 @@ impl State {
 
     pub fn all_evm_to_icp_iter(
         &self,
-    ) -> std::collections::btree_map::IntoIter<EvmToIcpTxIdentifier, EvmToIcpTx> {
-        self.evm_to_icp_txs.clone().into_iter()
+    ) -> std::collections::btree_map::Iter<'_, EvmToIcpTxIdentifier, EvmToIcpTx> {
+        self.evm_to_icp_txs.iter()
+    }
+
+    pub fn all_unverified_evm_to_icp(&self) -> Vec<(EvmToIcpTxIdentifier, EvmToIcpTx)> {
+        self.evm_to_icp_txs
+            .clone()
+            .into_iter()
+            .filter(|(_identifier, tx)| tx.verified == false)
+            .collect()
     }
 
     pub fn remove_unverified_evm_to_icp(&mut self, identifier: &EvmToIcpTxIdentifier) {
@@ -565,14 +589,14 @@ impl State {
             .all_evm_to_icp_iter()
             .filter_map(|(_id, tx)| {
                 if tx.from_address == address {
-                    Some(Transaction::from(CandidEvmToIcp::from(tx)))
+                    Some(Transaction::from(CandidEvmToIcp::from(tx.clone())))
                 } else {
                     None
                 }
             })
             .chain(self.all_icp_to_evm_iter().filter_map(|(_id, tx)| {
                 if tx.destination == address {
-                    Some(Transaction::from(CandidIcpToEvm::from(tx)))
+                    Some(Transaction::from(CandidIcpToEvm::from(tx.clone())))
                 } else {
                     None
                 }
@@ -587,14 +611,14 @@ impl State {
             .all_evm_to_icp_iter()
             .filter_map(|(_id, tx)| {
                 if tx.principal == principal_id {
-                    Some(Transaction::from(CandidEvmToIcp::from(tx)))
+                    Some(Transaction::from(CandidEvmToIcp::from(tx.clone())))
                 } else {
                     None
                 }
             })
             .chain(self.all_icp_to_evm_iter().filter_map(|(_id, tx)| {
                 if tx.from == principal_id {
-                    Some(Transaction::from(CandidIcpToEvm::from(tx)))
+                    Some(Transaction::from(CandidIcpToEvm::from(tx.clone())))
                 } else {
                     None
                 }
@@ -602,6 +626,28 @@ impl State {
             .collect();
 
         all_tx
+    }
+
+    pub fn get_suported_twin_token_pairs(&self) -> Vec<TokenPair> {
+        self.supported_ckerc20_tokens
+            .iter()
+            .map(|(erc20_identifier, ledger_id)| TokenPair {
+                erc20_address: erc20_identifier.erc20_address().to_string(),
+                ledger_id: *ledger_id,
+                oprator: Oprator::DfinityCkEthMinter,
+                chain_id: erc20_identifier.chain_id().into(),
+            })
+            .chain(
+                self.supported_twin_appic_tokens
+                    .iter()
+                    .map(|(erc20_identifier, ledger_id)| TokenPair {
+                        erc20_address: erc20_identifier.erc20_address().to_string(),
+                        ledger_id: *ledger_id,
+                        oprator: Oprator::AppicMinter,
+                        chain_id: erc20_identifier.chain_id().into(),
+                    }),
+            )
+            .collect()
     }
 }
 
@@ -667,11 +713,17 @@ impl From<Nat> for ChainId {
     }
 }
 
+impl From<ChainId> for Nat {
+    fn from(value: ChainId) -> Self {
+        Nat::from(value.0)
+    }
+}
+
 pub fn nat_to_u64(value: Nat) -> u64 {
     value.0.to_u64().unwrap()
 }
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct ChainId(pub u64);
 
