@@ -7,7 +7,8 @@ use ic_cdk::{init, post_upgrade, query, update};
 use ic_cdk_timers;
 use ic_ethereum_types::Address;
 use transaction_logger::endpoints::{
-    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError, TokenPair, Transaction,
+    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError,
+    Icrc28TrustedOriginsResponse, TokenPair, Transaction,
 };
 use transaction_logger::lifecycle;
 use transaction_logger::state::{
@@ -207,6 +208,42 @@ pub fn get_all_tx_by_principal(principal_id: Principal) -> Vec<Transaction> {
 #[query]
 pub fn get_supported_token_pairs() -> Vec<TokenPair> {
     read_state(|s| s.get_suported_twin_token_pairs())
+}
+
+// Canister Info
+#[update]
+async fn get_canister_status() -> ic_cdk::api::management_canister::main::CanisterStatusResponse {
+    ic_cdk::api::management_canister::main::canister_status(
+        ic_cdk::api::management_canister::main::CanisterIdRecord {
+            canister_id: ic_cdk::id(),
+        },
+    )
+    .await
+    .expect("failed to fetch canister status")
+    .0
+}
+
+// list every base URL that users will authenticate to your app from
+#[update]
+fn icrc28_trusted_origins() -> Icrc28TrustedOriginsResponse {
+    let trusted_origins = vec![
+        String::from("https://dduc6-3yaaa-aaaal-ai63a-cai.icp0.io"),
+        String::from("https://dduc6-3yaaa-aaaal-ai63a-cai.raw.icp0.io"),
+        String::from("https://dduc6-3yaaa-aaaal-ai63a-cai.ic0.app"),
+        String::from("https://dduc6-3yaaa-aaaal-ai63a-cai.raw.ic0.app"),
+        String::from("https://dduc6-3yaaa-aaaal-ai63a-cai.icp0.icp-api.io"),
+        String::from("https://dduc6-3yaaa-aaaal-ai63a-cai.icp-api.io"),
+        String::from("https://app.appicdao.com"),
+        String::from("https://ib67n-yiaaa-aaaao-qjwca-cai.icp0.io"),
+        String::from("https://ib67n-yiaaa-aaaao-qjwca-cai.raw.icp0.io"),
+        String::from("https://ib67n-yiaaa-aaaao-qjwca-cai.ic0.app"),
+        String::from("https://ib67n-yiaaa-aaaao-qjwca-cai.raw.ic0.app"),
+        String::from("https://ib67n-yiaaa-aaaao-qjwca-cai.icp0.icp-api.io"),
+        String::from("https://ib67n-yiaaa-aaaao-qjwca-cai.icp-api.io"),
+        String::from("https://test.appicdao.com"),
+    ];
+
+    return Icrc28TrustedOriginsResponse { trusted_origins };
 }
 
 fn main() {}

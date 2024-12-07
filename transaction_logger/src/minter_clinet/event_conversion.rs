@@ -14,7 +14,6 @@ use super::appic_minter_types::events::EventSource as AppicEventSource;
 #[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct Events {
     pub events: Vec<AppicEvent>,
-    pub last_event_time: Option<u64>,
 }
 
 // A trait for filtering and mapping EventResults form both appic and dfinity cketh minters into a Standard Event type
@@ -26,7 +25,6 @@ impl Reduce for DfinityCkGetEventsResult {
     fn reduce(self) -> Events {
         Events {
             events: AppicGetEventsResult::from(self.clone()).events,
-            last_event_time: self.events.last().map(|event| event.timestamp),
         }
     }
 }
@@ -59,10 +57,7 @@ impl Reduce for AppicGetEventsResult {
                 )
             })
             .collect();
-        Events {
-            events: reduced,
-            last_event_time: self.events.last().map(|event| event.timestamp),
-        }
+        Events { events: reduced }
     }
 }
 

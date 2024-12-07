@@ -1,7 +1,12 @@
 use crate::state::{EvmToIcpStatus, EvmToIcpTx, IcpToEvmStatus, IcpToEvmTx, Oprator};
 use candid::{CandidType, Deserialize, Nat, Principal};
-use ic_ethereum_types::Address;
 use serde::Serialize;
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct Icrc28TrustedOriginsResponse {
+    pub trusted_origins: Vec<String>,
+}
+
 // Transactions for Evm to Icp
 // unique identifier = transaction hash and chain id
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]

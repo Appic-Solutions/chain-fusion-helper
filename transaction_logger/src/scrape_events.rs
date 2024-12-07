@@ -202,6 +202,7 @@ fn apply_state_transition(
                 subaccount,
                 &chain_id,
                 &oprator,
+                event.timestamp,
             ),
             AppicEventPayload::AcceptedErc20Deposit {
                 transaction_hash,
@@ -223,6 +224,7 @@ fn apply_state_transition(
                 subaccount,
                 &chain_id,
                 &oprator,
+                event.timestamp,
             ),
             AppicEventPayload::InvalidDeposit {
                 event_source,
@@ -260,6 +262,7 @@ fn apply_state_transition(
                 created_at,
                 oprator.clone(),
                 chain_id.clone(),
+                event.timestamp,
             ),
             AppicEventPayload::CreatedTransaction {
                 withdrawal_id,
@@ -330,6 +333,7 @@ fn apply_state_transition(
                 Some(created_at),
                 oprator.clone(),
                 chain_id.clone(),
+                event.timestamp,
             ),
             AppicEventPayload::FailedErc20WithdrawalRequest {
                 withdrawal_id,

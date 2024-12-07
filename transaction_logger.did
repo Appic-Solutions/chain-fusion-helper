@@ -12,8 +12,10 @@ type AddEvmToIcpTx = record {
   total_gas_spent : nat;
 };
 type AddEvmToIcpTxError = variant {
+  InvalidAddress;
   ChinNotSupported;
   InvalidTokenPairs;
+  InvalidTokenContract;
   TxAlreadyExsits;
 };
 type AddIcpToEvmTx = record {
@@ -28,6 +30,13 @@ type AddIcpToEvmTx = record {
   oprator : Oprator;
   icrc_ledger_id : principal;
   native_ledger_burn_index : nat;
+};
+type AddIcpToEvmTxError = variant {
+  InvalidDestination;
+  ChinNotSupported;
+  InvalidTokenPairs;
+  InvalidTokenContract;
+  TxAlreadyExsits;
 };
 type CandidEvmToIcp = record {
   status : EvmToIcpStatus;
@@ -67,6 +76,26 @@ type CandidIcpToEvm = record {
   gas_used : opt nat;
   native_ledger_burn_index : nat;
 };
+type CanisterStatusResponse = record {
+  status : CanisterStatusType;
+  memory_size : nat;
+  cycles : nat;
+  settings : DefiniteCanisterSettings;
+  query_stats : QueryStats;
+  idle_cycles_burned_per_day : nat;
+  module_hash : opt blob;
+  reserved_cycles : nat;
+};
+type CanisterStatusType = variant { stopped; stopping; running };
+type DefiniteCanisterSettings = record {
+  freezing_threshold : nat;
+  controllers : vec principal;
+  reserved_cycles_limit : nat;
+  log_visibility : LogVisibility;
+  wasm_memory_limit : nat;
+  memory_allocation : nat;
+  compute_allocation : nat;
+};
 type EvmToIcpStatus = variant {
   Invalid : text;
   PendingVerification;
@@ -86,7 +115,9 @@ type IcpToEvmStatus = variant {
   Created;
   FinalizedTransaction;
 };
+type Icrc28TrustedOriginsResponse = record { trusted_origins : vec text };
 type InitArgs = record { minters : vec MinterArgs };
+type LogVisibility = variant { controllers; public };
 type LoggerArgs = variant { Upgrade : UpgradeArg; Init : InitArgs };
 type MinterArgs = record {
   last_observed_event : nat;
@@ -98,7 +129,20 @@ type MinterArgs = record {
   minter_id : principal;
 };
 type Oprator = variant { AppicMinter; DfinityCkEthMinter };
+type QueryStats = record {
+  response_payload_bytes_total : nat;
+  num_instructions_total : nat;
+  num_calls_total : nat;
+  request_payload_bytes_total : nat;
+};
 type Result = variant { Ok; Err : AddEvmToIcpTxError };
+type Result_1 = variant { Ok; Err : AddIcpToEvmTxError };
+type TokenPair = record {
+  ledger_id : principal;
+  chain_id : nat;
+  erc20_address : text;
+  oprator : Oprator;
+};
 type Transaction = variant {
   EvmToIcp : CandidEvmToIcp;
   IcpToEvm : CandidIcpToEvm;
@@ -117,6 +161,9 @@ type UpgradeArg = record {
 service : (LoggerArgs) -> {
   get_all_tx_by_address : (text) -> (vec Transaction) query;
   get_all_tx_by_principal : (principal) -> (vec Transaction) query;
+  get_canister_status : () -> (CanisterStatusResponse);
+  get_supported_token_pairs : () -> (vec TokenPair) query;
+  icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
   new_evm_to_icp_tx : (AddEvmToIcpTx) -> (Result);
-  new_icp_to_evm_tx : (AddIcpToEvmTx) -> (Result);
+  new_icp_to_evm_tx : (AddIcpToEvmTx) -> (Result_1);
 }

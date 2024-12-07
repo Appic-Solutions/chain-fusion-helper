@@ -309,6 +309,7 @@ impl State {
         subaccount: Option<[u8; 32]>,
         chain_id: &ChainId,
         oprator: &Oprator,
+        timestamp: u64,
     ) {
         if let Some(tx) = self.evm_to_icp_txs.get_mut(identifier) {
             *tx = EvmToIcpTx {
@@ -350,7 +351,7 @@ impl State {
                     ),
                     status: EvmToIcpStatus::Accepted,
                     verified: true,
-                    time: ic_cdk::api::time(),
+                    time: timestamp,
                     oprator: oprator.clone(),
                 },
             );
@@ -419,6 +420,7 @@ impl State {
         created_at: Option<u64>,
         oprator: Oprator,
         chain_id: ChainId,
+        timestamp: u64,
     ) {
         if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
             *tx = IcpToEvmTx {
@@ -445,7 +447,7 @@ impl State {
                     .expect("Should not fail converting minter address to Address"),
                 from,
                 from_subaccount,
-                time: created_at.unwrap_or(ic_cdk::api::time()),
+                time: created_at.unwrap_or(timestamp),
                 max_transaction_fee,
                 erc20_ledger_burn_index,
                 icrc_ledger_id: self.get_icrc_twin_for_erc20(

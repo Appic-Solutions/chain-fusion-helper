@@ -3,8 +3,8 @@
     Init = record {
       minters = vec {
         record {
-          last_observed_event = 9_800 : nat;
-          last_scraped_event = 9_800 : nat;
+          last_observed_event = 0 : nat;
+          last_scraped_event = 0 : nat;
           chain_id = 1 : nat;
           oprator = variant { DfinityCkEthMinter };
           icp_to_evm_fee = 0 : nat;
