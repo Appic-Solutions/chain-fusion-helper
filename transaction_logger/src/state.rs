@@ -512,10 +512,11 @@ impl State {
                 true => Some(
                     tx.withdrawal_amount.clone()
                         - (receipt.gas_used.clone() * receipt.effective_gas_price.clone())
-                        - icp_to_evm_fee,
+                        - icp_to_evm_fee.clone(),
                 ),
                 false => Some(tx.withdrawal_amount.clone()),
             };
+
             let status = match receipt.status {
                 TransactionStatus::Success => IcpToEvmStatus::Successful,
                 TransactionStatus::Failure => IcpToEvmStatus::Failed,
@@ -526,7 +527,9 @@ impl State {
                 transaction_hash: Some(receipt.transaction_hash),
                 gas_used: Some(receipt.gas_used.clone()),
                 effective_gas_price: Some(receipt.effective_gas_price.clone()),
-                toatal_gas_spent: Some(receipt.gas_used * receipt.effective_gas_price),
+                toatal_gas_spent: Some(
+                    (receipt.gas_used * receipt.effective_gas_price) + icp_to_evm_fee,
+                ),
                 ..tx.clone()
             }
         }
