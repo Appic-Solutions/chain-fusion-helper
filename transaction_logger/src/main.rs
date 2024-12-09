@@ -210,19 +210,6 @@ pub fn get_supported_token_pairs() -> Vec<TokenPair> {
     read_state(|s| s.get_suported_twin_token_pairs())
 }
 
-// Canister Info
-#[update]
-async fn get_canister_status() -> ic_cdk::api::management_canister::main::CanisterStatusResponse {
-    ic_cdk::api::management_canister::main::canister_status(
-        ic_cdk::api::management_canister::main::CanisterIdRecord {
-            canister_id: ic_cdk::id(),
-        },
-    )
-    .await
-    .expect("failed to fetch canister status")
-    .0
-}
-
 // list every base URL that users will authenticate to your app from
 #[update]
 fn icrc28_trusted_origins() -> Icrc28TrustedOriginsResponse {

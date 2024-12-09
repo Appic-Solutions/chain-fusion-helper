@@ -1,6 +1,3 @@
-use candid::Deserialize;
-use serde::Serialize;
-
 use crate::minter_clinet::appic_minter_types::events::Event as AppicEvent;
 
 use crate::minter_clinet::appic_minter_types::events::EventPayload as AppicEventPayload;
