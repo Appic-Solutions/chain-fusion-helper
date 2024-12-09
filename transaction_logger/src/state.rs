@@ -231,17 +231,21 @@ impl State {
         self.minters.get_mut(minter_key)
     }
 
-    pub fn get_minters_iter(&self) -> std::collections::btree_map::IntoIter<MinterKey, Minter> {
-        self.minters.clone().into_iter()
+    pub fn get_minters(&self) -> Vec<Minter> {
+        self.minters
+            .iter()
+            .map(|(_key, minter)| minter)
+            .cloned()
+            .collect()
     }
 
     pub fn if_chain_id_exists(&self, chain_id: &ChainId) -> bool {
-        let chain_ids: Vec<ChainId> = self
-            .get_minters_iter()
-            .map(|minter| minter.1.chain_id)
-            .collect();
-
-        chain_ids.contains(chain_id)
+        for minter in self.get_minters() {
+            if &minter.chain_id == chain_id {
+                return true;
+            }
+        }
+        false
     }
 
     pub fn record_minter(&mut self, minter: Minter) {
@@ -312,7 +316,7 @@ impl State {
             let new_tx = EvmToIcpTx {
                 from_address: parsed_from_address,
                 transaction_hash,
-                value: value,
+                value,
                 block_number: Some(block_number),
                 actual_received: None,
                 principal,

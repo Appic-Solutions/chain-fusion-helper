@@ -24,11 +24,11 @@ pub async fn scrape_events() {
         Err(_) => return,
     };
 
-    let minters_iter = read_state(|s| s.get_minters_iter());
+    let minters_iter = read_state(|s| s.get_minters());
 
-    for (minter_key, minter) in minters_iter {
+    for minter in minters_iter {
         let minter_client = MinterClient::from(&minter);
-
+        let minter_key = MinterKey::from(&minter);
         log!(
             INFO,
             "[Latest Events Count] getting the latest_evnt_count from minter {:?}",
