@@ -1,3 +1,4 @@
+use crate::state::ChainId as StateChainId;
 use std::str::FromStr;
 
 use super::EvmIcpTwinPairs;
@@ -162,7 +163,7 @@ impl From<OrchestratorInfo> for EvmIcpTwinPairs {
                     Erc20Identifier(
                         Address::from_str(&canisters.erc20_contract.address)
                             .expect("The response comes from the canister and it should not fail"),
-                        canisters.erc20_contract.chain_id.into(),
+                        StateChainId::from(&canisters.erc20_contract.chain_id),
                     ),
                     ledger_id.into(),
                 )),

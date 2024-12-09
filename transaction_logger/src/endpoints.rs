@@ -2,7 +2,7 @@ use crate::state::{EvmToIcpStatus, EvmToIcpTx, IcpToEvmStatus, IcpToEvmTx, Oprat
 use candid::{CandidType, Deserialize, Nat, Principal};
 use serde::Serialize;
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Debug, CandidType, Deserialize)]
 pub struct Icrc28TrustedOriginsResponse {
     pub trusted_origins: Vec<String>,
 }

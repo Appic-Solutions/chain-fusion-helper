@@ -11,7 +11,7 @@ use crate::minter_clinet::{AppicGetEventsResult, DfinityCkGetEventsResult};
 use super::appic_minter_types::events::EventSource as AppicEventSource;
 
 // standard type for events returned from minters
-#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, PartialOrd, Ord, Eq)]
 pub struct Events {
     pub events: Vec<AppicEvent>,
 }
@@ -24,7 +24,7 @@ pub trait Reduce {
 impl Reduce for DfinityCkGetEventsResult {
     fn reduce(self) -> Events {
         Events {
-            events: AppicGetEventsResult::from(self.clone()).events,
+            events: AppicGetEventsResult::from(self).events,
         }
     }
 }
@@ -33,7 +33,6 @@ impl Reduce for AppicGetEventsResult {
     fn reduce(self) -> Events {
         let reduced: Vec<AppicEvent> = self
             .events
-            .clone()
             .into_iter()
             .filter(|event| {
                 matches!(
@@ -65,10 +64,10 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
     fn from(value: DfinityCkGetEventsResult) -> AppicGetEventsResult {
         let filtered_mapped: Vec<AppicEvent> = value
             .events
-            .iter()
+            .into_iter()
             .filter_map(|event| {
                 let timestamp = event.timestamp;
-                let event_payload = match event.payload.clone() {
+                let event_payload = match event.payload {
                     DfinityEventPayload::Init(..) => None,
                     DfinityEventPayload::Upgrade(..) => None,
                     DfinityEventPayload::AcceptedDeposit {

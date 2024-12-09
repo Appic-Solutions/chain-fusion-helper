@@ -23,13 +23,12 @@ pub fn remove_unverified_tx() {
     log!(INFO, "[Remove Unverified Tx] Removing unverified tx");
 
     let current_time = ic_cdk::api::time();
-    for (identifier, tx) in all_unverified_evm_to_icp_tx {
-        if tx.time + ONE_HOUR_IN_NS < current_time {
+    for (identifier, tx_time) in all_unverified_evm_to_icp_tx {
+        if tx_time + ONE_HOUR_IN_NS < current_time {
             log!(
                 INFO,
-                "[Remove Unverified Tx] Removing unverified tx with identifier {:?} and transaction body {:?}",
+                "[Remove Unverified Tx] Removing unverified tx with identifier {:?}",
                 identifier,
-                tx
             );
             mutate_state(|s| s.remove_unverified_evm_to_icp(&identifier))
         }
@@ -37,13 +36,12 @@ pub fn remove_unverified_tx() {
 
     let all_unverified_icp_to_evm_tx = read_state(|s| s.all_unverified_icp_to_evm());
 
-    for (identifier, tx) in all_unverified_icp_to_evm_tx {
-        if tx.time + ONE_HOUR_IN_NS < current_time {
+    for (identifier, tx_time) in all_unverified_icp_to_evm_tx {
+        if tx_time + ONE_HOUR_IN_NS < current_time {
             log!(
                 INFO,
-                "[Remove Unverified Tx] Removing unverified tx with identifier {:?} and transaction body {:?}",
+                "[Remove Unverified Tx] Removing unverified tx with identifier {:?} ",
                 identifier,
-                tx
             );
             mutate_state(|s| s.remove_unverified_icp_to_evm(&identifier))
         }

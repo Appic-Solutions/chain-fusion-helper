@@ -79,7 +79,7 @@ fn post_upgrade(upgrade_args: Option<LoggerArgs>) {
 #[update]
 fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
     let tx_identifier = IcpToEvmIdentifier::from(&tx);
-    let chain_id = ChainId::from(tx.chain_id.clone());
+    let chain_id = ChainId::from(&tx.chain_id);
 
     if let true = read_state(|s| s.if_icp_to_evm_tx_exists(&tx_identifier)) {
         return Err(AddIcpToEvmTxError::TxAlreadyExsits);
@@ -117,7 +117,7 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
                 destination,
                 from: tx.from,
                 from_subaccount: tx.from_subaccount,
-                time: nat_to_u64(tx.time),
+                time: nat_to_u64(&tx.time),
                 max_transaction_fee: Some(tx.max_transaction_fee),
                 effective_gas_price: None,
                 gas_used: None,
@@ -140,7 +140,7 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
 #[update]
 fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
     let tx_identifier = EvmToIcpTxIdentifier::from(&tx);
-    let chain_id = ChainId::from(tx.chain_id.clone());
+    let chain_id = ChainId::from(&tx.chain_id);
 
     if let true = read_state(|s| s.if_evm_to_icp_tx_exists(&tx_identifier)) {
         return Err(AddEvmToIcpTxError::TxAlreadyExsits);

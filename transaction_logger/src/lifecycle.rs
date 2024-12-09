@@ -15,8 +15,8 @@ pub fn post_upgrade(upgrade_arg: Option<UpgradeArg>) {
             log!(INFO, "[init]: adding new minters: {:?}", new_mintres);
 
             let mapped_minters = new_mintres
-                .iter()
-                .map(|minter| Minter::from_minter_args(&minter));
+                .into_iter()
+                .map(|minter| Minter::from_minter_args(minter));
             for minter in mapped_minters {
                 mutate_state(|s| s.record_minter(minter))
             }
@@ -25,8 +25,8 @@ pub fn post_upgrade(upgrade_arg: Option<UpgradeArg>) {
         if let Some(update_minters) = arg.update_minters {
             for update_minter_args in update_minters {
                 let minter_key = MinterKey(
-                    ChainId::from(update_minter_args.clone().chain_id),
-                    update_minter_args.clone().oprator,
+                    ChainId::from(&update_minter_args.chain_id),
+                    update_minter_args.oprator.clone(),
                 );
 
                 mutate_state(|s| match s.get_minter_mut(&minter_key) {

@@ -2,11 +2,11 @@
 
 use std::str::FromStr;
 
+use crate::state::ChainId as StateChainId;
+use crate::state::Erc20Identifier;
 use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_ethereum_types::Address;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromError;
-
-use crate::state::Erc20Identifier;
 
 use super::EvmIcpTwinPairs;
 
@@ -172,7 +172,7 @@ impl From<LedgerManagerInfo> for EvmIcpTwinPairs {
                     Erc20Identifier(
                         Address::from_str(&canisters.erc20_contract.address)
                             .expect("The response comes from the canister and it should not fail"),
-                        canisters.erc20_contract.chain_id.into(),
+                        StateChainId::from(&canisters.erc20_contract.chain_id),
                     ),
                     ledger_id.into(),
                 )),

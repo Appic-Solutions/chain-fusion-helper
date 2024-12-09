@@ -50,7 +50,7 @@ impl Minter {
         self.last_scraped_event = event
     }
 
-    pub fn from_minter_args(args: &MinterArgs) -> Self {
+    pub fn from_minter_args(args: MinterArgs) -> Self {
         let MinterArgs {
             chain_id,
             minter_id,
@@ -59,15 +59,15 @@ impl Minter {
             last_scraped_event,
             evm_to_icp_fee,
             icp_to_evm_fee,
-        } = args.clone();
+        } = args;
         Self {
             id: minter_id,
-            last_observed_event: nat_to_u64(last_observed_event),
-            last_scraped_event: nat_to_u64(last_scraped_event),
+            last_observed_event: nat_to_u64(&last_observed_event),
+            last_scraped_event: nat_to_u64(&last_scraped_event),
             oprator,
             evm_to_icp_fee,
             icp_to_evm_fee,
-            chain_id: ChainId::from(chain_id),
+            chain_id: ChainId::from(&chain_id),
         }
     }
 }
@@ -82,10 +82,6 @@ impl MinterKey {
 
     pub fn chain_id(&self) -> ChainId {
         self.0.clone()
-    }
-
-    pub fn from_minter_args(args: &MinterArgs) -> Self {
-        Self(args.chain_id.clone().into(), args.oprator.clone())
     }
 }
 
@@ -107,10 +103,7 @@ impl EvmToIcpTxIdentifier {
 }
 impl From<&AddEvmToIcpTx> for EvmToIcpTxIdentifier {
     fn from(value: &AddEvmToIcpTx) -> Self {
-        Self::new(
-            &value.transaction_hash,
-            &ChainId::from(value.chain_id.clone()),
-        )
+        Self::new(&value.transaction_hash, &ChainId::from(&value.chain_id))
     }
 }
 
@@ -156,7 +149,7 @@ impl From<&AddIcpToEvmTx> for IcpToEvmIdentifier {
     fn from(value: &AddIcpToEvmTx) -> Self {
         Self::new(
             &value.native_ledger_burn_index,
-            &ChainId::from(value.chain_id.clone()),
+            &ChainId::from(&value.chain_id),
         )
     }
 }
@@ -234,13 +227,6 @@ pub struct State {
 }
 
 impl State {
-    pub fn get_minter(&self, minter_key: &MinterKey) -> Option<Minter> {
-        match self.minters.get(minter_key) {
-            Some(minter) => Some(minter.clone()),
-            None => None,
-        }
-    }
-
     pub fn get_minter_mut(&mut self, minter_key: &MinterKey) -> Option<&mut Minter> {
         self.minters.get_mut(minter_key)
     }
@@ -256,12 +242,6 @@ impl State {
             .collect();
 
         chain_ids.contains(chain_id)
-    }
-
-    pub fn get_minters_mut_iter(
-        &mut self,
-    ) -> std::collections::btree_map::IterMut<'_, MinterKey, Minter> {
-        self.minters.iter_mut()
     }
 
     pub fn record_minter(&mut self, minter: Minter) {
@@ -299,7 +279,7 @@ impl State {
 
     pub fn record_accepted_evm_to_icp(
         &mut self,
-        identifier: &EvmToIcpTxIdentifier,
+        identifier: EvmToIcpTxIdentifier,
         transaction_hash: TransactionHash,
         block_number: Nat,
         from_address: String,
@@ -311,94 +291,83 @@ impl State {
         oprator: &Oprator,
         timestamp: u64,
     ) {
-        if let Some(tx) = self.evm_to_icp_txs.get_mut(identifier) {
-            *tx = EvmToIcpTx {
-                verified: true,
-                block_number: Some(block_number),
-                from_address: Address::from_str(&from_address)
-                    .expect("Should not fail converting minter address to Address"),
-                value: value.clone(),
-                principal,
-                erc20_contract_address: Address::from_str(&erc20_contract_address)
-                    .expect("Should not fail converting minter address to Address"),
-                subaccount,
-                status: EvmToIcpStatus::Accepted,
-                ..tx.clone() // Copies the remaining fields
-            };
+        // Parse addresses once
+        let parsed_from_address = Address::from_str(&from_address)
+            .expect("Should not fail converting from_address to Address");
+        let parsed_erc20_address = Address::from_str(&erc20_contract_address)
+            .expect("Should not fail converting erc20_contract_address to Address");
+
+        if let Some(tx) = self.evm_to_icp_txs.get_mut(&identifier) {
+            // Update only the necessary fields in the existing transaction
+            tx.verified = true;
+            tx.block_number = Some(block_number);
+            tx.from_address = parsed_from_address;
+            tx.value = value;
+            tx.principal = principal;
+            tx.erc20_contract_address = parsed_erc20_address;
+            tx.subaccount = subaccount;
+            tx.status = EvmToIcpStatus::Accepted;
         } else {
-            self.record_new_evm_to_icp(
-                identifier.clone(),
-                EvmToIcpTx {
-                    from_address: Address::from_str(&from_address)
-                        .expect("Should not fail converting minter address to Address"),
-                    transaction_hash,
-                    value: value.clone(),
-                    block_number: Some(block_number),
-                    actual_received: None,
-                    principal,
-                    subaccount,
-                    chain_id: chain_id.clone(),
-                    total_gas_spent: None,
-                    erc20_contract_address: Address::from_str(&erc20_contract_address)
-                        .expect("Should not fail converting minter address to Address"),
-                    icrc_ledger_id: self.get_icrc_twin_for_erc20(
-                        &Erc20Identifier(
-                            Address::from_str(&erc20_contract_address)
-                                .expect("Should not fail converting minter address to Address"),
-                            chain_id.clone(),
-                        ),
-                        oprator,
-                    ),
-                    status: EvmToIcpStatus::Accepted,
-                    verified: true,
-                    time: timestamp,
-                    oprator: oprator.clone(),
-                },
-            );
+            // Create a new transaction only if one doses not already exist
+            let new_tx = EvmToIcpTx {
+                from_address: parsed_from_address,
+                transaction_hash,
+                value: value,
+                block_number: Some(block_number),
+                actual_received: None,
+                principal,
+                subaccount,
+                chain_id: chain_id.clone(),
+                total_gas_spent: None,
+                erc20_contract_address: parsed_erc20_address,
+                icrc_ledger_id: self.get_icrc_twin_for_erc20(
+                    &Erc20Identifier(parsed_erc20_address, chain_id.clone()),
+                    oprator,
+                ),
+                status: EvmToIcpStatus::Accepted,
+                verified: true,
+                time: timestamp,
+                oprator: oprator.clone(),
+            };
+
+            self.record_new_evm_to_icp(identifier, new_tx);
         }
     }
 
     pub fn record_minted_evm_to_icp(
         &mut self,
-        identifier: &EvmToIcpTxIdentifier,
+        identifier: EvmToIcpTxIdentifier,
         erc20_contract_address: String,
-        evm_to_icp_fee: Nat,
+        evm_to_icp_fee: &Nat,
     ) {
-        if let Some(tx) = self.evm_to_icp_txs.get_mut(identifier) {
-            // Fee calulation
-            let actual_received: Option<Nat> = match is_native_token(
-                &Address::from_str(&erc20_contract_address)
-                    .expect("Should not fail converting minter address to Address"),
-            ) {
-                true => Some(tx.value.clone() - evm_to_icp_fee),
-                false => Some(tx.value.clone()),
+        if let Some(tx) = self.evm_to_icp_txs.get_mut(&identifier) {
+            // Parse the address once
+            let parsed_address = Address::from_str(&erc20_contract_address)
+                .expect("Should not fail converting minter address to Address");
+
+            // Fee calculation
+            let actual_received = if is_native_token(&parsed_address) {
+                Some(tx.value.clone() - evm_to_icp_fee.clone()) // Clone only when needed
+            } else {
+                Some(tx.value.clone())
             };
 
-            *tx = EvmToIcpTx {
-                actual_received,
-                erc20_contract_address: Address::from_str(&erc20_contract_address)
-                    .expect("Should not fail converting minter address to Address"),
-                status: EvmToIcpStatus::Minted,
-                ..tx.clone() // Copies the remaining fields
-            };
+            // Update only necessary fields directly
+            tx.actual_received = actual_received;
+            tx.erc20_contract_address = parsed_address;
+            tx.status = EvmToIcpStatus::Minted;
         }
     }
 
-    pub fn record_invalid_evm_to_icp(&mut self, identifier: &EvmToIcpTxIdentifier, reason: String) {
-        if let Some(tx) = self.evm_to_icp_txs.get_mut(identifier) {
-            *tx = EvmToIcpTx {
-                status: EvmToIcpStatus::Invalid(reason),
-                ..tx.clone() // Copies the remaining fields
-            };
+    pub fn record_invalid_evm_to_icp(&mut self, identifier: EvmToIcpTxIdentifier, reason: String) {
+        if let Some(tx) = self.evm_to_icp_txs.get_mut(&identifier) {
+            tx.status = EvmToIcpStatus::Invalid(reason);
         }
     }
 
-    pub fn record_quarantined_evm_to_icp(&mut self, identifier: &EvmToIcpTxIdentifier) {
-        if let Some(tx) = self.evm_to_icp_txs.get_mut(identifier) {
-            *tx = EvmToIcpTx {
-                status: EvmToIcpStatus::Quarantined,
-                ..tx.clone() // Copies the remaining fields
-            };
+    pub fn record_quarantined_evm_to_icp(&mut self, identifier: EvmToIcpTxIdentifier) {
+        if let Some(tx) = self.evm_to_icp_txs.get_mut(&identifier) {
+            tx.status = EvmToIcpStatus::Quarantined;
         }
     }
 
@@ -408,7 +377,7 @@ impl State {
 
     pub fn record_accepted_icp_to_evm(
         &mut self,
-        identifier: &IcpToEvmIdentifier,
+        identifier: IcpToEvmIdentifier,
         max_transaction_fee: Option<Nat>,
         withdrawal_amount: Nat,
         erc20_contract_address: String,
@@ -418,152 +387,128 @@ impl State {
         from: Principal,
         from_subaccount: Option<[u8; 32]>,
         created_at: Option<u64>,
-        oprator: Oprator,
-        chain_id: ChainId,
+        oprator: &Oprator,
+        chain_id: &ChainId,
         timestamp: u64,
     ) {
-        if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
-            *tx = IcpToEvmTx {
-                verified: true,
-                max_transaction_fee,
-                withdrawal_amount,
-                erc20_contract_address: Address::from_str(&erc20_contract_address)
-                    .expect("Should not fail converting minter address to Address"),
-                destination: Address::from_str(&destination)
-                    .expect("Should not fail converting minter address to Address"),
-                native_ledger_burn_index,
-                erc20_ledger_burn_index,
-                from,
-                from_subaccount,
-                status: IcpToEvmStatus::Accepted,
-                ..tx.clone()
-            }
+        let destination_address = Address::from_str(&destination)
+            .expect("Should not fail converting destination to Address");
+        let erc20_address = Address::from_str(&erc20_contract_address)
+            .expect("Should not fail converting ERC20 contract address to Address");
+
+        if let Some(tx) = self.icp_to_evm_txs.get_mut(&identifier) {
+            tx.verified = true;
+            tx.max_transaction_fee = max_transaction_fee;
+            tx.withdrawal_amount = withdrawal_amount;
+            tx.erc20_contract_address = erc20_address;
+            tx.destination = destination_address;
+            tx.native_ledger_burn_index = native_ledger_burn_index;
+            tx.erc20_ledger_burn_index = erc20_ledger_burn_index;
+            tx.from = from;
+            tx.from_subaccount = from_subaccount;
+            tx.status = IcpToEvmStatus::Accepted;
         } else {
+            let icrc_ledger_id = self.get_icrc_twin_for_erc20(
+                &Erc20Identifier(erc20_address.clone(), chain_id.clone()),
+                oprator,
+            );
+
             let new_tx = IcpToEvmTx {
                 native_ledger_burn_index,
                 withdrawal_amount,
                 actual_received: None,
-                destination: Address::from_str(&destination)
-                    .expect("Should not fail converting minter address to Address"),
+                destination: destination_address,
                 from,
                 from_subaccount,
                 time: created_at.unwrap_or(timestamp),
                 max_transaction_fee,
                 erc20_ledger_burn_index,
-                icrc_ledger_id: self.get_icrc_twin_for_erc20(
-                    &Erc20Identifier(
-                        Address::from_str(&erc20_contract_address)
-                            .expect("Should not fail converting minter address to Address"),
-                        chain_id.clone(),
-                    ),
-                    &oprator,
-                ),
-                chain_id,
-                erc20_contract_address: Address::from_str(&erc20_contract_address)
-                    .expect("Should not fail converting minter address to Address"),
+                icrc_ledger_id,
+                chain_id: chain_id.clone(),
+                erc20_contract_address: erc20_address,
                 verified: true,
                 status: IcpToEvmStatus::Accepted,
-                oprator,
+                oprator: oprator.clone(),
                 effective_gas_price: None,
                 gas_used: None,
                 toatal_gas_spent: None,
                 transaction_hash: None,
             };
 
-            self.record_new_icp_to_evm(identifier.clone(), new_tx);
+            self.record_new_icp_to_evm(identifier, new_tx);
+        }
+    }
+    pub fn record_created_icp_to_evm(&mut self, identifier: IcpToEvmIdentifier) {
+        if let Some(tx) = self.icp_to_evm_txs.get_mut(&identifier) {
+            tx.status = IcpToEvmStatus::Created;
         }
     }
 
-    pub fn record_created_icp_to_evm(&mut self, identifier: &IcpToEvmIdentifier) {
-        if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
-            *tx = IcpToEvmTx {
-                status: IcpToEvmStatus::Created,
-                ..tx.clone()
-            }
+    pub fn record_signed_icp_to_evm(&mut self, identifier: IcpToEvmIdentifier) {
+        if let Some(tx) = self.icp_to_evm_txs.get_mut(&identifier) {
+            tx.status = IcpToEvmStatus::SignedTransaction;
         }
     }
 
-    pub fn record_signed_icp_to_evm(&mut self, identifier: &IcpToEvmIdentifier) {
-        if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
-            *tx = IcpToEvmTx {
-                status: IcpToEvmStatus::SignedTransaction,
-                ..tx.clone()
-            }
-        }
-    }
-
-    pub fn record_replaced_icp_to_evm(&mut self, identifier: &IcpToEvmIdentifier) {
-        if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
-            *tx = IcpToEvmTx {
-                status: IcpToEvmStatus::ReplacedTransaction,
-                ..tx.clone()
-            }
+    pub fn record_replaced_icp_to_evm(&mut self, identifier: IcpToEvmIdentifier) {
+        if let Some(tx) = self.icp_to_evm_txs.get_mut(&identifier) {
+            tx.status = IcpToEvmStatus::ReplacedTransaction;
         }
     }
 
     pub fn record_finalized_icp_to_evm(
         &mut self,
-        identifier: &IcpToEvmIdentifier,
+        identifier: IcpToEvmIdentifier,
         receipt: TransactionReceipt,
-        icp_to_evm_fee: Nat,
+        icp_to_evm_fee: &Nat,
     ) {
-        if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
-            let actual_received: Option<Nat> = match is_native_token(&tx.erc20_contract_address) {
-                true => Some(
+        if let Some(tx) = self.icp_to_evm_txs.get_mut(&identifier) {
+            let actual_received = if is_native_token(&tx.erc20_contract_address) {
+                Some(
                     tx.withdrawal_amount.clone()
                         - (receipt.gas_used.clone() * receipt.effective_gas_price.clone())
                         - icp_to_evm_fee.clone(),
-                ),
-                false => Some(tx.withdrawal_amount.clone()),
+                )
+            } else {
+                Some(tx.withdrawal_amount.clone())
             };
 
-            let status = match receipt.status {
+            tx.status = match receipt.status {
                 TransactionStatus::Success => IcpToEvmStatus::Successful,
                 TransactionStatus::Failure => IcpToEvmStatus::Failed,
             };
-            *tx = IcpToEvmTx {
-                status,
-                actual_received,
-                transaction_hash: Some(receipt.transaction_hash),
-                gas_used: Some(receipt.gas_used.clone()),
-                effective_gas_price: Some(receipt.effective_gas_price.clone()),
-                toatal_gas_spent: Some(
-                    (receipt.gas_used * receipt.effective_gas_price) + icp_to_evm_fee,
-                ),
-                ..tx.clone()
-            }
+
+            tx.actual_received = actual_received;
+            tx.transaction_hash = Some(receipt.transaction_hash);
+            tx.gas_used = Some(receipt.gas_used.clone());
+            tx.effective_gas_price = Some(receipt.effective_gas_price.clone());
+            tx.toatal_gas_spent =
+                Some((receipt.gas_used * receipt.effective_gas_price) + icp_to_evm_fee.clone());
         }
     }
 
-    pub fn record_reimbursed_icp_to_evm(&mut self, identifier: &IcpToEvmIdentifier) {
-        if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
-            *tx = IcpToEvmTx {
-                status: IcpToEvmStatus::Reimbursed,
-                ..tx.clone()
-            }
+    pub fn record_reimbursed_icp_to_evm(&mut self, identifier: IcpToEvmIdentifier) {
+        if let Some(tx) = self.icp_to_evm_txs.get_mut(&identifier) {
+            tx.status = IcpToEvmStatus::Reimbursed;
         }
     }
 
-    pub fn record_quarantined_reimbursed_icp_to_evm(&mut self, identifier: &IcpToEvmIdentifier) {
-        if let Some(tx) = self.icp_to_evm_txs.get_mut(identifier) {
-            *tx = IcpToEvmTx {
-                status: IcpToEvmStatus::QuarantinedReimbursement,
-                ..tx.clone()
-            }
+    pub fn record_quarantined_reimbursed_icp_to_evm(&mut self, identifier: IcpToEvmIdentifier) {
+        if let Some(tx) = self.icp_to_evm_txs.get_mut(&identifier) {
+            tx.status = IcpToEvmStatus::QuarantinedReimbursement;
         }
     }
 
-    pub fn all_icp_to_evm_iter(
-        &self,
-    ) -> std::collections::btree_map::Iter<'_, IcpToEvmIdentifier, IcpToEvmTx> {
-        self.icp_to_evm_txs.iter()
-    }
-
-    pub fn all_unverified_icp_to_evm(&self) -> Vec<(IcpToEvmIdentifier, IcpToEvmTx)> {
+    pub fn all_unverified_icp_to_evm(&self) -> Vec<(IcpToEvmIdentifier, u64)> {
         self.icp_to_evm_txs
             .iter()
-            .filter(|(_identifier, tx)| tx.verified == false)
-            .map(|(_identifier, tx)| (_identifier.clone(), tx.clone()))
+            .filter_map(|(identifier, tx)| {
+                if tx.verified == false {
+                    Some((identifier.clone(), tx.time))
+                } else {
+                    None
+                }
+            })
             .collect()
     }
 
@@ -571,17 +516,16 @@ impl State {
         self.icp_to_evm_txs.remove(identifier);
     }
 
-    pub fn all_evm_to_icp_iter(
-        &self,
-    ) -> std::collections::btree_map::Iter<'_, EvmToIcpTxIdentifier, EvmToIcpTx> {
-        self.evm_to_icp_txs.iter()
-    }
-
-    pub fn all_unverified_evm_to_icp(&self) -> Vec<(EvmToIcpTxIdentifier, EvmToIcpTx)> {
+    pub fn all_unverified_evm_to_icp(&self) -> Vec<(EvmToIcpTxIdentifier, u64)> {
         self.evm_to_icp_txs
             .iter()
-            .filter(|(_identifier, tx)| tx.verified == false)
-            .map(|(_identifier, tx)| (_identifier.clone(), tx.clone()))
+            .filter_map(|(identifier, tx)| {
+                if tx.verified == false {
+                    Some((identifier.clone(), tx.time))
+                } else {
+                    None
+                }
+            })
             .collect()
     }
 
@@ -591,7 +535,8 @@ impl State {
 
     pub fn get_transaction_for_address(&self, address: Address) -> Vec<Transaction> {
         let all_tx: Vec<Transaction> = self
-            .all_evm_to_icp_iter()
+            .evm_to_icp_txs
+            .iter()
             .filter_map(|(_id, tx)| {
                 if tx.from_address == address {
                     Some(Transaction::from(CandidEvmToIcp::from(tx.clone())))
@@ -599,7 +544,7 @@ impl State {
                     None
                 }
             })
-            .chain(self.all_icp_to_evm_iter().filter_map(|(_id, tx)| {
+            .chain(self.icp_to_evm_txs.iter().filter_map(|(_id, tx)| {
                 if tx.destination == address {
                     Some(Transaction::from(CandidIcpToEvm::from(tx.clone())))
                 } else {
@@ -613,7 +558,8 @@ impl State {
 
     pub fn get_transaction_for_principal(&self, principal_id: Principal) -> Vec<Transaction> {
         let all_tx: Vec<Transaction> = self
-            .all_evm_to_icp_iter()
+            .evm_to_icp_txs
+            .iter()
             .filter_map(|(_id, tx)| {
                 if tx.principal == principal_id {
                     Some(Transaction::from(CandidEvmToIcp::from(tx.clone())))
@@ -621,7 +567,7 @@ impl State {
                     None
                 }
             })
-            .chain(self.all_icp_to_evm_iter().filter_map(|(_id, tx)| {
+            .chain(self.icp_to_evm_txs.iter().filter_map(|(_id, tx)| {
                 if tx.from == principal_id {
                     Some(Transaction::from(CandidIcpToEvm::from(tx.clone())))
                 } else {
@@ -695,11 +641,9 @@ pub fn init_state(state: State) {
 
 impl From<InitArgs> for State {
     fn from(value: InitArgs) -> Self {
-        let minters = BTreeMap::from_iter(value.minters.iter().map(|minter| {
-            (
-                MinterKey::from_minter_args(&minter),
-                Minter::from_minter_args(&minter),
-            )
+        let minters = BTreeMap::from_iter(value.minters.into_iter().map(|minter_args| {
+            let minter = Minter::from_minter_args(minter_args);
+            (MinterKey::from(&minter), minter)
         }));
         Self {
             active_tasks: Default::default(),
@@ -712,8 +656,8 @@ impl From<InitArgs> for State {
     }
 }
 
-impl From<Nat> for ChainId {
-    fn from(value: Nat) -> Self {
+impl From<&Nat> for ChainId {
+    fn from(value: &Nat) -> Self {
         Self(value.0.to_u64().unwrap())
     }
 }
@@ -724,7 +668,7 @@ impl From<ChainId> for Nat {
     }
 }
 
-pub fn nat_to_u64(value: Nat) -> u64 {
+pub fn nat_to_u64(value: &Nat) -> u64 {
     value.0.to_u64().unwrap()
 }
 
