@@ -302,8 +302,20 @@ pub struct State {
 }
 
 impl State {
-    pub fn update_minter(&mut self, minter_key: MinterKey, minter: Minter) {
-        self.minters.insert(minter_key, minter);
+    pub fn update_minter_fees(
+        &mut self,
+        minter_key: &MinterKey,
+        evm_to_icp_fee: Nat,
+        icp_to_evm_fee: Nat,
+    ) {
+        if let Some(minter) = self.minters.get(minter_key) {
+            let new_minter = Minter {
+                evm_to_icp_fee,
+                icp_to_evm_fee,
+                ..minter
+            };
+            self.record_minter(new_minter);
+        }
     }
 
     pub fn update_last_observed_event(&mut self, minter_key: &MinterKey, last_observed_event: u64) {

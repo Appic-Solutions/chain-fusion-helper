@@ -10,18 +10,14 @@ use transaction_logger::endpoints::{
     AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError,
     Icrc28TrustedOriginsResponse, TokenPair, Transaction,
 };
-use transaction_logger::lifecycle;
+use transaction_logger::lifecycle::{self, init as initialize};
 use transaction_logger::state::{
     mutate_state, nat_to_u64, read_state, ChainId, Erc20Identifier, EvmToIcpStatus, EvmToIcpTx,
     EvmToIcpTxIdentifier, IcpToEvmIdentifier, IcpToEvmStatus, IcpToEvmTx,
 };
 use transaction_logger::{
-    endpoints::LoggerArgs,
-    logs::INFO,
-    remove_unverified_tx::remove_unverified_tx,
-    scrape_events::scrape_events,
-    state::{init_state, State},
-    update_token_pairs::update_token_pairs,
+    endpoints::LoggerArgs, logs::INFO, remove_unverified_tx::remove_unverified_tx,
+    scrape_events::scrape_events, state::State, update_token_pairs::update_token_pairs,
     CHECK_NEW_ICRC_TWIN_TOKENS, REMOVE_UNVERIFIED_TX_INTERVAL, SCRAPE_EVENTS_INTERVAL,
 };
 // Setup timers
@@ -48,8 +44,8 @@ pub fn init(init_args: LoggerArgs) {
     match init_args {
         LoggerArgs::Init(init_args) => {
             log!(INFO, "[init]: initialized minter with arg: {:?}", init_args);
-            let state = State::from(init_args);
-            init_state(state);
+
+            initialize(init_args);
         }
         LoggerArgs::Upgrade(_upgrade_arg) => {
             ic_cdk::trap("cannot init canister state with upgrade args");
