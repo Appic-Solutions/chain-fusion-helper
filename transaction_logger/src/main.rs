@@ -17,7 +17,7 @@ use transaction_logger::state::{
 };
 use transaction_logger::{
     endpoints::LoggerArgs, logs::INFO, remove_unverified_tx::remove_unverified_tx,
-    scrape_events::scrape_events, state::State, update_token_pairs::update_token_pairs,
+    scrape_events::scrape_events, update_token_pairs::update_token_pairs,
     CHECK_NEW_ICRC_TWIN_TOKENS, REMOVE_UNVERIFIED_TX_INTERVAL, SCRAPE_EVENTS_INTERVAL,
 };
 // Setup timers
