@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+pub mod cbor;
 pub mod endpoints;
 pub mod guard;
 mod ledger_manager_client;

@@ -24,9 +24,9 @@ pub async fn scrape_events() {
         Err(_) => return,
     };
 
-    let minters_iter = read_state(|s| s.get_minters());
+    let minters = read_state(|s| s.get_minters());
 
-    for minter in minters_iter {
+    for minter in minters.into_iter() {
         let minter_client = MinterClient::from(&minter);
         let minter_key = MinterKey::from(&minter);
         log!(
@@ -36,7 +36,8 @@ pub async fn scrape_events() {
         );
 
         // Get the latest event count to update last_observed_event;
-        let latest_event_count = minter_client.get_total_events_count().await;
+        // -1 since the starting index in 0 not 1
+        let latest_event_count = minter_client.get_total_events_count().await - 1;
 
         log!(
             INFO,
@@ -191,7 +192,7 @@ fn apply_state_transition(
                 subaccount,
                 ..
             } => s.record_accepted_evm_to_icp(
-                EvmToIcpTxIdentifier::new(&transaction_hash, &chain_id),
+                EvmToIcpTxIdentifier::new(&transaction_hash, chain_id),
                 transaction_hash,
                 block_number,
                 from_address,
@@ -199,8 +200,8 @@ fn apply_state_transition(
                 principal,
                 NATIVE_ERC20_ADDRESS.to_string(),
                 subaccount,
-                &chain_id,
-                &oprator,
+                chain_id,
+                oprator,
                 event.timestamp,
             ),
             AppicEventPayload::AcceptedErc20Deposit {
@@ -213,7 +214,7 @@ fn apply_state_transition(
                 erc20_contract_address,
                 subaccount,
             } => s.record_accepted_evm_to_icp(
-                EvmToIcpTxIdentifier::new(&transaction_hash, &chain_id),
+                EvmToIcpTxIdentifier::new(&transaction_hash, chain_id),
                 transaction_hash,
                 block_number,
                 from_address,
@@ -221,19 +222,19 @@ fn apply_state_transition(
                 principal,
                 erc20_contract_address,
                 subaccount,
-                &chain_id,
-                &oprator,
+                chain_id,
+                oprator,
                 event.timestamp,
             ),
             AppicEventPayload::InvalidDeposit {
                 event_source,
                 reason,
             } => s.record_invalid_evm_to_icp(
-                EvmToIcpTxIdentifier::new(&event_source.transaction_hash, &chain_id),
+                EvmToIcpTxIdentifier::new(&event_source.transaction_hash, chain_id),
                 reason,
             ),
             AppicEventPayload::MintedNative { event_source, .. } => s.record_minted_evm_to_icp(
-                EvmToIcpTxIdentifier::new(&event_source.transaction_hash, &chain_id),
+                EvmToIcpTxIdentifier::new(&event_source.transaction_hash, chain_id),
                 NATIVE_ERC20_ADDRESS.to_string(),
                 evm_to_icp_fee,
             ),
@@ -246,7 +247,7 @@ fn apply_state_transition(
                 from_subaccount,
                 created_at,
             } => s.record_accepted_icp_to_evm(
-                IcpToEvmIdentifier::new(&ledger_burn_index, &chain_id),
+                IcpToEvmIdentifier::new(&ledger_burn_index, chain_id),
                 None,
                 withdrawal_amount,
                 NATIVE_ERC20_ADDRESS.to_string(),
@@ -256,32 +257,32 @@ fn apply_state_transition(
                 from,
                 from_subaccount,
                 created_at,
-                &oprator,
-                &chain_id,
+                oprator,
+                chain_id,
                 event.timestamp,
             ),
             AppicEventPayload::CreatedTransaction { withdrawal_id, .. } => {
-                s.record_created_icp_to_evm(IcpToEvmIdentifier::new(&withdrawal_id, &chain_id))
+                s.record_created_icp_to_evm(IcpToEvmIdentifier::new(&withdrawal_id, chain_id))
             }
             AppicEventPayload::SignedTransaction { withdrawal_id, .. } => {
-                s.record_signed_icp_to_evm(IcpToEvmIdentifier::new(&withdrawal_id, &chain_id))
+                s.record_signed_icp_to_evm(IcpToEvmIdentifier::new(&withdrawal_id, chain_id))
             }
             AppicEventPayload::ReplacedTransaction { withdrawal_id, .. } => {
-                s.record_replaced_icp_to_evm(IcpToEvmIdentifier::new(&withdrawal_id, &chain_id))
+                s.record_replaced_icp_to_evm(IcpToEvmIdentifier::new(&withdrawal_id, chain_id))
             }
             AppicEventPayload::FinalizedTransaction {
                 withdrawal_id,
                 transaction_receipt,
             } => s.record_finalized_icp_to_evm(
-                IcpToEvmIdentifier::new(&withdrawal_id, &chain_id),
+                IcpToEvmIdentifier::new(&withdrawal_id, chain_id),
                 transaction_receipt,
                 icp_to_evm_fee,
             ),
             AppicEventPayload::ReimbursedNativeWithdrawal { withdrawal_id, .. } => {
-                s.record_reimbursed_icp_to_evm(IcpToEvmIdentifier::new(&withdrawal_id, &chain_id))
+                s.record_reimbursed_icp_to_evm(IcpToEvmIdentifier::new(&withdrawal_id, chain_id))
             }
             AppicEventPayload::ReimbursedErc20Withdrawal { withdrawal_id, .. } => {
-                s.record_reimbursed_icp_to_evm(IcpToEvmIdentifier::new(&withdrawal_id, &chain_id))
+                s.record_reimbursed_icp_to_evm(IcpToEvmIdentifier::new(&withdrawal_id, chain_id))
             }
             AppicEventPayload::SkippedBlock { .. } => {}
             AppicEventPayload::AddedErc20Token { .. } => {}
@@ -297,7 +298,7 @@ fn apply_state_transition(
                 created_at,
                 ..
             } => s.record_accepted_icp_to_evm(
-                IcpToEvmIdentifier::new(&native_ledger_burn_index, &chain_id),
+                IcpToEvmIdentifier::new(&native_ledger_burn_index, chain_id),
                 Some(max_transaction_fee),
                 withdrawal_amount,
                 erc20_contract_address,
@@ -307,31 +308,31 @@ fn apply_state_transition(
                 from,
                 from_subaccount,
                 Some(created_at),
-                &oprator,
-                &chain_id,
+                oprator,
+                chain_id,
                 event.timestamp,
             ),
             AppicEventPayload::FailedErc20WithdrawalRequest { withdrawal_id, .. } => {
-                s.record_reimbursed_icp_to_evm(IcpToEvmIdentifier::new(&withdrawal_id, &chain_id))
+                s.record_reimbursed_icp_to_evm(IcpToEvmIdentifier::new(&withdrawal_id, chain_id))
             }
             AppicEventPayload::MintedErc20 {
                 event_source,
                 erc20_contract_address,
                 ..
             } => s.record_minted_evm_to_icp(
-                EvmToIcpTxIdentifier::new(&event_source.transaction_hash, &chain_id),
+                EvmToIcpTxIdentifier::new(&event_source.transaction_hash, chain_id),
                 erc20_contract_address,
                 evm_to_icp_fee,
             ),
             AppicEventPayload::QuarantinedDeposit { event_source } => s
                 .record_quarantined_evm_to_icp(EvmToIcpTxIdentifier::new(
                     &event_source.transaction_hash,
-                    &chain_id,
+                    chain_id,
                 )),
             AppicEventPayload::QuarantinedReimbursement { index } => s
                 .record_quarantined_reimbursed_icp_to_evm(IcpToEvmIdentifier::new(
                     &index.into(),
-                    &chain_id,
+                    chain_id,
                 )),
         });
     }

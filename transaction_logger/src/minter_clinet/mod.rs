@@ -76,17 +76,17 @@ impl From<&Minter> for MinterClient {
         Self {
             runtime: IcRunTime(),
             minter_id: value.id,
-            oprator: value.oprator.clone(),
+            oprator: value.oprator,
         }
     }
 }
 
 impl MinterClient {
-    pub fn new(minter_id: &Principal, oprator: &Oprator) -> Self {
+    pub fn new(minter_id: Principal, oprator: Oprator) -> Self {
         Self {
             runtime: IcRunTime(),
-            minter_id: *minter_id,
-            oprator: oprator.clone(),
+            minter_id,
+            oprator,
         }
     }
 

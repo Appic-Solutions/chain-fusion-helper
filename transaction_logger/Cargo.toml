@@ -3,6 +3,11 @@ name = "transaction_logger"
 version = "0.1.0"
 edition = "2021"
 
+[profile.release]
+lto = true
+opt-level = 'z'
+
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 
@@ -26,6 +31,7 @@ serde_bytes = "0.11.15"
 serde_cbor = "0.11.2"
 serde_json = { version = "^1.0.107" }
 ciborium = "0.2.1"
+
 hex = { version = "0.4.3", features = ["serde"] }
 
 num-traits="0.2.19"

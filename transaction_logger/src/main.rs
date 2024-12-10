@@ -85,7 +85,7 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
         return Err(AddIcpToEvmTxError::TxAlreadyExsits);
     };
 
-    if let true = read_state(|s| s.if_chain_id_exists(&chain_id)) {
+    if let true = read_state(|s| s.if_chain_id_exists(chain_id)) {
         return Err(AddIcpToEvmTxError::ChinNotSupported);
     };
 
@@ -97,7 +97,7 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
 
     let icrc_pair = read_state(|s| {
         match s.get_icrc_twin_for_erc20(
-            &Erc20Identifier::new(&erc20_contract_address, &chain_id),
+            &Erc20Identifier::new(&erc20_contract_address, chain_id),
             &tx.oprator,
         ) {
             Some(icrc_id) => Ok(icrc_id),
@@ -146,7 +146,7 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
         return Err(AddEvmToIcpTxError::TxAlreadyExsits);
     };
 
-    if let true = read_state(|s| s.if_chain_id_exists(&chain_id)) {
+    if let true = read_state(|s| s.if_chain_id_exists(chain_id)) {
         return Err(AddEvmToIcpTxError::ChinNotSupported);
     };
 
@@ -158,7 +158,7 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
 
     let icrc_pair = read_state(|s| {
         match s.get_icrc_twin_for_erc20(
-            &Erc20Identifier::new(&erc20_contract_address, &chain_id),
+            &Erc20Identifier::new(&erc20_contract_address, chain_id),
             &tx.oprator,
         ) {
             Some(icrc_id) => Ok(icrc_id),
