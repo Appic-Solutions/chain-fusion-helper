@@ -53,11 +53,7 @@ pub async fn scrape_events() {
         };
 
         // Updating last observed block nunmber
-        mutate_state(|s| {
-            if let Some(muted_minter) = s.get_minter_mut(&minter_key) {
-                muted_minter.update_last_observed_event(latest_event_count);
-            }
-        });
+        mutate_state(|s| s.update_last_observed_event(&minter_key, latest_event_count));
 
         let last_scraped_event = minter.last_scraped_event;
 
@@ -124,11 +120,7 @@ pub async fn scrape_events_range(
                         evm_to_icp_fee,
                         icp_to_evm_fee,
                     );
-                    mutate_state(|s| {
-                        s.get_minter_mut(minter_key)
-                            .unwrap()
-                            .update_last_scraped_event(chunk_end);
-                    });
+                    mutate_state(|s| s.update_last_scraped_event(&minter_key, chunk_end));
                     success = true; // Mark as successful
                     break; // Exit retry loop
                 }

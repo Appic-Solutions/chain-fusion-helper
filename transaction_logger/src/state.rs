@@ -1,26 +1,26 @@
 use candid::{CandidType, Nat, Principal};
-use ic_cdk::trap;
 use ic_ethereum_types::Address;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::DefaultMemoryImpl;
-use ic_stable_structures::{storable::Bound, Cell, Storable};
+use ic_stable_structures::{storable::Bound, BTreeMap, Storable};
 use minicbor::{Decode, Encode};
 use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cell::RefCell;
+use storage_config::{
+    evm_to_icp_memory, icp_to_evm_memory, minter_memory, supported_appic_tokens_memory_id,
+    supported_ckerc20_tokens_memory_id,
+};
 
-use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use crate::endpoints::{
-    AddEvmToIcpTx, AddIcpToEvmTx, CandidEvmToIcp, CandidIcpToEvm, InitArgs, MinterArgs, TokenPair,
+    AddEvmToIcpTx, AddIcpToEvmTx, CandidEvmToIcp, CandidIcpToEvm, MinterArgs, TokenPair,
     Transaction,
 };
-use crate::guard::TaskType;
 use crate::scrape_events::NATIVE_ERC20_ADDRESS;
 
-use std::collections::HashSet;
 use std::fmt::Debug;
 
 use crate::minter_clinet::appic_minter_types::events::{TransactionReceipt, TransactionStatus};
@@ -287,34 +287,49 @@ impl Erc20Identifier {
 }
 // State Definition,
 // All types of transactions will be sotred in this stable state
-#[derive(Clone, PartialEq, Debug, Eq, Deserialize, Serialize)]
 pub struct State {
-    /// Locks preventing concurrent execution timer tasks
-    pub active_tasks: HashSet<TaskType>,
-
     // List of all minters including (cketh dfinity and appic minters)
-    pub minters: BTreeMap<MinterKey, Minter>,
+    pub minters: BTreeMap<MinterKey, Minter, StableMemory>,
 
     // List of all evm_to_icp transactions
-    pub evm_to_icp_txs: BTreeMap<EvmToIcpTxIdentifier, EvmToIcpTx>,
+    pub evm_to_icp_txs: BTreeMap<EvmToIcpTxIdentifier, EvmToIcpTx, StableMemory>,
 
     // list of all icp_to_evm transactions
-    pub icp_to_evm_txs: BTreeMap<IcpToEvmIdentifier, IcpToEvmTx>,
+    pub icp_to_evm_txs: BTreeMap<IcpToEvmIdentifier, IcpToEvmTx, StableMemory>,
 
-    pub supported_ckerc20_tokens: BTreeMap<Erc20Identifier, Principal>,
-    pub supported_twin_appic_tokens: BTreeMap<Erc20Identifier, Principal>,
+    pub supported_ckerc20_tokens: BTreeMap<Erc20Identifier, Principal, StableMemory>,
+    pub supported_twin_appic_tokens: BTreeMap<Erc20Identifier, Principal, StableMemory>,
 }
 
 impl State {
-    pub fn get_minter_mut(&mut self, minter_key: &MinterKey) -> Option<&mut Minter> {
-        self.minters.get_mut(minter_key)
+    pub fn update_minter(&mut self, minter_key: MinterKey, minter: Minter) {
+        self.minters.insert(minter_key, minter);
+    }
+
+    pub fn update_last_observed_event(&mut self, minter_key: &MinterKey, last_observed_event: u64) {
+        if let Some(minter) = self.minters.get(minter_key) {
+            let new_minter = Minter {
+                last_observed_event,
+                ..minter
+            };
+            self.record_minter(new_minter);
+        }
+    }
+
+    pub fn update_last_scraped_event(&mut self, minter_key: &MinterKey, last_scraped_event: u64) {
+        if let Some(minter) = self.minters.get(minter_key) {
+            let new_minter = Minter {
+                last_scraped_event,
+                ..minter
+            };
+            self.record_minter(new_minter);
+        }
     }
 
     pub fn get_minters(&self) -> Vec<Minter> {
         self.minters
             .iter()
-            .map(|(_key, minter)| minter)
-            .cloned()
+            .map(|(_minter_key, minter)| minter)
             .collect()
     }
 
@@ -340,11 +355,11 @@ impl State {
             Oprator::AppicMinter => self
                 .supported_twin_appic_tokens
                 .get(erc20_identifier)
-                .map(|token_principal| *token_principal),
+                .map(|token_principal| token_principal),
             Oprator::DfinityCkEthMinter => self
                 .supported_ckerc20_tokens
                 .get(erc20_identifier)
-                .map(|token_principal| *token_principal),
+                .map(|token_principal| token_principal),
         }
     }
 
@@ -380,16 +395,20 @@ impl State {
         let parsed_erc20_address = Address::from_str(&erc20_contract_address)
             .expect("Should not fail converting erc20_contract_address to Address");
 
-        if let Some(tx) = self.evm_to_icp_txs.get_mut(&identifier) {
+        if let Some(tx) = self.evm_to_icp_txs.get(&identifier) {
             // Update only the necessary fields in the existing transaction
-            tx.verified = true;
-            tx.block_number = Some(block_number);
-            tx.from_address = parsed_from_address;
-            tx.value = value;
-            tx.principal = principal;
-            tx.erc20_contract_address = parsed_erc20_address;
-            tx.subaccount = subaccount;
-            tx.status = EvmToIcpStatus::Accepted;
+            let new_tx = EvmToIcpTx {
+                verified: true,
+                block_number: Some(block_number),
+                from_address: parsed_from_address,
+                value,
+                principal,
+                erc20_contract_address: parsed_erc20_address,
+                subaccount,
+                status: EvmToIcpStatus::Accepted,
+                ..tx
+            };
+            self.record_new_evm_to_icp(identifier, new_tx);
         } else {
             // Create a new transaction only if one doses not already exist
             let new_tx = EvmToIcpTx {
@@ -423,7 +442,7 @@ impl State {
         erc20_contract_address: String,
         evm_to_icp_fee: &Nat,
     ) {
-        if let Some(tx) = self.evm_to_icp_txs.get_mut(&identifier) {
+        if let Some(tx) = self.evm_to_icp_txs.get(&identifier) {
             // Parse the address once
             let parsed_address = Address::from_str(&erc20_contract_address)
                 .expect("Should not fail converting minter address to Address");
@@ -435,22 +454,33 @@ impl State {
                 Some(tx.value.clone())
             };
 
-            // Update only necessary fields directly
-            tx.actual_received = actual_received;
-            tx.erc20_contract_address = parsed_address;
-            tx.status = EvmToIcpStatus::Minted;
+            let new_tx = EvmToIcpTx {
+                actual_received,
+                erc20_contract_address: parsed_address,
+                status: EvmToIcpStatus::Minted,
+                ..tx
+            };
+            self.record_new_evm_to_icp(identifier, new_tx);
         }
     }
 
     pub fn record_invalid_evm_to_icp(&mut self, identifier: EvmToIcpTxIdentifier, reason: String) {
-        if let Some(tx) = self.evm_to_icp_txs.get_mut(&identifier) {
-            tx.status = EvmToIcpStatus::Invalid(reason);
+        if let Some(tx) = self.evm_to_icp_txs.get(&identifier) {
+            let new_tx = EvmToIcpTx {
+                status: EvmToIcpStatus::Invalid(reason),
+                ..tx
+            };
+            self.record_new_evm_to_icp(identifier, new_tx);
         }
     }
 
     pub fn record_quarantined_evm_to_icp(&mut self, identifier: EvmToIcpTxIdentifier) {
-        if let Some(tx) = self.evm_to_icp_txs.get_mut(&identifier) {
-            tx.status = EvmToIcpStatus::Quarantined;
+        if let Some(tx) = self.evm_to_icp_txs.get(&identifier) {
+            let new_tx = EvmToIcpTx {
+                status: EvmToIcpStatus::Quarantined,
+                ..tx
+            };
+            self.record_new_evm_to_icp(identifier, new_tx);
         }
     }
 
@@ -479,17 +509,22 @@ impl State {
         let erc20_address = Address::from_str(&erc20_contract_address)
             .expect("Should not fail converting ERC20 contract address to Address");
 
-        if let Some(tx) = self.icp_to_evm_txs.get_mut(&identifier) {
-            tx.verified = true;
-            tx.max_transaction_fee = max_transaction_fee;
-            tx.withdrawal_amount = withdrawal_amount;
-            tx.erc20_contract_address = erc20_address;
-            tx.destination = destination_address;
-            tx.native_ledger_burn_index = native_ledger_burn_index;
-            tx.erc20_ledger_burn_index = erc20_ledger_burn_index;
-            tx.from = from;
-            tx.from_subaccount = from_subaccount;
-            tx.status = IcpToEvmStatus::Accepted;
+        if let Some(tx) = self.icp_to_evm_txs.get(&identifier) {
+            let new_tx = IcpToEvmTx {
+                verified: true,
+                max_transaction_fee,
+                withdrawal_amount,
+                erc20_contract_address: erc20_address,
+                destination: destination_address,
+                native_ledger_burn_index,
+                erc20_ledger_burn_index,
+                from,
+                from_subaccount,
+                status: IcpToEvmStatus::Accepted,
+                ..tx
+            };
+
+            self.record_new_icp_to_evm(identifier, new_tx);
         } else {
             let icrc_ledger_id = self.get_icrc_twin_for_erc20(
                 &Erc20Identifier(erc20_address.clone(), chain_id),
@@ -522,20 +557,32 @@ impl State {
         }
     }
     pub fn record_created_icp_to_evm(&mut self, identifier: IcpToEvmIdentifier) {
-        if let Some(tx) = self.icp_to_evm_txs.get_mut(&identifier) {
-            tx.status = IcpToEvmStatus::Created;
+        if let Some(tx) = self.icp_to_evm_txs.get(&identifier) {
+            let new_tx = IcpToEvmTx {
+                status: IcpToEvmStatus::Created,
+                ..tx
+            };
+            self.record_new_icp_to_evm(identifier, new_tx);
         }
     }
 
     pub fn record_signed_icp_to_evm(&mut self, identifier: IcpToEvmIdentifier) {
-        if let Some(tx) = self.icp_to_evm_txs.get_mut(&identifier) {
-            tx.status = IcpToEvmStatus::SignedTransaction;
+        if let Some(tx) = self.icp_to_evm_txs.get(&identifier) {
+            let new_tx = IcpToEvmTx {
+                status: IcpToEvmStatus::SignedTransaction,
+                ..tx
+            };
+            self.record_new_icp_to_evm(identifier, new_tx);
         }
     }
 
     pub fn record_replaced_icp_to_evm(&mut self, identifier: IcpToEvmIdentifier) {
-        if let Some(tx) = self.icp_to_evm_txs.get_mut(&identifier) {
-            tx.status = IcpToEvmStatus::ReplacedTransaction;
+        if let Some(tx) = self.icp_to_evm_txs.get(&identifier) {
+            let new_tx = IcpToEvmTx {
+                status: IcpToEvmStatus::ReplacedTransaction,
+                ..tx
+            };
+            self.record_new_icp_to_evm(identifier, new_tx);
         }
     }
 
@@ -545,7 +592,7 @@ impl State {
         receipt: TransactionReceipt,
         icp_to_evm_fee: &Nat,
     ) {
-        if let Some(tx) = self.icp_to_evm_txs.get_mut(&identifier) {
+        if let Some(tx) = self.icp_to_evm_txs.get(&identifier) {
             let actual_received = if is_native_token(&tx.erc20_contract_address) {
                 Some(
                     tx.withdrawal_amount.clone()
@@ -556,29 +603,42 @@ impl State {
                 Some(tx.withdrawal_amount.clone())
             };
 
-            tx.status = match receipt.status {
+            let status = match receipt.status {
                 TransactionStatus::Success => IcpToEvmStatus::Successful,
                 TransactionStatus::Failure => IcpToEvmStatus::Failed,
             };
-
-            tx.actual_received = actual_received;
-            tx.transaction_hash = Some(receipt.transaction_hash);
-            tx.gas_used = Some(receipt.gas_used.clone());
-            tx.effective_gas_price = Some(receipt.effective_gas_price.clone());
-            tx.toatal_gas_spent =
-                Some((receipt.gas_used * receipt.effective_gas_price) + icp_to_evm_fee.clone());
+            let new_tx = IcpToEvmTx {
+                actual_received,
+                transaction_hash: Some(receipt.transaction_hash),
+                gas_used: Some(receipt.gas_used.clone()),
+                effective_gas_price: Some(receipt.effective_gas_price.clone()),
+                toatal_gas_spent: Some(
+                    (receipt.gas_used * receipt.effective_gas_price) + icp_to_evm_fee.clone(),
+                ),
+                status,
+                ..tx
+            };
+            self.record_new_icp_to_evm(identifier, new_tx);
         }
     }
 
     pub fn record_reimbursed_icp_to_evm(&mut self, identifier: IcpToEvmIdentifier) {
-        if let Some(tx) = self.icp_to_evm_txs.get_mut(&identifier) {
-            tx.status = IcpToEvmStatus::Reimbursed;
+        if let Some(tx) = self.icp_to_evm_txs.get(&identifier) {
+            let new_tx = IcpToEvmTx {
+                status: IcpToEvmStatus::Reimbursed,
+                ..tx
+            };
+            self.record_new_icp_to_evm(identifier, new_tx);
         }
     }
 
     pub fn record_quarantined_reimbursed_icp_to_evm(&mut self, identifier: IcpToEvmIdentifier) {
-        if let Some(tx) = self.icp_to_evm_txs.get_mut(&identifier) {
-            tx.status = IcpToEvmStatus::QuarantinedReimbursement;
+        if let Some(tx) = self.icp_to_evm_txs.get(&identifier) {
+            let new_tx = IcpToEvmTx {
+                status: IcpToEvmStatus::QuarantinedReimbursement,
+                ..tx
+            };
+            self.record_new_icp_to_evm(identifier, new_tx);
         }
     }
 
@@ -667,7 +727,7 @@ impl State {
             .iter()
             .map(|(erc20_identifier, ledger_id)| TokenPair {
                 erc20_address: erc20_identifier.erc20_address().to_string(),
-                ledger_id: *ledger_id,
+                ledger_id: ledger_id,
                 oprator: Oprator::DfinityCkEthMinter,
                 chain_id: erc20_identifier.chain_id().into(),
             })
@@ -676,7 +736,7 @@ impl State {
                     .iter()
                     .map(|(erc20_identifier, ledger_id)| TokenPair {
                         erc20_address: erc20_identifier.erc20_address().to_string(),
-                        ledger_id: *ledger_id,
+                        ledger_id: ledger_id,
                         oprator: Oprator::AppicMinter,
                         chain_id: erc20_identifier.chain_id().into(),
                     }),
@@ -685,58 +745,9 @@ impl State {
     }
 }
 
-pub fn read_state<R>(f: impl FnOnce(&State) -> R) -> R {
-    STATE.with(|cell| f(cell.borrow().get().expect_initialized()))
-}
-
-/// Mutates (part of) the current state using `f`.
-///
-/// Panics if there is no state.
-pub fn mutate_state<F, R>(f: F) -> R
-where
-    F: FnOnce(&mut State) -> R,
-{
-    STATE.with(|cell| {
-        let mut borrowed = cell.borrow_mut();
-        let mut state = borrowed.get().expect_initialized().clone();
-        let result = f(&mut state);
-        borrowed
-            .set(ConfigState::Initialized(state))
-            .expect("failed to write state in stable cell");
-        result
-    })
-}
-
-pub fn init_state(state: State) {
-    STATE.with(|cell| {
-        let mut borrowed = cell.borrow_mut();
-        assert_eq!(
-            borrowed.get(),
-            &ConfigState::Uninitialized,
-            "BUG: State is already initialized and has value {:?}",
-            borrowed.get()
-        );
-        borrowed
-            .set(ConfigState::Initialized(state))
-            .expect("failed to initialize state in stable cell")
-    });
-}
-
-impl From<InitArgs> for State {
-    fn from(value: InitArgs) -> Self {
-        let minters = BTreeMap::from_iter(value.minters.into_iter().map(|minter_args| {
-            let minter = Minter::from_minter_args(minter_args);
-            (MinterKey::from(&minter), minter)
-        }));
-        Self {
-            active_tasks: Default::default(),
-            minters,
-            evm_to_icp_txs: Default::default(),
-            icp_to_evm_txs: Default::default(),
-            supported_ckerc20_tokens: Default::default(),
-            supported_twin_appic_tokens: Default::default(),
-        }
-    }
+pub fn is_native_token(address: &Address) -> bool {
+    address
+        == &Address::from_str(NATIVE_ERC20_ADDRESS).expect("Should not fail converintg to address")
 }
 
 impl From<&Nat> for ChainId {
@@ -767,76 +778,198 @@ impl AsRef<u64> for ChainId {
     }
 }
 
+pub fn read_state<R>(f: impl FnOnce(&State) -> R) -> R {
+    STATE.with(|cell| {
+        f(cell
+            .borrow()
+            .as_ref()
+            .expect("BUG: state is not initialized"))
+    })
+}
+
+// / Mutates (part of) the current state using `f`.
+// /
+// / Panics if there is no state.
+pub fn mutate_state<F, R>(f: F) -> R
+where
+    F: FnOnce(&mut State) -> R,
+{
+    STATE.with(|cell| {
+        f(cell
+            .borrow_mut()
+            .as_mut()
+            .expect("BUG: state is not initialized"))
+    })
+}
+
 // State configuration
 pub type StableMemory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
-    static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
-        MemoryManager::init(DefaultMemoryImpl::default())
+    pub static STATE: RefCell<Option<State>> = RefCell::new(
+        Some(State
+             {  minters: BTreeMap::init(minter_memory()), evm_to_icp_txs: BTreeMap::init(evm_to_icp_memory()),
+                icp_to_evm_txs: BTreeMap::init(icp_to_evm_memory()), supported_ckerc20_tokens: BTreeMap::init(supported_ckerc20_tokens_memory_id()),
+            supported_twin_appic_tokens:BTreeMap::init(supported_appic_tokens_memory_id()) })
     );
-
 }
 
-const STATE_MEMORY_ID: MemoryId = MemoryId::new(0);
+mod storage_config {
+    use super::*;
 
-pub fn state_memory() -> StableMemory {
-    MEMORY_MANAGER.with(|m| m.borrow().get(STATE_MEMORY_ID))
-}
+    thread_local! {
+        static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
+            MemoryManager::init(DefaultMemoryImpl::default())
+        );
 
-thread_local! {
-    pub static STATE: RefCell<Cell<ConfigState, StableMemory>> = RefCell::new(Cell::init(
-   state_memory(), ConfigState::default())
-    .expect("failed to initialize stable cell for state"));
-}
-
-/// Configuration state of the lsm.
-#[derive(Clone, PartialEq, Debug, Default)]
-enum ConfigState {
-    #[default]
-    Uninitialized,
-    // This state is only used between wasm module initialization and init().
-    Initialized(State),
-}
-
-impl ConfigState {
-    fn expect_initialized(&self) -> &State {
-        match &self {
-            ConfigState::Uninitialized => trap("BUG: state not initialized"),
-            ConfigState::Initialized(s) => s,
-        }
-    }
-}
-
-impl Storable for ConfigState {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        match &self {
-            ConfigState::Uninitialized => Cow::Borrowed(&[]),
-            ConfigState::Initialized(config) => Cow::Owned(encode(config)),
-        }
     }
 
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        if bytes.is_empty() {
-            return ConfigState::Uninitialized;
-        }
-        ConfigState::Initialized(decode(bytes.as_ref()))
+    const MINTERS_MEMORY_ID: MemoryId = MemoryId::new(0);
+
+    pub fn minter_memory() -> StableMemory {
+        MEMORY_MANAGER.with(|m| m.borrow().get(MINTERS_MEMORY_ID))
     }
 
-    const BOUND: Bound = Bound::Unbounded;
-}
+    const EVM_TO_ICP_MEMORY_ID: MemoryId = MemoryId::new(1);
 
-fn encode<S: ?Sized + serde::Serialize>(state: &S) -> Vec<u8> {
-    let mut buf = vec![];
-    ciborium::ser::into_writer(state, &mut buf).expect("failed to encode state");
-    buf
-}
+    pub fn evm_to_icp_memory() -> StableMemory {
+        MEMORY_MANAGER.with(|m| m.borrow().get(EVM_TO_ICP_MEMORY_ID))
+    }
 
-fn decode<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> T {
-    ciborium::de::from_reader(bytes)
-        .unwrap_or_else(|e| panic!("failed to decode state bytes {}: {e}", hex::encode(bytes)))
-}
+    const ICP_TO_EVM_MEMORY_ID: MemoryId = MemoryId::new(2);
 
-pub fn is_native_token(address: &Address) -> bool {
-    address
-        == &Address::from_str(NATIVE_ERC20_ADDRESS).expect("Should not fail converintg to address")
+    pub fn icp_to_evm_memory() -> StableMemory {
+        MEMORY_MANAGER.with(|m| m.borrow().get(ICP_TO_EVM_MEMORY_ID))
+    }
+
+    const SUPPORTED_CK_MEMORY_ID: MemoryId = MemoryId::new(3);
+
+    pub fn supported_ckerc20_tokens_memory_id() -> StableMemory {
+        MEMORY_MANAGER.with(|m| m.borrow().get(SUPPORTED_CK_MEMORY_ID))
+    }
+
+    const SUPPORTED_APPIC_MEMORY_ID: MemoryId = MemoryId::new(4);
+
+    pub fn supported_appic_tokens_memory_id() -> StableMemory {
+        MEMORY_MANAGER.with(|m| m.borrow().get(SUPPORTED_APPIC_MEMORY_ID))
+    }
+
+    impl Storable for MinterKey {
+        fn to_bytes(&self) -> Cow<[u8]> {
+            encode(self)
+        }
+
+        fn from_bytes(bytes: Cow<[u8]>) -> Self {
+            decode(bytes)
+        }
+
+        const BOUND: Bound = Bound::Unbounded;
+    }
+
+    impl Storable for Minter {
+        fn to_bytes(&self) -> Cow<[u8]> {
+            encode(self)
+        }
+
+        fn from_bytes(bytes: Cow<[u8]>) -> Self {
+            decode(bytes)
+        }
+
+        const BOUND: Bound = Bound::Unbounded;
+    }
+
+    impl Storable for EvmToIcpTxIdentifier {
+        fn to_bytes(&self) -> Cow<[u8]> {
+            encode(self)
+        }
+
+        fn from_bytes(bytes: Cow<[u8]>) -> Self {
+            decode(bytes)
+        }
+
+        const BOUND: Bound = Bound::Unbounded;
+    }
+
+    impl Storable for EvmToIcpStatus {
+        fn to_bytes(&self) -> Cow<[u8]> {
+            encode(self)
+        }
+
+        fn from_bytes(bytes: Cow<[u8]>) -> Self {
+            decode(bytes)
+        }
+
+        const BOUND: Bound = Bound::Unbounded;
+    }
+
+    impl Storable for EvmToIcpTx {
+        fn to_bytes(&self) -> Cow<[u8]> {
+            encode(self)
+        }
+
+        fn from_bytes(bytes: Cow<[u8]>) -> Self {
+            decode(bytes)
+        }
+
+        const BOUND: Bound = Bound::Unbounded;
+    }
+
+    impl Storable for IcpToEvmIdentifier {
+        fn to_bytes(&self) -> Cow<[u8]> {
+            encode(self)
+        }
+
+        fn from_bytes(bytes: Cow<[u8]>) -> Self {
+            decode(bytes)
+        }
+
+        const BOUND: Bound = Bound::Unbounded;
+    }
+
+    impl Storable for IcpToEvmStatus {
+        fn to_bytes(&self) -> Cow<[u8]> {
+            encode(self)
+        }
+
+        fn from_bytes(bytes: Cow<[u8]>) -> Self {
+            decode(bytes)
+        }
+
+        const BOUND: Bound = Bound::Unbounded;
+    }
+
+    impl Storable for IcpToEvmTx {
+        fn to_bytes(&self) -> Cow<[u8]> {
+            encode(self)
+        }
+
+        fn from_bytes(bytes: Cow<[u8]>) -> Self {
+            decode(bytes)
+        }
+
+        const BOUND: Bound = Bound::Unbounded;
+    }
+
+    impl Storable for Erc20Identifier {
+        fn to_bytes(&self) -> Cow<[u8]> {
+            encode(self)
+        }
+
+        fn from_bytes(bytes: Cow<[u8]>) -> Self {
+            decode(bytes)
+        }
+
+        const BOUND: Bound = Bound::Unbounded;
+    }
+
+    fn encode<T: ?Sized + serde::Serialize>(value: &T) -> Cow<[u8]> {
+        let mut buf = vec![];
+        ciborium::ser::into_writer(value, &mut buf).expect("failed to encode");
+        Cow::Owned(buf)
+    }
+
+    fn decode<T: serde::de::DeserializeOwned>(bytes: Cow<[u8]>) -> T {
+        ciborium::de::from_reader(bytes.as_ref())
+            .unwrap_or_else(|e| panic!("failed to decode bytes {}: {e}", hex::encode(bytes)))
+    }
 }
