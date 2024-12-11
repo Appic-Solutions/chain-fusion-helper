@@ -12,8 +12,9 @@ use transaction_logger::endpoints::{
 };
 use transaction_logger::lifecycle::{self, init as initialize};
 use transaction_logger::state::{
-    mutate_state, nat_to_u64, read_state, ChainId, Erc20Identifier, EvmToIcpStatus, EvmToIcpTx,
-    EvmToIcpTxIdentifier, IcpToEvmIdentifier, IcpToEvmStatus, IcpToEvmTx,
+    mutate_state, nat_to_erc20_amount, nat_to_ledger_burn_index, nat_to_u64, read_state, ChainId,
+    Erc20Identifier, EvmToIcpStatus, EvmToIcpTx, EvmToIcpTxIdentifier, IcpToEvmIdentifier,
+    IcpToEvmStatus, IcpToEvmTx,
 };
 use transaction_logger::{
     endpoints::LoggerArgs, logs::INFO, remove_unverified_tx::remove_unverified_tx,
@@ -107,17 +108,17 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
             tx_identifier,
             IcpToEvmTx {
                 transaction_hash: None,
-                native_ledger_burn_index: tx.native_ledger_burn_index,
-                withdrawal_amount: tx.withdrawal_amount,
+                native_ledger_burn_index: nat_to_ledger_burn_index(&tx.native_ledger_burn_index),
+                withdrawal_amount: nat_to_erc20_amount(tx.withdrawal_amount),
                 actual_received: None,
                 destination,
                 from: tx.from,
                 from_subaccount: tx.from_subaccount,
                 time: nat_to_u64(&tx.time),
-                max_transaction_fee: Some(tx.max_transaction_fee),
+                max_transaction_fee: Some(nat_to_erc20_amount(tx.max_transaction_fee)),
                 effective_gas_price: None,
                 gas_used: None,
-                toatal_gas_spent: None,
+                total_gas_spent: None,
                 erc20_ledger_burn_index: None,
                 erc20_contract_address,
                 icrc_ledger_id: Some(icrc_pair),
@@ -177,12 +178,12 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
                 status: EvmToIcpStatus::PendingVerification,
                 oprator: tx.oprator,
                 from_address,
-                value: tx.value,
+                value: nat_to_erc20_amount(tx.value),
                 block_number: None,
                 principal: tx.principal,
                 subaccount: tx.subaccount,
                 chain_id,
-                total_gas_spent: Some(tx.total_gas_spent),
+                total_gas_spent: Some(nat_to_erc20_amount(tx.total_gas_spent)),
             },
         )
     });
