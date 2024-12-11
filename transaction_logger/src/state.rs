@@ -3,7 +3,6 @@ use ic_ethereum_types::Address;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::{storable::Bound, BTreeMap, Storable};
-use minicbor::{Decode, Encode};
 use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -19,6 +18,7 @@ use crate::endpoints::{
     AddEvmToIcpTx, AddIcpToEvmTx, CandidEvmToIcp, CandidIcpToEvm, MinterArgs, TokenPair,
     Transaction,
 };
+use crate::numeric::{BlockNumber, Erc20TokenAmount, LedgerBurnIndex};
 use crate::scrape_events::NATIVE_ERC20_ADDRESS;
 
 use std::fmt::Debug;
@@ -26,41 +26,21 @@ use std::fmt::Debug;
 use crate::minter_clinet::appic_minter_types::events::{TransactionReceipt, TransactionStatus};
 
 #[derive(
-    Clone,
-    Copy,
-    CandidType,
-    PartialEq,
-    Encode,
-    Decode,
-    PartialOrd,
-    Eq,
-    Ord,
-    Debug,
-    Deserialize,
-    Serialize,
+    Clone, Copy, CandidType, PartialEq, PartialOrd, Eq, Ord, Debug, Deserialize, Serialize,
 )]
 pub enum Oprator {
-    #[n(0)]
     DfinityCkEthMinter,
-    #[n(1)]
     AppicMinter,
 }
 
-#[derive(Clone, PartialEq, Ord, PartialOrd, Eq, Debug, Encode, Decode, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Ord, PartialOrd, Eq, Debug, Deserialize, Serialize)]
 pub struct Minter {
-    #[cbor(n(0), with = "crate::cbor::principal")]
     pub id: Principal,
-    #[n(1)]
     pub last_observed_event: u64,
-    #[n(2)]
     pub last_scraped_event: u64,
-    #[n(3)]
     pub oprator: Oprator,
-    #[cbor(n(4), with = "crate::cbor::nat")]
-    pub evm_to_icp_fee: Nat,
-    #[cbor(n(5), with = "crate::cbor::nat")]
-    pub icp_to_evm_fee: Nat,
-    #[n(6)]
+    pub evm_to_icp_fee: Erc20TokenAmount,
+    pub icp_to_evm_fee: Erc20TokenAmount,
     pub chain_id: ChainId,
 }
 
@@ -88,15 +68,17 @@ impl Minter {
             last_observed_event: nat_to_u64(&last_observed_event),
             last_scraped_event: nat_to_u64(&last_scraped_event),
             oprator,
-            evm_to_icp_fee,
-            icp_to_evm_fee,
+            evm_to_icp_fee: Erc20TokenAmount::try_from(evm_to_icp_fee)
+                .expect("Should not fail converting fees"),
+            icp_to_evm_fee: Erc20TokenAmount::try_from(icp_to_evm_fee)
+                .expect("Should not fail converting fees"),
             chain_id: ChainId::from(&chain_id),
         }
     }
 }
 
-#[derive(Clone, PartialEq, Encode, Decode, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
-pub struct MinterKey(#[n(0)] pub ChainId, #[n(1)] pub Oprator);
+#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+pub struct MinterKey(pub ChainId, pub Oprator);
 
 impl MinterKey {
     pub fn oprator(&self) -> Oprator {
@@ -116,166 +98,111 @@ impl From<&Minter> for MinterKey {
 
 type TransactionHash = String;
 
-#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Encode, Decode, Deserialize, Serialize)]
-pub struct EvmToIcpTxIdentifier(#[n(0)] TransactionHash, #[n(1)] ChainId);
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Serialize)]
+pub struct EvmToIcpTxIdentifier(TransactionHash, ChainId);
 
 impl EvmToIcpTxIdentifier {
+    /// Creates a new `EvmToIcpTxIdentifier` instance.
     pub fn new(transaction_hash: &TransactionHash, chain_id: ChainId) -> Self {
-        EvmToIcpTxIdentifier(transaction_hash.clone(), chain_id)
+        Self(transaction_hash.clone(), chain_id)
     }
 }
+
 impl From<&AddEvmToIcpTx> for EvmToIcpTxIdentifier {
     fn from(value: &AddEvmToIcpTx) -> Self {
         Self::new(&value.transaction_hash, ChainId::from(&value.chain_id))
     }
 }
 
-#[derive(
-    Clone, Encode, Decode, CandidType, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize,
-)]
+#[derive(Clone, CandidType, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub enum EvmToIcpStatus {
-    #[n(0)]
     PendingVerification,
-    #[n(1)]
     Accepted,
-    #[n(2)]
     Minted,
-    #[n(3)]
-    Invalid(#[n(0)] String),
-    #[n(4)]
+    Invalid(String),
     Quarantined,
 }
 
-#[derive(Clone, Encode, Decode, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct EvmToIcpTx {
-    #[n(0)]
     pub from_address: Address,
-    #[n(1)]
     pub transaction_hash: TransactionHash,
-    #[cbor(n(2), with = "crate::cbor::nat")]
-    pub value: Nat,
-    #[cbor(n(3), with = "crate::cbor::nat::option")]
-    pub block_number: Option<Nat>,
-    #[cbor(n(4), with = "crate::cbor::nat::option")]
-    pub actual_received: Option<Nat>,
-    #[cbor(n(5), with = "crate::cbor::principal")]
+    pub value: Erc20TokenAmount,
+    pub block_number: Option<BlockNumber>,
+    pub actual_received: Option<Erc20TokenAmount>,
     pub principal: Principal,
-    #[cbor(n(6), with = "minicbor::bytes")]
     pub subaccount: Option<[u8; 32]>,
-    #[n(7)]
     pub chain_id: ChainId,
-    #[cbor(n(8), with = "crate::cbor::nat::option")]
-    pub total_gas_spent: Option<Nat>,
-    #[n(9)]
+    pub total_gas_spent: Option<Erc20TokenAmount>,
     pub erc20_contract_address: Address,
-    #[cbor(n(10), with = "crate::cbor::principal::option")]
     pub icrc_ledger_id: Option<Principal>,
-    #[n(11)]
     pub status: EvmToIcpStatus,
-    #[n(12)]
     pub verified: bool,
-    #[n(13)]
     pub time: u64,
-    #[n(14)]
     pub oprator: Oprator,
 }
 
-pub type NativeLedgerBurnIndex = Nat;
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Serialize)]
+pub struct IcpToEvmIdentifier(LedgerBurnIndex, ChainId);
 
-#[derive(Clone, Encode, Decode, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
-pub struct IcpToEvmIdentifier(
-    #[cbor(n(0), with = "crate::cbor::nat")] NativeLedgerBurnIndex,
-    #[n(1)] ChainId,
-);
 impl IcpToEvmIdentifier {
-    pub fn new(native_ledger_burn_index: &NativeLedgerBurnIndex, chain_id: ChainId) -> Self {
-        IcpToEvmIdentifier(native_ledger_burn_index.clone(), chain_id)
+    /// Creates a new `IcpToEvmIdentifier` instance.
+    pub fn new(ledger_burn_index: LedgerBurnIndex, chain_id: ChainId) -> Self {
+        Self(ledger_burn_index, chain_id)
     }
 }
 
 impl From<&AddIcpToEvmTx> for IcpToEvmIdentifier {
     fn from(value: &AddIcpToEvmTx) -> Self {
-        Self::new(
-            &value.native_ledger_burn_index,
-            ChainId::from(&value.chain_id),
-        )
+        let ledger_burn_index = LedgerBurnIndex::new(nat_to_u64(&value.native_ledger_burn_index));
+        let chain_id = ChainId::from(&value.chain_id);
+        Self::new(ledger_burn_index, chain_id)
     }
 }
 
-#[derive(
-    CandidType, Clone, Encode, Decode, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize,
-)]
+#[derive(CandidType, Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub enum IcpToEvmStatus {
-    #[n(0)]
     PendingVerification,
-    #[n(1)]
     Accepted,
-    #[n(2)]
     Created,
-    #[n(3)]
     SignedTransaction,
-    #[n(4)]
     FinalizedTransaction,
-    #[n(5)]
     ReplacedTransaction,
-    #[n(6)]
     Reimbursed,
-    #[n(7)]
     QuarantinedReimbursement,
-    #[n(8)]
     Successful,
-    #[n(9)]
     Failed,
 }
 
-#[derive(Clone, PartialEq, Encode, Decode, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct IcpToEvmTx {
-    #[n(0)]
     pub transaction_hash: Option<TransactionHash>,
-    #[cbor(n(1), with = "crate::cbor::nat")]
-    pub native_ledger_burn_index: NativeLedgerBurnIndex,
-    #[cbor(n(2), with = "crate::cbor::nat")]
-    pub withdrawal_amount: Nat,
-    #[cbor(n(3), with = "crate::cbor::nat::option")]
-    pub actual_received: Option<Nat>,
-    #[n(4)]
+    pub native_ledger_burn_index: LedgerBurnIndex,
+    pub withdrawal_amount: Erc20TokenAmount,
+    pub actual_received: Option<Erc20TokenAmount>,
     pub destination: Address,
-    #[cbor(n(5), with = "crate::cbor::principal")]
     pub from: Principal,
-    #[n(6)]
     pub chain_id: ChainId,
-    #[cbor(n(7), with = "minicbor::bytes")]
     pub from_subaccount: Option<[u8; 32]>,
-    #[n(8)]
     pub time: u64,
-    #[cbor(n(9), with = "crate::cbor::nat::option")]
-    pub max_transaction_fee: Option<Nat>,
-    #[cbor(n(10), with = "crate::cbor::nat::option")]
-    pub effective_gas_price: Option<Nat>,
-    #[cbor(n(11), with = "crate::cbor::nat::option")]
-    pub gas_used: Option<Nat>,
-    #[cbor(n(12), with = "crate::cbor::nat::option")]
-    pub toatal_gas_spent: Option<Nat>,
-    #[cbor(n(13), with = "crate::cbor::nat::option")]
-    pub erc20_ledger_burn_index: Option<Nat>,
-    #[n(14)]
+    pub max_transaction_fee: Option<Erc20TokenAmount>,
+    pub effective_gas_price: Option<Erc20TokenAmount>,
+    pub gas_used: Option<Erc20TokenAmount>,
+    pub total_gas_spent: Option<Erc20TokenAmount>,
+    pub erc20_ledger_burn_index: Option<LedgerBurnIndex>,
     pub erc20_contract_address: Address,
-    #[cbor(n(15), with = "crate::cbor::principal::option")]
     pub icrc_ledger_id: Option<Principal>,
-    #[n(16)]
     pub verified: bool,
-    #[n(17)]
     pub status: IcpToEvmStatus,
-    #[n(18)]
     pub oprator: Oprator,
 }
 
-#[derive(Clone, PartialEq, Ord, Eq, Encode, Decode, PartialOrd, Debug, Deserialize, Serialize)]
-pub struct Erc20Identifier(#[n(0)] pub Address, #[n(1)] pub ChainId);
+#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+pub struct Erc20Identifier(pub Address, pub ChainId);
 
 impl Erc20Identifier {
     pub fn new(contract: &Address, chain_id: ChainId) -> Self {
-        Self(contract.clone(), chain_id)
+        Self(*contract, chain_id)
     }
 
     pub fn erc20_address(&self) -> Address {
@@ -305,8 +232,8 @@ impl State {
     pub fn update_minter_fees(
         &mut self,
         minter_key: &MinterKey,
-        evm_to_icp_fee: Nat,
-        icp_to_evm_fee: Nat,
+        evm_to_icp_fee: Erc20TokenAmount,
+        icp_to_evm_fee: Erc20TokenAmount,
     ) {
         if let Some(minter) = self.minters.get(minter_key) {
             let new_minter = Minter {
@@ -338,15 +265,12 @@ impl State {
         }
     }
 
-    pub fn get_minters(&self) -> Vec<Minter> {
-        self.minters
-            .iter()
-            .map(|(_minter_key, minter)| minter)
-            .collect()
+    pub fn get_minters(&self) -> Vec<(MinterKey, Minter)> {
+        self.minters.iter().collect()
     }
 
     pub fn if_chain_id_exists(&self, chain_id: ChainId) -> bool {
-        for minter in self.get_minters() {
+        for (_minter_key, minter) in self.get_minters() {
             if minter.chain_id == chain_id {
                 return true;
             }
@@ -411,9 +335,9 @@ impl State {
             // Update only the necessary fields in the existing transaction
             let new_tx = EvmToIcpTx {
                 verified: true,
-                block_number: Some(block_number),
+                block_number: Some(nat_to_block_number(block_number)),
                 from_address: parsed_from_address,
-                value,
+                value: nat_to_erc20_amount(value),
                 principal,
                 erc20_contract_address: parsed_erc20_address,
                 subaccount,
@@ -426,8 +350,8 @@ impl State {
             let new_tx = EvmToIcpTx {
                 from_address: parsed_from_address,
                 transaction_hash,
-                value,
-                block_number: Some(block_number),
+                value: nat_to_erc20_amount(value),
+                block_number: Some(nat_to_block_number(block_number)),
                 actual_received: None,
                 principal,
                 subaccount,
@@ -451,24 +375,19 @@ impl State {
     pub fn record_minted_evm_to_icp(
         &mut self,
         identifier: EvmToIcpTxIdentifier,
-        erc20_contract_address: String,
-        evm_to_icp_fee: &Nat,
+        evm_to_icp_fee: Erc20TokenAmount,
     ) {
         if let Some(tx) = self.evm_to_icp_txs.get(&identifier) {
-            // Parse the address once
-            let parsed_address = Address::from_str(&erc20_contract_address)
-                .expect("Should not fail converting minter address to Address");
-
             // Fee calculation
-            let actual_received = if is_native_token(&parsed_address) {
-                Some(tx.value.clone() - evm_to_icp_fee.clone()) // Clone only when needed
+            let actual_received = if is_native_token(&tx.erc20_contract_address) {
+                Some(tx.value.checked_sub(evm_to_icp_fee).unwrap_or(tx.value))
             } else {
-                Some(tx.value.clone())
+                Some(tx.value)
             };
 
+            // Transaction update
             let new_tx = EvmToIcpTx {
                 actual_received,
-                erc20_contract_address: parsed_address,
                 status: EvmToIcpStatus::Minted,
                 ..tx
             };
@@ -520,6 +439,14 @@ impl State {
             .expect("Should not fail converting destination to Address");
         let erc20_address = Address::from_str(&erc20_contract_address)
             .expect("Should not fail converting ERC20 contract address to Address");
+        let max_transaction_fee = max_transaction_fee.map(|max_fee| nat_to_erc20_amount(max_fee));
+
+        let withdrawal_amount = nat_to_erc20_amount(withdrawal_amount);
+
+        let native_ledger_burn_index = LedgerBurnIndex::new(nat_to_u64(&native_ledger_burn_index));
+
+        let erc20_ledger_burn_index =
+            erc20_ledger_burn_index.map(|burn_index| LedgerBurnIndex::new(nat_to_u64(&burn_index)));
 
         if let Some(tx) = self.icp_to_evm_txs.get(&identifier) {
             let new_tx = IcpToEvmTx {
@@ -538,10 +465,8 @@ impl State {
 
             self.record_new_icp_to_evm(identifier, new_tx);
         } else {
-            let icrc_ledger_id = self.get_icrc_twin_for_erc20(
-                &Erc20Identifier(erc20_address.clone(), chain_id),
-                &oprator,
-            );
+            let icrc_ledger_id =
+                self.get_icrc_twin_for_erc20(&Erc20Identifier(erc20_address, chain_id), &oprator);
 
             let new_tx = IcpToEvmTx {
                 native_ledger_burn_index,
@@ -561,13 +486,14 @@ impl State {
                 oprator,
                 effective_gas_price: None,
                 gas_used: None,
-                toatal_gas_spent: None,
                 transaction_hash: None,
+                total_gas_spent: None,
             };
 
             self.record_new_icp_to_evm(identifier, new_tx);
         }
     }
+
     pub fn record_created_icp_to_evm(&mut self, identifier: IcpToEvmIdentifier) {
         if let Some(tx) = self.icp_to_evm_txs.get(&identifier) {
             let new_tx = IcpToEvmTx {
@@ -602,17 +528,22 @@ impl State {
         &mut self,
         identifier: IcpToEvmIdentifier,
         receipt: TransactionReceipt,
-        icp_to_evm_fee: &Nat,
+        icp_to_evm_fee: Erc20TokenAmount,
     ) {
         if let Some(tx) = self.icp_to_evm_txs.get(&identifier) {
+            let gas_used = nat_to_erc20_amount(receipt.gas_used);
+            let effective_gas_price = nat_to_erc20_amount(receipt.effective_gas_price);
+
+            let total_gas_spent = gas_used
+                .checked_mul(effective_gas_price)
+                .unwrap()
+                .checked_add(icp_to_evm_fee)
+                .unwrap();
+
             let actual_received = if is_native_token(&tx.erc20_contract_address) {
-                Some(
-                    tx.withdrawal_amount.clone()
-                        - (receipt.gas_used.clone() * receipt.effective_gas_price.clone())
-                        - icp_to_evm_fee.clone(),
-                )
+                tx.withdrawal_amount.checked_sub(total_gas_spent)
             } else {
-                Some(tx.withdrawal_amount.clone())
+                Some(tx.withdrawal_amount)
             };
 
             let status = match receipt.status {
@@ -622,11 +553,9 @@ impl State {
             let new_tx = IcpToEvmTx {
                 actual_received,
                 transaction_hash: Some(receipt.transaction_hash),
-                gas_used: Some(receipt.gas_used.clone()),
-                effective_gas_price: Some(receipt.effective_gas_price.clone()),
-                toatal_gas_spent: Some(
-                    (receipt.gas_used * receipt.effective_gas_price) + icp_to_evm_fee.clone(),
-                ),
+                gas_used: Some(gas_used),
+                effective_gas_price: Some(effective_gas_price),
+                total_gas_spent: Some(total_gas_spent),
                 status,
                 ..tx
             };
@@ -657,13 +586,8 @@ impl State {
     pub fn all_unverified_icp_to_evm(&self) -> Vec<(IcpToEvmIdentifier, u64)> {
         self.icp_to_evm_txs
             .iter()
-            .filter_map(|(identifier, tx)| {
-                if tx.verified == false {
-                    Some((identifier.clone(), tx.time))
-                } else {
-                    None
-                }
-            })
+            .filter(|(_, tx)| !tx.verified) // Filter out verified transactions
+            .map(|(identifier, tx)| (identifier, tx.time)) // Map to the desired tuple
             .collect()
     }
 
@@ -674,13 +598,8 @@ impl State {
     pub fn all_unverified_evm_to_icp(&self) -> Vec<(EvmToIcpTxIdentifier, u64)> {
         self.evm_to_icp_txs
             .iter()
-            .filter_map(|(identifier, tx)| {
-                if tx.verified == false {
-                    Some((identifier.clone(), tx.time))
-                } else {
-                    None
-                }
-            })
+            .filter(|(_, tx)| !tx.verified) // Filter out verified transactions
+            .map(|(identifier, tx)| (identifier, tx.time)) // Map to the desired tuple
             .collect()
     }
 
@@ -689,49 +608,37 @@ impl State {
     }
 
     pub fn get_transaction_for_address(&self, address: Address) -> Vec<Transaction> {
-        let all_tx: Vec<Transaction> = self
+        let result: Vec<Transaction> = self
             .evm_to_icp_txs
             .iter()
-            .filter_map(|(_id, tx)| {
-                if tx.from_address == address {
-                    Some(Transaction::from(CandidEvmToIcp::from(tx.clone())))
-                } else {
-                    None
-                }
-            })
-            .chain(self.icp_to_evm_txs.iter().filter_map(|(_id, tx)| {
-                if tx.destination == address {
-                    Some(Transaction::from(CandidIcpToEvm::from(tx.clone())))
-                } else {
-                    None
-                }
-            }))
+            .filter(|(_id, tx)| tx.from_address == address)
+            .map(|(_id, tx)| Transaction::from(CandidEvmToIcp::from(tx)))
+            .chain(
+                self.icp_to_evm_txs
+                    .iter()
+                    .filter(|(_id, tx)| tx.destination == address)
+                    .map(|(_id, tx)| Transaction::from(CandidIcpToEvm::from(tx))),
+            )
             .collect();
 
-        all_tx
+        result
     }
 
     pub fn get_transaction_for_principal(&self, principal_id: Principal) -> Vec<Transaction> {
-        let all_tx: Vec<Transaction> = self
+        let result: Vec<Transaction> = self
             .evm_to_icp_txs
             .iter()
-            .filter_map(|(_id, tx)| {
-                if tx.principal == principal_id {
-                    Some(Transaction::from(CandidEvmToIcp::from(tx.clone())))
-                } else {
-                    None
-                }
-            })
-            .chain(self.icp_to_evm_txs.iter().filter_map(|(_id, tx)| {
-                if tx.from == principal_id {
-                    Some(Transaction::from(CandidIcpToEvm::from(tx.clone())))
-                } else {
-                    None
-                }
-            }))
+            .filter(|(_id, tx)| tx.principal == principal_id)
+            .map(|(_id, tx)| Transaction::from(CandidEvmToIcp::from(tx)))
+            .chain(
+                self.icp_to_evm_txs
+                    .iter()
+                    .filter(|(_id, tx)| tx.from == principal_id)
+                    .map(|(_id, tx)| Transaction::from(CandidIcpToEvm::from(tx))),
+            )
             .collect();
 
-        all_tx
+        result
     }
 
     pub fn get_suported_twin_token_pairs(&self) -> Vec<TokenPair> {
@@ -739,7 +646,7 @@ impl State {
             .iter()
             .map(|(erc20_identifier, ledger_id)| TokenPair {
                 erc20_address: erc20_identifier.erc20_address().to_string(),
-                ledger_id: ledger_id,
+                ledger_id,
                 oprator: Oprator::DfinityCkEthMinter,
                 chain_id: erc20_identifier.chain_id().into(),
             })
@@ -748,7 +655,7 @@ impl State {
                     .iter()
                     .map(|(erc20_identifier, ledger_id)| TokenPair {
                         erc20_address: erc20_identifier.erc20_address().to_string(),
-                        ledger_id: ledger_id,
+                        ledger_id,
                         oprator: Oprator::AppicMinter,
                         chain_id: erc20_identifier.chain_id().into(),
                     }),
@@ -774,15 +681,31 @@ impl From<ChainId> for Nat {
     }
 }
 
+pub fn nat_to_ledger_burn_index(value: &Nat) -> LedgerBurnIndex {
+    LedgerBurnIndex::new(nat_to_u64(value))
+}
+
+pub fn nat_to_block_number(value: Nat) -> BlockNumber {
+    BlockNumber::try_from(value).expect("Failed to convert nat into Erc20TokenAmount")
+}
+
+pub fn nat_to_erc20_amount(value: Nat) -> Erc20TokenAmount {
+    Erc20TokenAmount::try_from(value).expect("Failed to convert nat into Erc20TokenAmount")
+}
+
 pub fn nat_to_u64(value: &Nat) -> u64 {
     value.0.to_u64().unwrap()
 }
 
-#[derive(
-    Clone, Copy, Eq, Encode, Decode, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize,
-)]
+pub fn nat_to_u128(value: &Nat) -> u128 {
+    value.0.to_u128().unwrap()
+}
+
+pub fn calculate_actual_icp_to_evm_received() {}
+
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
-pub struct ChainId(#[n(0)] pub u64);
+pub struct ChainId(pub u64);
 
 impl AsRef<u64> for ChainId {
     fn as_ref(&self) -> &u64 {
@@ -819,10 +742,13 @@ pub type StableMemory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
     pub static STATE: RefCell<Option<State>> = RefCell::new(
-        Some(State
-             {  minters: BTreeMap::init(minter_memory()), evm_to_icp_txs: BTreeMap::init(evm_to_icp_memory()),
-                icp_to_evm_txs: BTreeMap::init(icp_to_evm_memory()), supported_ckerc20_tokens: BTreeMap::init(supported_ckerc20_tokens_memory_id()),
-            supported_twin_appic_tokens:BTreeMap::init(supported_appic_tokens_memory_id()) })
+        Some(State {
+                minters: BTreeMap::init(minter_memory()),
+                evm_to_icp_txs: BTreeMap::init(evm_to_icp_memory()),
+                icp_to_evm_txs: BTreeMap::init(icp_to_evm_memory()),
+                supported_ckerc20_tokens: BTreeMap::init(supported_ckerc20_tokens_memory_id()),
+                supported_twin_appic_tokens:BTreeMap::init(supported_appic_tokens_memory_id())
+            })
     );
 }
 
@@ -975,13 +901,64 @@ mod storage_config {
     }
 
     fn encode<T: ?Sized + serde::Serialize>(value: &T) -> Cow<[u8]> {
-        let mut buf = vec![];
-        ciborium::ser::into_writer(value, &mut buf).expect("failed to encode");
-        Cow::Owned(buf)
+        let bytes = bincode::serialize(value).expect("failed to encode");
+        Cow::Owned(bytes)
     }
 
-    fn decode<T: serde::de::DeserializeOwned>(bytes: Cow<[u8]>) -> T {
-        ciborium::de::from_reader(bytes.as_ref())
+    fn decode<T: for<'a> serde::Deserialize<'a>>(bytes: Cow<[u8]>) -> T {
+        bincode::deserialize(bytes.as_ref())
             .unwrap_or_else(|e| panic!("failed to decode bytes {}: {e}", hex::encode(bytes)))
+    }
+}
+
+// Testing which state serialization is faster
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Instant;
+
+    #[test]
+    fn compare_bincode_and_ciborium() {
+        let tx_identifier: EvmToIcpTxIdentifier = EvmToIcpTxIdentifier(
+            "0x00000034125423542452345241254235245".to_string(),
+            ChainId(56),
+        );
+
+        // Bincode Serialization and Deserialization
+        let start = Instant::now();
+        let bincode_bytes = bincode::serialize(&tx_identifier).unwrap();
+        let bincode_serialization_time = start.elapsed();
+
+        let start = Instant::now();
+        let bincode_deserialized: EvmToIcpTxIdentifier =
+            bincode::deserialize(&bincode_bytes).unwrap();
+        let bincode_deserialization_time = start.elapsed();
+
+        assert_eq!(bincode_deserialized, tx_identifier);
+
+        // Ciborium Serialization and Deserialization
+        let start = Instant::now();
+        let mut ciborium_buf = Vec::new();
+        ciborium::ser::into_writer(&tx_identifier, &mut ciborium_buf)
+            .expect("Failed to serialize with Ciborium");
+        let ciborium_serialization_time = start.elapsed();
+
+        let start = Instant::now();
+        let ciborium_deserialized: EvmToIcpTxIdentifier =
+            ciborium::de::from_reader(ciborium_buf.as_slice())
+                .expect("Failed to deserialize with Ciborium");
+        let ciborium_deserialization_time = start.elapsed();
+
+        assert_eq!(ciborium_deserialized, tx_identifier);
+
+        // Print results
+        println!(
+            "Bincode - Serialization: {:?}, Deserialization: {:?}",
+            bincode_serialization_time, bincode_deserialization_time
+        );
+        println!(
+            "Ciborium - Serialization: {:?}, Deserialization: {:?}",
+            ciborium_serialization_time, ciborium_deserialization_time
+        );
     }
 }

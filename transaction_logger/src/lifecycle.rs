@@ -1,6 +1,7 @@
 use crate::endpoints::InitArgs;
 use crate::endpoints::UpgradeArg;
 use crate::logs::INFO;
+use crate::state::nat_to_erc20_amount;
 use crate::state::ChainId;
 use crate::state::Minter;
 
@@ -50,8 +51,8 @@ pub fn post_upgrade(upgrade_arg: Option<UpgradeArg>) {
                 mutate_state(|s| {
                     s.update_minter_fees(
                         &minter_key,
-                        update_minter_args.evm_to_icp_fee,
-                        update_minter_args.icp_to_evm_fee,
+                        nat_to_erc20_amount(update_minter_args.evm_to_icp_fee),
+                        nat_to_erc20_amount(update_minter_args.icp_to_evm_fee),
                     )
                 });
             }

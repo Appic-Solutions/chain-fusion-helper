@@ -64,9 +64,16 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
             .into_iter()
             .filter_map(|event| {
                 let timestamp = event.timestamp;
+
                 let event_payload = match event.payload {
-                    DfinityEventPayload::Init(..) => None,
-                    DfinityEventPayload::Upgrade(..) => None,
+                    DfinityEventPayload::Init(..)
+                    | DfinityEventPayload::Upgrade(..)
+                    | DfinityEventPayload::SyncedToBlock { .. }
+                    | DfinityEventPayload::SyncedErc20ToBlock { .. }
+                    | DfinityEventPayload::SyncedDepositWithSubaccountToBlock { .. }
+                    | DfinityEventPayload::SkippedBlock { .. }
+                    | DfinityEventPayload::AddedCkErc20Token { .. } => None,
+
                     DfinityEventPayload::AcceptedDeposit {
                         transaction_hash,
                         block_number,
@@ -84,6 +91,7 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         principal,
                         subaccount,
                     }),
+
                     DfinityEventPayload::AcceptedErc20Deposit {
                         transaction_hash,
                         block_number,
@@ -103,6 +111,7 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         erc20_contract_address,
                         subaccount,
                     }),
+
                     DfinityEventPayload::InvalidDeposit {
                         event_source,
                         reason,
@@ -113,6 +122,7 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         },
                         reason,
                     }),
+
                     DfinityEventPayload::MintedCkEth {
                         event_source,
                         mint_block_index,
@@ -123,9 +133,7 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         },
                         mint_block_index,
                     }),
-                    DfinityEventPayload::SyncedToBlock { .. } => None,
-                    DfinityEventPayload::SyncedErc20ToBlock { .. } => None,
-                    DfinityEventPayload::SyncedDepositWithSubaccountToBlock { .. } => None,
+
                     DfinityEventPayload::AcceptedEthWithdrawalRequest {
                         withdrawal_amount,
                         destination,
@@ -141,6 +149,7 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         from_subaccount,
                         created_at,
                     }),
+
                     DfinityEventPayload::CreatedTransaction {
                         withdrawal_id,
                         transaction,
@@ -148,6 +157,7 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         withdrawal_id,
                         transaction: transaction.into(),
                     }),
+
                     DfinityEventPayload::SignedTransaction {
                         withdrawal_id,
                         raw_transaction,
@@ -155,6 +165,7 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         withdrawal_id,
                         raw_transaction,
                     }),
+
                     DfinityEventPayload::ReplacedTransaction {
                         withdrawal_id,
                         transaction,
@@ -162,6 +173,7 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         withdrawal_id,
                         transaction: transaction.into(),
                     }),
+
                     DfinityEventPayload::FinalizedTransaction {
                         withdrawal_id,
                         transaction_receipt,
@@ -169,6 +181,7 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         withdrawal_id,
                         transaction_receipt: transaction_receipt.into(),
                     }),
+
                     DfinityEventPayload::ReimbursedEthWithdrawal {
                         reimbursed_in_block,
                         withdrawal_id,
@@ -180,6 +193,7 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         reimbursed_amount,
                         transaction_hash,
                     }),
+
                     DfinityEventPayload::ReimbursedErc20Withdrawal {
                         withdrawal_id,
                         burn_in_block,
@@ -195,8 +209,7 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         reimbursed_amount,
                         transaction_hash,
                     }),
-                    DfinityEventPayload::SkippedBlock { .. } => None,
-                    DfinityEventPayload::AddedCkErc20Token { .. } => None,
+
                     DfinityEventPayload::AcceptedErc20WithdrawalRequest {
                         max_transaction_fee,
                         withdrawal_amount,
@@ -220,17 +233,7 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         from_subaccount,
                         created_at,
                     }),
-                    DfinityEventPayload::FailedErc20WithdrawalRequest {
-                        withdrawal_id,
-                        reimbursed_amount,
-                        to,
-                        to_subaccount,
-                    } => Some(AppicEventPayload::FailedErc20WithdrawalRequest {
-                        withdrawal_id,
-                        reimbursed_amount,
-                        to,
-                        to_subaccount,
-                    }),
+
                     DfinityEventPayload::MintedCkErc20 {
                         event_source,
                         mint_block_index,
@@ -245,6 +248,7 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         erc20_token_symbol: ckerc20_token_symbol,
                         erc20_contract_address,
                     }),
+
                     DfinityEventPayload::QuarantinedDeposit { event_source } => {
                         Some(AppicEventPayload::QuarantinedDeposit {
                             event_source: AppicEventSource {
@@ -253,19 +257,26 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                             },
                         })
                     }
+
                     DfinityEventPayload::QuarantinedReimbursement { index } => {
                         Some(AppicEventPayload::QuarantinedReimbursement {
                             index: index.into(),
                         })
                     }
-                };
-                match event_payload {
-                    Some(e) => Some(AppicEvent {
-                        timestamp,
-                        payload: e,
+                    DfinityEventPayload::FailedErc20WithdrawalRequest {
+                        withdrawal_id,
+                        reimbursed_amount,
+                        to,
+                        to_subaccount,
+                    } => Some(AppicEventPayload::FailedErc20WithdrawalRequest {
+                        withdrawal_id,
+                        reimbursed_amount,
+                        to,
+                        to_subaccount,
                     }),
-                    None => None,
-                }
+                };
+
+                event_payload.map(|payload| AppicEvent { timestamp, payload })
             })
             .collect();
 

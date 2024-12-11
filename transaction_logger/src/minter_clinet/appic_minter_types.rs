@@ -93,12 +93,13 @@ pub struct UpgradeArg {
 
 pub mod events {
 
+    use super::*;
+    use crate::{
+        numeric::LedgerBurnIndex,
+        state::{nat_to_ledger_burn_index, nat_to_u64},
+    };
     use candid::{CandidType, Deserialize, Nat, Principal};
     use serde_bytes::ByteBuf;
-
-    use crate::state::NativeLedgerBurnIndex;
-
-    use super::*;
 
     #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
     pub struct GetEventsArg {
@@ -136,15 +137,17 @@ pub mod events {
         },
     }
 
-    impl From<ReimbursementIndex> for NativeLedgerBurnIndex {
+    impl From<ReimbursementIndex> for LedgerBurnIndex {
         fn from(value: ReimbursementIndex) -> Self {
             match value {
-                ReimbursementIndex::Native { ledger_burn_index } => ledger_burn_index,
+                ReimbursementIndex::Native { ledger_burn_index } => {
+                    nat_to_ledger_burn_index(&ledger_burn_index)
+                }
                 ReimbursementIndex::Erc20 {
                     native_ledger_burn_index,
                     ledger_id: _,
                     erc20_ledger_burn_index: _,
-                } => native_ledger_burn_index,
+                } => nat_to_ledger_burn_index(&native_ledger_burn_index),
             }
         }
     }
