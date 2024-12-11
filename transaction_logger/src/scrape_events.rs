@@ -5,13 +5,11 @@ use crate::{
     numeric::Erc20TokenAmount,
     state::{
         mutate_state, nat_to_ledger_burn_index, read_state, ChainId, EvmToIcpTxIdentifier,
-        IcpToEvmIdentifier, Minter, MinterKey, Oprator,
+        IcpToEvmIdentifier, MinterKey, Oprator,
     },
 };
 
 use crate::minter_clinet::appic_minter_types::events::EventPayload as AppicEventPayload;
-use crate::numeric::LedgerBurnIndex;
-use candid::Nat;
 use ic_canister_log::log;
 
 use crate::minter_clinet::event_conversion::Events;
@@ -317,11 +315,7 @@ fn apply_state_transition(
                     nat_to_ledger_burn_index(&withdrawal_id),
                     chain_id,
                 )),
-            AppicEventPayload::MintedErc20 {
-                event_source,
-                erc20_contract_address,
-                ..
-            } => s.record_minted_evm_to_icp(
+            AppicEventPayload::MintedErc20 { event_source, .. } => s.record_minted_evm_to_icp(
                 EvmToIcpTxIdentifier::new(&event_source.transaction_hash, chain_id),
                 evm_to_icp_fee,
             ),

@@ -70,10 +70,10 @@ type CandidIcpToEvm = record {
   actual_received : opt nat;
   chain_id : nat;
   max_transaction_fee : opt nat;
-  toatal_gas_spent : opt nat;
   oprator : Oprator;
   icrc_ledger_id : opt principal;
   gas_used : opt nat;
+  total_gas_spent : opt nat;
   native_ledger_burn_index : nat;
 };
 type EvmToIcpStatus = variant {

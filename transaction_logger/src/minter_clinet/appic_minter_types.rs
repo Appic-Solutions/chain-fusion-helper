@@ -94,10 +94,7 @@ pub struct UpgradeArg {
 pub mod events {
 
     use super::*;
-    use crate::{
-        numeric::LedgerBurnIndex,
-        state::{nat_to_ledger_burn_index, nat_to_u64},
-    };
+    use crate::{numeric::LedgerBurnIndex, state::nat_to_ledger_burn_index};
     use candid::{CandidType, Deserialize, Nat, Principal};
     use serde_bytes::ByteBuf;
 
