@@ -19,3 +19,6 @@ pub type BlockNumber = CheckedAmountOf<BlockNumberTag>;
 
 pub enum BurnIndexTag {}
 pub type LedgerBurnIndex = Id<BurnIndexTag, u64>;
+
+pub enum MintIndexTag {}
+pub type LedgerMintIndex = Id<BurnIndexTag, u64>;

@@ -4,8 +4,8 @@ use crate::{
     minter_clinet::MinterClient,
     numeric::Erc20TokenAmount,
     state::{
-        mutate_state, nat_to_ledger_burn_index, read_state, ChainId, EvmToIcpTxIdentifier,
-        IcpToEvmIdentifier, MinterKey, Operator,
+        mutate_state, nat_to_ledger_burn_index, nat_to_ledger_mint_index, read_state, ChainId,
+        EvmToIcpTxIdentifier, IcpToEvmIdentifier, MinterKey, Operator,
     },
 };
 
@@ -219,9 +219,13 @@ fn apply_state_transition(
                 EvmToIcpTxIdentifier::new(&event_source.transaction_hash, chain_id),
                 reason,
             ),
-            AppicEventPayload::MintedNative { event_source, .. } => s.record_minted_evm_to_icp(
+            AppicEventPayload::MintedNative {
+                event_source,
+                mint_block_index,
+            } => s.record_minted_evm_to_icp(
                 EvmToIcpTxIdentifier::new(&event_source.transaction_hash, chain_id),
                 evm_to_icp_fee,
+                nat_to_ledger_mint_index(&mint_block_index),
             ),
             AppicEventPayload::SyncedToBlock { .. } => {}
             AppicEventPayload::AcceptedNativeWithdrawalRequest {
@@ -315,9 +319,14 @@ fn apply_state_transition(
                     nat_to_ledger_burn_index(&withdrawal_id),
                     chain_id,
                 )),
-            AppicEventPayload::MintedErc20 { event_source, .. } => s.record_minted_evm_to_icp(
+            AppicEventPayload::MintedErc20 {
+                event_source,
+                mint_block_index,
+                ..
+            } => s.record_minted_evm_to_icp(
                 EvmToIcpTxIdentifier::new(&event_source.transaction_hash, chain_id),
                 evm_to_icp_fee,
+                nat_to_ledger_mint_index(&mint_block_index),
             ),
             AppicEventPayload::QuarantinedDeposit { event_source } => s
                 .record_quarantined_evm_to_icp(EvmToIcpTxIdentifier::new(

@@ -2,12 +2,12 @@ type AddEvmToIcpTx = record {
   "principal" : principal;
   transaction_hash : text;
   value : nat;
+  operator : Operator;
   time : nat;
   subaccount : opt blob;
   erc20_contract_address : text;
   chain_id : nat;
   from_address : text;
-  operator : Operator;
   icrc_ledger_id : principal;
   total_gas_spent : nat;
 };
@@ -22,12 +22,12 @@ type AddIcpToEvmTx = record {
   destination : text;
   withdrawal_amount : nat;
   from : principal;
+  operator : Operator;
   time : nat;
   from_subaccount : opt blob;
   erc20_contract_address : text;
   chain_id : nat;
   max_transaction_fee : nat;
-  operator : Operator;
   icrc_ledger_id : principal;
   native_ledger_burn_index : nat;
 };
@@ -44,14 +44,15 @@ type CandidEvmToIcp = record {
   verified : bool;
   transaction_hash : text;
   value : nat;
+  operator : Operator;
   time : nat64;
   subaccount : opt blob;
   block_number : opt nat;
   erc20_contract_address : text;
   actual_received : opt nat;
+  ledger_mint_index : opt nat;
   chain_id : nat;
   from_address : text;
-  operator : Operator;
   icrc_ledger_id : opt principal;
   total_gas_spent : opt nat;
 };
@@ -64,13 +65,13 @@ type CandidIcpToEvm = record {
   transaction_hash : opt text;
   withdrawal_amount : nat;
   from : principal;
+  operator : Operator;
   time : nat64;
   from_subaccount : opt blob;
   erc20_contract_address : text;
   actual_received : opt nat;
   chain_id : nat;
   max_transaction_fee : opt nat;
-  operator : Operator;
   icrc_ledger_id : opt principal;
   gas_used : opt nat;
   total_gas_spent : opt nat;
@@ -82,6 +83,10 @@ type EvmToIcpStatus = variant {
   Minted;
   Accepted;
   Quarantined;
+};
+type GetTxParams = record {
+  chain_id : nat;
+  search_param : TransactionSearchParam;
 };
 type IcpToEvmStatus = variant {
   Failed;
@@ -101,8 +106,8 @@ type LoggerArgs = variant { Upgrade : UpgradeArg; Init : InitArgs };
 type MinterArgs = record {
   last_observed_event : nat;
   last_scraped_event : nat;
-  chain_id : nat;
   operator : Operator;
+  chain_id : nat;
   icp_to_evm_fee : nat;
   evm_to_icp_fee : nat;
   minter_id : principal;
@@ -111,18 +116,23 @@ type Operator = variant { AppicMinter; DfinityCkEthMinter };
 type Result = variant { Ok; Err : AddEvmToIcpTxError };
 type Result_1 = variant { Ok; Err : AddIcpToEvmTxError };
 type TokenPair = record {
+  operator : Operator;
   ledger_id : principal;
   chain_id : nat;
   erc20_address : text;
-  operator : Operator;
 };
 type Transaction = variant {
   EvmToIcp : CandidEvmToIcp;
   IcpToEvm : CandidIcpToEvm;
 };
+type TransactionSearchParam = variant {
+  TxWithdrawalId : nat;
+  TxMintId : nat;
+  TxHash : text;
+};
 type UpdateMinterArgs = record {
-  chain_id : nat;
   operator : Operator;
+  chain_id : nat;
   icp_to_evm_fee : nat;
   evm_to_icp_fee : nat;
   minter_id : principal;
@@ -135,6 +145,7 @@ service : (LoggerArgs) -> {
   get_all_tx_by_address : (text) -> (vec Transaction) query;
   get_all_tx_by_principal : (principal) -> (vec Transaction) query;
   get_supported_token_pairs : () -> (vec TokenPair) query;
+  get_transaction : (GetTxParams) -> (opt Transaction) query;
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
   new_evm_to_icp_tx : (AddEvmToIcpTx) -> (Result);
   new_icp_to_evm_tx : (AddIcpToEvmTx) -> (Result_1);

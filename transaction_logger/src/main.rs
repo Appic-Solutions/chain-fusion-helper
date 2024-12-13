@@ -7,7 +7,7 @@ use ic_cdk::{init, post_upgrade, query, update};
 use ic_cdk_timers;
 use ic_ethereum_types::Address;
 use transaction_logger::endpoints::{
-    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError,
+    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError, GetTxParams,
     Icrc28TrustedOriginsResponse, TokenPair, Transaction,
 };
 use transaction_logger::lifecycle::{self, init as initialize};
@@ -174,6 +174,7 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
                 time: ic_cdk::api::time(),
                 erc20_contract_address,
                 icrc_ledger_id: Some(icrc_pair),
+                ledger_mint_index: None,
                 verified: false,
                 status: EvmToIcpStatus::PendingVerification,
                 operator: tx.operator,
@@ -205,6 +206,22 @@ pub fn get_all_tx_by_principal(principal_id: Principal) -> Vec<Transaction> {
 #[query]
 pub fn get_supported_token_pairs() -> Vec<TokenPair> {
     read_state(|s| s.get_suported_twin_token_pairs())
+}
+
+#[query]
+pub fn get_transaction(params: GetTxParams) -> Option<Transaction> {
+    // Check if chain id is supported
+    let chain_id = ChainId::from(&params.chain_id);
+    let chain_check_result = read_state(|s| s.if_chain_id_exists(chain_id));
+
+    if !chain_check_result {
+        return None;
+    }
+
+    let search_result =
+        read_state(|s| s.get_transaction_by_search_params(params.search_param, chain_id));
+
+    search_result
 }
 
 // list every base URL that users will authenticate to your app from

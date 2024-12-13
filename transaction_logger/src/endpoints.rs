@@ -104,6 +104,19 @@ pub enum Transaction {
     EvmToIcp(CandidEvmToIcp),
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub struct GetTxParams {
+    pub chain_id: CandidChainId,
+    pub search_param: TransactionSearchParam,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub enum TransactionSearchParam {
+    TxHash(String),
+    TxWithdrawalId(Nat),
+    TxMintId(Nat),
+}
+
 impl From<CandidIcpToEvm> for Transaction {
     fn from(value: CandidIcpToEvm) -> Self {
         Self::IcpToEvm(value)
@@ -195,6 +208,7 @@ pub struct CandidEvmToIcp {
     pub transaction_hash: String,
     pub value: Nat,
     pub block_number: Option<Nat>,
+    pub ledger_mint_index: Option<Nat>,
     pub actual_received: Option<Nat>,
     pub principal: Principal,
     pub subaccount: Option<[u8; 32]>,
@@ -226,12 +240,15 @@ impl From<EvmToIcpTx> for CandidEvmToIcp {
             verified,
             time,
             operator,
+            ledger_mint_index,
         } = value;
         Self {
             from_address: from_address.to_string(),
             transaction_hash,
             value: value.into(),
             block_number: block_number.map(|blokc_number| blokc_number.into()),
+            ledger_mint_index: ledger_mint_index
+                .map(|ledger_mint_index| ledger_mint_index.get().into()),
             actual_received: actual_received.map(|actual_received| actual_received.into()),
             principal,
             subaccount,

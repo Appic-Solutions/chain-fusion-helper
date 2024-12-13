@@ -1,3 +1,4 @@
+use crate::numeric::LedgerMintIndex;
 use candid::{CandidType, Nat, Principal};
 use ic_ethereum_types::Address;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
@@ -16,7 +17,7 @@ use std::str::FromStr;
 
 use crate::endpoints::{
     AddEvmToIcpTx, AddIcpToEvmTx, CandidEvmToIcp, CandidIcpToEvm, MinterArgs, TokenPair,
-    Transaction,
+    Transaction, TransactionSearchParam,
 };
 use crate::numeric::{BlockNumber, Erc20TokenAmount, LedgerBurnIndex};
 use crate::scrape_events::NATIVE_ERC20_ADDRESS;
@@ -128,6 +129,7 @@ pub struct EvmToIcpTx {
     pub from_address: Address,
     pub transaction_hash: TransactionHash,
     pub value: Erc20TokenAmount,
+    pub ledger_mint_index: Option<LedgerMintIndex>,
     pub block_number: Option<BlockNumber>,
     pub actual_received: Option<Erc20TokenAmount>,
     pub principal: Principal,
@@ -366,6 +368,7 @@ impl State {
                 verified: true,
                 time: timestamp,
                 operator,
+                ledger_mint_index: None,
             };
 
             self.record_new_evm_to_icp(identifier, new_tx);
@@ -376,6 +379,7 @@ impl State {
         &mut self,
         identifier: EvmToIcpTxIdentifier,
         evm_to_icp_fee: Erc20TokenAmount,
+        ledger_mint_index: LedgerMintIndex,
     ) {
         if let Some(tx) = self.evm_to_icp_txs.get(&identifier) {
             // Fee calculation
@@ -388,6 +392,7 @@ impl State {
             // Transaction update
             let new_tx = EvmToIcpTx {
                 actual_received,
+                ledger_mint_index: Some(ledger_mint_index),
                 status: EvmToIcpStatus::Minted,
                 ..tx
             };
@@ -662,6 +667,66 @@ impl State {
             )
             .collect()
     }
+
+    fn get_transaction_by_hash(&self, tx_hash: &String, chain_id: ChainId) -> Option<Transaction> {
+        let evm_to_icp_id = EvmToIcpTxIdentifier::new(tx_hash, chain_id);
+
+        self.evm_to_icp_txs
+            .get(&evm_to_icp_id)
+            .map(|tx| Transaction::from(CandidEvmToIcp::from(tx)))
+            .or_else(|| {
+                self.icp_to_evm_txs
+                    .values()
+                    .find(|tx| {
+                        tx.chain_id == chain_id && tx.transaction_hash.as_ref() == Some(tx_hash)
+                    })
+                    .map(|tx| Transaction::from(CandidIcpToEvm::from(tx)))
+            })
+    }
+
+    fn get_transaction_by_burn_idex(
+        &self,
+        ledger_burn_index: LedgerBurnIndex,
+        chain_id: ChainId,
+    ) -> Option<Transaction> {
+        let icp_to_evm_id = IcpToEvmIdentifier(ledger_burn_index, chain_id);
+
+        self.icp_to_evm_txs
+            .get(&icp_to_evm_id)
+            .map(|tx| Transaction::from(CandidIcpToEvm::from(tx)))
+    }
+
+    fn get_transaction_by_mint_id(
+        &self,
+        ledger_mint_index: LedgerMintIndex,
+        chain_id: ChainId,
+    ) -> Option<Transaction> {
+        self.evm_to_icp_txs
+            .values()
+            .find(|tx| tx.chain_id == chain_id && tx.ledger_mint_index == Some(ledger_mint_index))
+            .map(|tx| Transaction::EvmToIcp(CandidEvmToIcp::from(tx)))
+    }
+
+    pub fn get_transaction_by_search_params(
+        &self,
+        search_param: TransactionSearchParam,
+        chain_id: ChainId,
+    ) -> Option<Transaction> {
+        let search_result = match search_param {
+            TransactionSearchParam::TxHash(tx_hash) => {
+                self.get_transaction_by_hash(&tx_hash, chain_id)
+            }
+
+            TransactionSearchParam::TxWithdrawalId(withdrawal_id) => self
+                .get_transaction_by_burn_idex(nat_to_ledger_burn_index(&withdrawal_id), chain_id),
+
+            TransactionSearchParam::TxMintId(mint_id) => {
+                self.get_transaction_by_mint_id(nat_to_ledger_mint_index(&mint_id), chain_id)
+            }
+        };
+
+        search_result
+    }
 }
 
 pub fn is_native_token(address: &Address) -> bool {
@@ -685,6 +750,10 @@ pub fn nat_to_ledger_burn_index(value: &Nat) -> LedgerBurnIndex {
     LedgerBurnIndex::new(nat_to_u64(value))
 }
 
+pub fn nat_to_ledger_mint_index(value: &Nat) -> LedgerMintIndex {
+    LedgerMintIndex::new(nat_to_u64(value))
+}
+
 pub fn nat_to_block_number(value: Nat) -> BlockNumber {
     BlockNumber::try_from(value).expect("Failed to convert nat into Erc20TokenAmount")
 }
@@ -700,8 +769,6 @@ pub fn nat_to_u64(value: &Nat) -> u64 {
 pub fn nat_to_u128(value: &Nat) -> u128 {
     value.0.to_u128().unwrap()
 }
-
-pub fn calculate_actual_icp_to_evm_received() {}
 
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
