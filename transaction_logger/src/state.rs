@@ -9,8 +9,8 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cell::RefCell;
 use storage_config::{
-    evm_to_icp_memory, icp_to_evm_memory, minter_memory, supported_appic_tokens_memory_id,
-    supported_ckerc20_tokens_memory_id,
+    evm_to_icp_memory, evm_token_list_id, icp_to_evm_memory, minter_memory,
+    supported_appic_tokens_memory_id, supported_ckerc20_tokens_memory_id,
 };
 
 use std::str::FromStr;
@@ -214,6 +214,39 @@ impl Erc20Identifier {
         self.1
     }
 }
+
+impl From<&EvmToken> for Erc20Identifier {
+    fn from(value: &EvmToken) -> Self {
+        Self::new(&value.erc20_contract_address, value.chain_id)
+    }
+}
+
+#[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+pub struct EvmToken {
+    pub chain_id: ChainId,
+    pub erc20_contract_address: Address,
+    pub name: String,
+    pub decimals: u8,
+    pub symbol: String,
+    pub logo: String,
+}
+
+pub enum IcpTokenType {
+    ICRC1,
+    ICRC2,
+    ICRC3,
+    DIP20,
+    Other(String),
+}
+
+pub struct IcpToken {
+    pub ledger_id: Principal,
+    pub name: String,
+    pub decimals: u8,
+    pub symbol: String,
+    pub token_type: IcpTokenType,
+}
+
 // State Definition,
 // All types of transactions will be sotred in this stable state
 pub struct State {
@@ -228,6 +261,8 @@ pub struct State {
 
     pub supported_ckerc20_tokens: BTreeMap<Erc20Identifier, Principal, StableMemory>,
     pub supported_twin_appic_tokens: BTreeMap<Erc20Identifier, Principal, StableMemory>,
+
+    pub evm_tokens_list: BTreeMap<Erc20Identifier, EvmToken, StableMemory>,
 }
 
 impl State {
@@ -612,6 +647,7 @@ impl State {
         self.evm_to_icp_txs.remove(identifier);
     }
 
+    // Gets all the transaction history for an evm address
     pub fn get_transaction_for_address(&self, address: Address) -> Vec<Transaction> {
         let result: Vec<Transaction> = self
             .evm_to_icp_txs
@@ -629,6 +665,7 @@ impl State {
         result
     }
 
+    // Gets all the transaction history for a principal
     pub fn get_transaction_for_principal(&self, principal_id: Principal) -> Vec<Transaction> {
         let result: Vec<Transaction> = self
             .evm_to_icp_txs
@@ -646,6 +683,7 @@ impl State {
         result
     }
 
+    // Gets supported twin token pairs for both Appic and Dfinity NNS Twin tokens
     pub fn get_suported_twin_token_pairs(&self) -> Vec<TokenPair> {
         self.supported_ckerc20_tokens
             .iter()
@@ -668,6 +706,7 @@ impl State {
             .collect()
     }
 
+    // Searches for a transaction by hash in both evm_to_icp and icp_to_evm
     fn get_transaction_by_hash(&self, tx_hash: &String, chain_id: ChainId) -> Option<Transaction> {
         let evm_to_icp_id = EvmToIcpTxIdentifier::new(tx_hash, chain_id);
 
@@ -684,6 +723,7 @@ impl State {
             })
     }
 
+    // Searches for a transaction by burn index id in icp_to_evm_tx
     fn get_transaction_by_burn_idex(
         &self,
         ledger_burn_index: LedgerBurnIndex,
@@ -696,6 +736,7 @@ impl State {
             .map(|tx| Transaction::from(CandidIcpToEvm::from(tx)))
     }
 
+    // Searches for a transaction by mint id in evm_to_icp_txs
     fn get_transaction_by_mint_id(
         &self,
         ledger_mint_index: LedgerMintIndex,
@@ -707,6 +748,8 @@ impl State {
             .map(|tx| Transaction::EvmToIcp(CandidEvmToIcp::from(tx)))
     }
 
+    // Gets a single transaction by search param
+    // Returns none if no transaction is available
     pub fn get_transaction_by_search_params(
         &self,
         search_param: TransactionSearchParam,
@@ -726,6 +769,23 @@ impl State {
         };
 
         search_result
+    }
+
+    // Records a single evm token
+    pub fn record_evm_token(&mut self, identifier: Erc20Identifier, token: EvmToken) {
+        self.evm_tokens_list.insert(identifier, token);
+    }
+
+    // Records all evm_tokens in bulk
+    pub fn record_evm_tokens_bulk(&mut self, tokens: Vec<EvmToken>) {
+        tokens.into_iter().for_each(|token| {
+            self.evm_tokens_list
+                .insert(Erc20Identifier::from(&token), token);
+        });
+    }
+
+    pub fn get_evm_token_by_identifier(&self, identifier: &Erc20Identifier) -> Option<EvmToken> {
+        self.evm_tokens_list.get(identifier)
     }
 }
 
@@ -770,6 +830,9 @@ pub fn nat_to_u128(value: &Nat) -> u128 {
     value.0.to_u128().unwrap()
 }
 
+pub fn nat_to_u8(value: &Nat) -> u8 {
+    value.0.to_u8().unwrap()
+}
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct ChainId(pub u64);
@@ -814,7 +877,9 @@ thread_local! {
                 evm_to_icp_txs: BTreeMap::init(evm_to_icp_memory()),
                 icp_to_evm_txs: BTreeMap::init(icp_to_evm_memory()),
                 supported_ckerc20_tokens: BTreeMap::init(supported_ckerc20_tokens_memory_id()),
-                supported_twin_appic_tokens:BTreeMap::init(supported_appic_tokens_memory_id())
+                supported_twin_appic_tokens:BTreeMap::init(supported_appic_tokens_memory_id()),
+                evm_tokens_list:BTreeMap::init(evm_token_list_id())
+
             })
     );
 }
@@ -857,6 +922,12 @@ mod storage_config {
 
     pub fn supported_appic_tokens_memory_id() -> StableMemory {
         MEMORY_MANAGER.with(|m| m.borrow().get(SUPPORTED_APPIC_MEMORY_ID))
+    }
+
+    const EVM_TOKEN_LIST: MemoryId = MemoryId::new(5);
+
+    pub fn evm_token_list_id() -> StableMemory {
+        MEMORY_MANAGER.with(|m| m.borrow().get(EVM_TOKEN_LIST))
     }
 
     impl Storable for MinterKey {
@@ -956,6 +1027,18 @@ mod storage_config {
     }
 
     impl Storable for Erc20Identifier {
+        fn to_bytes(&self) -> Cow<[u8]> {
+            encode(self)
+        }
+
+        fn from_bytes(bytes: Cow<[u8]>) -> Self {
+            decode(bytes)
+        }
+
+        const BOUND: Bound = Bound::Unbounded;
+    }
+
+    impl Storable for EvmToken {
         fn to_bytes(&self) -> Cow<[u8]> {
             encode(self)
         }

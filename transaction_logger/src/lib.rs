@@ -3,7 +3,8 @@ use std::time::Duration;
 pub mod checked_amount;
 pub mod endpoints;
 pub mod guard;
-mod ledger_manager_client;
+pub mod icp_tokens_service;
+pub mod ledger_manager_client;
 pub mod lifecycle;
 pub mod logs;
 pub mod minter_clinet;
@@ -11,6 +12,7 @@ pub mod numeric;
 pub mod remove_unverified_tx;
 pub mod scrape_events;
 pub mod state;
+pub mod update_icp_tokens;
 pub mod update_token_pairs;
 
 pub const SCRAPE_EVENTS_INTERVAL: Duration = Duration::from_secs(1 * 60);

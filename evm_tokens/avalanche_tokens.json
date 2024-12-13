@@ -1,0 +1,1922 @@
+[
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x0000000000000000000000000000000000000000",
+    "name": "Avalanche",
+    "decimals": 18,
+    "symbol": "AVAX",
+    "logo": "https://github.com/trustwallet/assets/blob/master/blockchains/avalanchec/info/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xc7b5d72c836e718cda8888eaf03707faef675079",
+    "name": "TrustSwap Token",
+    "decimals": 18,
+    "symbol": "SWAP.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xCC4304A31d09258b0029eA7FE63d032f52e44EFe/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x9eaac1b23d935365bd7b542fe22ceee2922f52dc",
+    "name": "yearn.finance",
+    "decimals": 18,
+    "symbol": "YFI.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x9eAaC1B23d935365bD7b542Fe22cEEe2922f52dc/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xb599c3590f42f8f995ecfa0f85d2980b76862fc1",
+    "name": "UST",
+    "decimals": 6,
+    "symbol": "UST",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xb599c3590F42f8F995ECfa0f85D2980B76862fc1/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xfac235f442ed946087c1db9f70075b51e698a487",
+    "name": "Pterosaur Token",
+    "decimals": 18,
+    "symbol": "PTER",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/pter.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x2f86508f41310d8d974b76deb3d246c0caa71cf5",
+    "name": "Hot Cross Token",
+    "decimals": 18,
+    "symbol": "HOTCROSS",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x4FA7163E153419E0E1064e418dd7A99314Ed27b6/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x83a283641c6b4df383bcddf807193284c84c5342",
+    "name": "VaporNodes",
+    "decimals": 18,
+    "symbol": "VPND",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/vpnd.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x78ea17559b3d2cf85a7f9c2c704eda119db5e6de",
+    "name": "Avaware",
+    "decimals": 18,
+    "symbol": "AVE",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/ave.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x7d1232b90d3f809a54eeaeebc639c62df8a8942f",
+    "name": "Snowbank",
+    "decimals": 9,
+    "symbol": "SB",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/sb.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x916aba115f5162960e48a2675ad4d8cbd09ce8e4",
+    "name": "MCVERSE",
+    "decimals": 18,
+    "symbol": "MCV",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/mcv.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xf44fb887334fa17d2c5c0f970b5d320ab53ed557",
+    "name": "BSCstarter",
+    "decimals": 18,
+    "symbol": "START",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x31D0a7AdA4d4c131Eb612DB48861211F63e57610/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x00ee200df31b869a321b10400da10b561f3ee60d",
+    "name": "Arable Protocol",
+    "decimals": 18,
+    "symbol": "ACRE",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/acre.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xf03dccaec9a28200a6708c686cf0b8bf26ddc356",
+    "name": "YDragon",
+    "decimals": 18,
+    "symbol": "YDR",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/ydr.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xae4aa155d2987b454c29450ef4f862cf00907b61",
+    "name": "Thorus",
+    "decimals": 18,
+    "symbol": "THO",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/tho.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x2b1d36f5b61addaf7da7ebbd11b35fd8cfb0de31",
+    "name": "Interport Token",
+    "decimals": 18,
+    "symbol": "ITP",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/linea/assets/0x2b1D36f5B61AdDAf7DA7ebbd11B35FD8cfb0DE31/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x98443b96ea4b0858fdf3219cd13e98c7a4690588",
+    "name": "Basic Attention Token",
+    "decimals": 18,
+    "symbol": "BAT.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x98443B96EA4b0858FDF3219Cd13e98C7A4690588/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xb67a9374da03d4114a6fb8f0e7f2b82b5cb34ee3",
+    "name": "Augmented Finance",
+    "decimals": 18,
+    "symbol": "AGF",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/agf.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xbd100d061e120b2c67a24453cf6368e63f1be056",
+    "name": "iDeFiYieldProtocol",
+    "decimals": 18,
+    "symbol": "iDYP",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xBD100d061E120b2c67A24453CF6368E63f1Be056/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7",
+    "name": "Wrapped AVAX",
+    "decimals": 18,
+    "symbol": "WAVAX",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xce1bffbd5374dac86a2893119683f4911a2f7814",
+    "name": "Spell Token",
+    "decimals": 18,
+    "symbol": "SPELL",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xCE1bFFBD5374Dac86a2893119683F4911a2F7814/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xd7783a275e53fc6746dedfbad4a06059937502a4",
+    "name": "BIOS",
+    "decimals": 18,
+    "symbol": "BIOS",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xAACa86B876ca011844b5798ECA7a67591A9743C8/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x63dc3ca01ff09e714c8108ffd6f8a3e0b8cd13e4",
+    "name": "Zum Token",
+    "decimals": 18,
+    "symbol": "ZUM",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xe0b9BcD54bF8A730EA5d3f1fFCe0885E911a502c/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x9fda7ceec4c18008096c2fe2b85f05dc300f94d0",
+    "name": "MarginSwap",
+    "decimals": 18,
+    "symbol": "MFI",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/mfi.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xbc7b0223dd16cbc679c0d04ba3f4530d76dfba87",
+    "name": "Okse",
+    "decimals": 18,
+    "symbol": "OKSE",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/okse.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x88128fd4b259552a9a1d457f435a6527aab72d42",
+    "name": "Maker",
+    "decimals": 18,
+    "symbol": "MKR.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x88128fd4b259552A9A1D457f435a6527AAb72d42/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x695fa794d59106cebd40ab5f5ca19f458c723829",
+    "name": "HakuSwap Token",
+    "decimals": 18,
+    "symbol": "HAKU",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/haku.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x70928e5b188def72817b7775f0bf6325968e563b",
+    "name": "LUNA",
+    "decimals": 6,
+    "symbol": "LUNA",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x70928E5B188def72817b7775F0BF6325968e563B/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xb514cabd09ef5b169ed3fe0fa8dbd590741e81c2",
+    "name": "USDD",
+    "decimals": 18,
+    "symbol": "USDD",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x0C10bF8FcB7Bf5412187A595ab97a3609160b5c6/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xafc43610c7840b20b90caaf93759be5b54b291c9",
+    "name": "Allbridge",
+    "decimals": 18,
+    "symbol": "ABR",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/abr.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xf5f3216e9fed36f8ccf08d310fec6fbf7f06200f",
+    "name": "BOBS",
+    "decimals": 18,
+    "symbol": "BOBS",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/bobs.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x544c42fbb96b39b21df61cf322b5edc285ee7429",
+    "name": "Avalanche INSUR Token",
+    "decimals": 18,
+    "symbol": "INSUR",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x544c42fBB96B39B21DF61cf322b5EDC285EE7429/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x938fe3788222a74924e062120e7bfac829c719fb",
+    "name": "Ape In",
+    "decimals": 18,
+    "symbol": "APEIN",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/apein.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xc685e8eddc9f078666794cbfcd8d8351bac404ef",
+    "name": "Ultron",
+    "decimals": 18,
+    "symbol": "ULX",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/ulx.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x3bd2b1c7ed8d396dbb98ded3aebb41350a5b2339",
+    "name": "UMA Voting Token v1",
+    "decimals": 18,
+    "symbol": "UMA.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x3Bd2B1c7ED8D396dbb98DED3aEbb41350a5b2339/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xee9801669c6138e84bd50deb500827b776777d28",
+    "name": "O3 Swap Token",
+    "decimals": 18,
+    "symbol": "O3",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/optimism/assets/0xEe9801669C6138E84bD50dEB500827b776777d28/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x7c22e823b5ee641ed534ce3e368b59b5f0a3b7e0",
+    "name": "Grantsville",
+    "decimals": 18,
+    "symbol": "GVILLE",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/gville.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x4036f3d9c45a20f44f0b8b85dd6ca33005ff9654",
+    "name": "ROOBEE",
+    "decimals": 18,
+    "symbol": "ROOBEE",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/arbitrum/assets/0x3BD2dFd03BC7c3011ed7fb8c4d0949B382726cee/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x44754455564474a89358b2c2265883df993b12f0",
+    "name": "ZeroSwapToken",
+    "decimals": 18,
+    "symbol": "ZEE",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2eDf094dB69d6Dcd487f1B3dB9febE2eeC0dd4c5/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x50b7545627a5162f82a992c33b87adc75187b218",
+    "name": "Wrapped BTC",
+    "decimals": 8,
+    "symbol": "WBTC.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x50b7545627a5162F82A992c33b87aDc75187B218/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x5ecfec22aa950cb5a3b4fd7249dc30b2bd160f18",
+    "name": "Tarot",
+    "decimals": 18,
+    "symbol": "TAROT",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/fantom/assets/0xb7C2ddB1EBAc1056231ef22c1b0A13988537a274/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x3ab1c9adb065f3fca0059652cd7a52b05c98f9a9",
+    "name": "Orbs",
+    "decimals": 18,
+    "symbol": "ORBS",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/arbitrum/assets/0xf3C091ed43de9c270593445163a41A876A0bb3dd/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xb648fa7a5f5ed3b3c743140346e3dc3fe94a9125",
+    "name": "altFINS",
+    "decimals": 18,
+    "symbol": "AFINS",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/afins.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xcfccee441963aa4aeb39214f7071378a99f4e766",
+    "name": "Payday",
+    "decimals": 9,
+    "symbol": "PAYDAY",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/payday.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xc7198437980c041c805a1edcba50c1ce5db95118",
+    "name": "Tether USD",
+    "decimals": 6,
+    "symbol": "USDT.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xc7198437980c041c805A1EDcbA50c1Ce5db95118/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x130966628846bfd36ff31a822705796e8cb8c18d",
+    "name": "Magic Internet Money",
+    "decimals": 18,
+    "symbol": "MIM",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/mim.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x644192291cc835a93d6330b24ea5f5fedd0eef9e",
+    "name": "AllianceBlock Nexera Token",
+    "decimals": 18,
+    "symbol": "NXRA",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x644192291cc835A93d6330b24EA5f5FEdD0eEF9e/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xa5acfeca5270bc9768633fbc86caa959b85ec8b7",
+    "name": "KRW",
+    "decimals": 18,
+    "symbol": "KRW",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x1446f3CEdf4d86a9399E49f7937766E6De2A3AAB/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xfcde4a87b8b6fa58326bb462882f1778158b02f1",
+    "name": "Wirex Token",
+    "decimals": 18,
+    "symbol": "WXT",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/wxt.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xd586e7f844cea2f87f50152665bcbc2c279d8d70",
+    "name": "Dai Stablecoin",
+    "decimals": 18,
+    "symbol": "DAI.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xd586E7F844cEa2F87f50152665BCbc2C279D8d70/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xf0ff231e3f1a50f83136717f287adab862f89431",
+    "name": "USDT",
+    "decimals": 6,
+    "symbol": "USDT",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xF0FF231e3F1A50F83136717f287ADAB862f89431/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x590eb2920486486c2d9bb3eb651f73b81df87bcf",
+    "name": "bobcoin",
+    "decimals": 18,
+    "symbol": "BOBC",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0xCE6bD1833BD077f62B2c1F9a777bB829801d6811/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x0795b0da5aba851e8d1f0c59771d602cadb40d61",
+    "name": "Maple",
+    "decimals": 18,
+    "symbol": "MPL",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/mpl.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x214db107654ff987ad859f34125307783fc8e387",
+    "name": "Frax Share",
+    "decimals": 18,
+    "symbol": "FXS",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x214DB107654fF987AD859F34125307783fC8e387/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x13e7bcefdde72492e656f3fa58bae6029708e673",
+    "name": "AGX Coin",
+    "decimals": 18,
+    "symbol": "AGX",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/agx.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x4e720dd3ac5cfe1e1fbde4935f386bb1c66f4642",
+    "name": "Graviton",
+    "decimals": 18,
+    "symbol": "GTON",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/gton.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x1f1e7c893855525b303f99bdf5c3c05be09ca251",
+    "name": "Synapse",
+    "decimals": 18,
+    "symbol": "SYN",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x1f1E7c893855525b303f99bDF5c3c05Be09ca251/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x63a72806098bd3d9520cc43356dd78afe5d386d9",
+    "name": "Aave Token",
+    "decimals": 18,
+    "symbol": "AAVE.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x63a72806098Bd3D9520cC43356dD78afe5D386D9/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xc17c30e98541188614df99239cabd40280810ca3",
+    "name": "EverRise",
+    "decimals": 18,
+    "symbol": "RISE",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xC17c30e98541188614dF99239cABD40280810cA3/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x4586af10ecceed4e383e3f2ec93b6c61e26500b5",
+    "name": "HUNDRED",
+    "decimals": 18,
+    "symbol": "HUNDRED",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/hundred.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x7678e162f38ec9ef2bfd1d0aaf9fd93355e5fa0b",
+    "name": "VNX Euro",
+    "decimals": 18,
+    "symbol": "VEUR",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/veur.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x223a368ad0e7396165fc629976d77596a51f155c",
+    "name": "GURS",
+    "decimals": 18,
+    "symbol": "GURS",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/gurs.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x47c3118ad183712acd42648e9e522e13690f29a0",
+    "name": "Meat",
+    "decimals": 6,
+    "symbol": "MEAT",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/meat.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xc0c5aa69dbe4d6dddfbc89c0957686ec60f24389",
+    "name": "XEN Crypto",
+    "decimals": 18,
+    "symbol": "aXEN",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xC0C5AA69Dbe4d6DDdfBc89c0957686ec60F24389/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xc3048e19e76cb9a3aa9d77d8c03c29fc906e2437",
+    "name": "Compound",
+    "decimals": 18,
+    "symbol": "COMP.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xc3048E19E76CB9a3Aa9d77D8C03c29Fc906e2437/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x184ff13b3ebcb25be44e860163a5d8391dd568c1",
+    "name": "Kimbo",
+    "decimals": 18,
+    "symbol": "KIMBO",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x184ff13B3EBCB25Be44e860163A5D8391Dd568c1/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xc6bdfc4f2e90196738873e824a9efa03f7c64176",
+    "name": "ViciCoin",
+    "decimals": 18,
+    "symbol": "VCNT",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/vcnt.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xca1068444196cdfe676fd15a29f35e502580a69e",
+    "name": "AntGold",
+    "decimals": 18,
+    "symbol": "ANTG",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/antg.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x4bfc90322dd638f81f034517359bd447f8e0235a",
+    "name": "New Order",
+    "decimals": 18,
+    "symbol": "NEWO",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/newo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x0cd741f007b417088ca7f4392e8d6b49b4f7a975",
+    "name": "KINGSHIT",
+    "decimals": 18,
+    "symbol": "KINGSHIT",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/kingshit.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x1ecd47ff4d9598f89721a2866bfeb99505a413ed",
+    "name": "AVME",
+    "decimals": 18,
+    "symbol": "AVME",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/avme.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x9988a27919e8872b24f2ccb1991bf0297b68a470",
+    "name": "AvaxTech",
+    "decimals": 9,
+    "symbol": "ATECH",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/atech.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x0ebd9537a25f56713e34c45b38f421a1e7191469",
+    "name": "OpenOcean",
+    "decimals": 18,
+    "symbol": "OOE",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/ooe.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x511d35c52a3c244e7b8bd92c0c297755fbd89212",
+    "name": "Beta Token",
+    "decimals": 18,
+    "symbol": "BETA",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/beta.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xf44ff799ea2bbfec96f9a50498209aac3c2b3b8b",
+    "name": "Route",
+    "decimals": 18,
+    "symbol": "ROUTE",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xf44Ff799eA2bBFeC96f9A50498209AAc3C2b3b8b/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xdf474b7109b73b7d57926d43598d5934131136b2",
+    "name": "Ankr Network",
+    "decimals": 18,
+    "symbol": "ANKR",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x8290333ceF9e6D528dD5618Fb97a76f268f3EDD4/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xbd3936ec8d83a5d4e73eca625ecfa006da8c8f52",
+    "name": "UREEQA Token [via ChainPort.io]",
+    "decimals": 18,
+    "symbol": "URQA",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x1735Db6AB5BAa19eA55d0AdcEeD7bcDc008B3136/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x8b6663725d7e7368b01eefddc16be085e492498e",
+    "name": "Kishimoto Inu",
+    "decimals": 9,
+    "symbol": "KISHIMOTO",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xf5b1Fd29d23e98Db2D9EBb8435E1082e3B38FB65/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x03e8d118a1864c7dc53bf91e007ab7d91f5a06fa",
+    "name": "DEXTF Token",
+    "decimals": 18,
+    "symbol": "DEXTF",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x5F64Ab1544D28732F0A24F4713c2C8ec0dA089f0/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xd1c3f94de7e5b45fa4edbba472491a9f4b166fc4",
+    "name": "Avalaunch",
+    "decimals": 18,
+    "symbol": "XAVA",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/xava.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x694200a68b18232916353250955be220e88c5cbb",
+    "name": "Kovin Segnocchi",
+    "decimals": 18,
+    "symbol": "KOVIN",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/kovin.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xc09304620876777d0958ce568257e46f8445ba4f",
+    "name": "Snowball",
+    "decimals": 9,
+    "symbol": "SNOX",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/snox.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xd4d026322c88c2d49942a75dff920fcfbc5614c1",
+    "name": "DEAPCOIN",
+    "decimals": 18,
+    "symbol": "DEP",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x1A3496C18d558bd9C6C8f609E1B129f67AB08163/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x1209810df5370f68b28e6832dc4ac80072e2d0b8",
+    "name": "AVALOX",
+    "decimals": 18,
+    "symbol": "AVALOX",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/avalox.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x1a3264f2e7b1cfc6220ec9348d33ccf02af7aaa4",
+    "name": "Dypius",
+    "decimals": 18,
+    "symbol": "DYP",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x1a3264F2e7b1CFC6220ec9348d33cCF02Af7aaa4/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x2905106e44b72c1a0d29735fcaaa19280e59436d",
+    "name": "Koava",
+    "decimals": 18,
+    "symbol": "KOAVA",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/koava.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x1263fea931b86f3e8ce8afbf29f66631b7be9347",
+    "name": "BNPL Pay",
+    "decimals": 18,
+    "symbol": "BNPL",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/bnpl.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x223174d9f096d8b468b24f620a02f43b70792789",
+    "name": "Avalanche Hills",
+    "decimals": 18,
+    "symbol": "AHILL",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/ahill.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xa56f9a54880afbc30cf29bb66d2d9adcdcaeadd6",
+    "name": "Qi Dao Protocol",
+    "decimals": 18,
+    "symbol": "QI",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/assets/0x580A84C73811E1839F75d86d75d88cCa0c241fF4/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xe15bcb9e0ea69e6ab9fa080c4c4a5632896298c3",
+    "name": "Balancer",
+    "decimals": 18,
+    "symbol": "BAL",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/arbitrum/assets/0x040d1EdC9569d4Bab2D15287Dc5A4F10F56a56B8/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x596fa47043f99a4e0f122243b841e55375cde0d2",
+    "name": "ZRX",
+    "decimals": 18,
+    "symbol": "ZRX.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x596fA47043f99A4e0F122243B841E55375cdE0d2/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x6e84a6216ea6dacc71ee8e6b0a5b7322eebc0fdd",
+    "name": "JoeToken",
+    "decimals": 18,
+    "symbol": "JOE",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xb09fe1613fe03e7361319d2a43edc17422f36b09",
+    "name": "Bogged Finance",
+    "decimals": 18,
+    "symbol": "BOG",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0xB09FE1613fE03E7361319d2a43eDc17422f36B09/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xc55036b5348cfb45a932481744645985010d3a44",
+    "name": "Wine Shares",
+    "decimals": 18,
+    "symbol": "WINE",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/wine.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x9c846d808a41328a209e235b5e3c4e626dab169e",
+    "name": "chikn fert",
+    "decimals": 18,
+    "symbol": "FERT",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/fert.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xb0a6e056b587d0a85640b39b1cb44086f7a26a1e",
+    "name": "OddzToken",
+    "decimals": 18,
+    "symbol": "ODDZ",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xB0a6e056B587D0a85640b39b1cB44086F7a26A1E/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x81440c939f2c1e34fc7048e518a637205a632a74",
+    "name": "Cycle Token",
+    "decimals": 18,
+    "symbol": "CYCLE",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/cycle.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xa12dd2e5bcd0611a9245518902effa73e788b142",
+    "name": "GIVE TR YOUR COQ",
+    "decimals": 4,
+    "symbol": "GTRYC",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/gtryc.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xbd83010eb60f12112908774998f65761cf9f6f9a",
+    "name": "SpookyToken",
+    "decimals": 18,
+    "symbol": "BOO",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x55aF5865807b196bD0197e0902746F31FBcCFa58/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x3b55e45fd6bd7d4724f5c47e0d1bcaedd059263e",
+    "name": "MAI",
+    "decimals": 18,
+    "symbol": "miMatic",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/assets/0xa3Fa99A148fA48D14Ed51d610c367C61876997F1/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xad090976ce846935dcff1ded852668beed912916",
+    "name": "Oath Token",
+    "decimals": 18,
+    "symbol": "OATH",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/fantom/assets/0x21Ada0D2aC28C3A5Fa3cD2eE30882dA8812279B6/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x15fa5d3dbd11a831b72b92c1705bc9f801e233cb",
+    "name": "PointPay Token",
+    "decimals": 18,
+    "symbol": "PXP",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/pxp.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xf693248f96fe03422fea95ac0afbbbc4a8fdd172",
+    "name": "Treasure Under Sea",
+    "decimals": 18,
+    "symbol": "TUS",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/tus.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x442f7f22b1ee2c842beaff52880d4573e9201158",
+    "name": "Wrapped BNB",
+    "decimals": 18,
+    "symbol": "WBNB",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x442F7f22b1EE2c842bEAFf52880d4573E9201158/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x2da8312e2c08b79104c6b18ba26bc7065abec704",
+    "name": "Bawls Onu",
+    "decimals": 18,
+    "symbol": "BAWLS",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/bawls.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x5947bb275c521040051d82396192181b413227a3",
+    "name": "Chainlink Token",
+    "decimals": 18,
+    "symbol": "LINK.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x5947BB275c521040051D82396192181b413227A3/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x7086e045b78e1e72f741f25231c08d238812cf8a",
+    "name": "RaceX",
+    "decimals": 18,
+    "symbol": "RACEX",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/racex.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xc0fbc4967259786c743361a5885ef49380473dcf",
+    "name": "Aleph.im V2 SuperToken",
+    "decimals": 18,
+    "symbol": "ALEPH",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x27702a26126e0B3702af63Ee09aC4d1A084EF628/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x2cf51e73c3516f3d86e9c0b4de0971dbf0766fd4",
+    "name": "XIO Network",
+    "decimals": 18,
+    "symbol": "XIO",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x0f7F961648aE6Db43C75663aC7E5414Eb79b5704/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x9e037de681cafa6e661e6108ed9c2bd1aa567ecd",
+    "name": "Wrapped AllianceBlock Token",
+    "decimals": 18,
+    "symbol": "WALBT",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x00a8b738E453fFd858a7edf03bcCfe20412f0Eb0/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x6c44e09737ac84bcf27633883daf7487898e4e5e",
+    "name": "OpulousToken",
+    "decimals": 18,
+    "symbol": "OPUL",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x686318000d982bc8dCC1cdCF8fFd22322F0960Ed/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x8239a6b877804206c7799028232a7188da487cec",
+    "name": "Balancer",
+    "decimals": 18,
+    "symbol": "BAL",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/assets/0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x97d367a5f900f5c9db4370d0d801fc52332244c7",
+    "name": "STATIK",
+    "decimals": 18,
+    "symbol": "STATIK",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/statik.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x5fc17416925789e0852fbfcd81c490ca4abc51f9",
+    "name": "inSure",
+    "decimals": 18,
+    "symbol": "SURE",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x5fC17416925789E0852FBFcd81c490ca4abc51F9/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x542fa0b261503333b90fe60c78f2beed16b7b7fd",
+    "name": "TRACTOR JOE",
+    "decimals": 9,
+    "symbol": "TRACTOR",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/tractor.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x2598c30330d5771ae9f983979209486ae26de875",
+    "name": "Any Inu",
+    "decimals": 18,
+    "symbol": "AI",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x2598c30330D5771AE9F983979209486aE26dE875/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x51e48670098173025c477d9aa3f0eff7bf9f7812",
+    "name": "DegenX",
+    "decimals": 18,
+    "symbol": "DGNX",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/dgnx.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xee65d8b88f86ace0f7ba42ba2d2c679b6f604bf0",
+    "name": "TAZOR",
+    "decimals": 9,
+    "symbol": "TAZOR",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/tazor.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x397bbd6a0e41bdf4c3f971731e180db8ad06ebc1",
+    "name": "Avaxtars Token",
+    "decimals": 6,
+    "symbol": "AVXT",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/avxt.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x62edc0692bd897d2295872a9ffcac5425011c661",
+    "name": "GMX",
+    "decimals": 18,
+    "symbol": "GMX",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x62edc0692BD897D2295872a9FFCac5425011c661/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x74fefa839a96a1632a29e0fcf0907d0f88528658",
+    "name": "Ethereum Victory",
+    "decimals": 18,
+    "symbol": "EVIC",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/evic.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x99083d1b9c6744c71d0cf70b8965faca37684527",
+    "name": "France REV Finance",
+    "decimals": 18,
+    "symbol": "FRF",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/frf.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xe6d1afea0b76c8f51024683dd27fa446ddaf34b6",
+    "name": "Frozen Walrus Share",
+    "decimals": 18,
+    "symbol": "WSHARE",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/wshare.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x111111111111ed1d73f860f57b2798b683f2d325",
+    "name": "YUSD Stablecoin",
+    "decimals": 18,
+    "symbol": "YUSD",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/yusd.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x714f020c54cc9d104b6f4f6998c63ce2a31d1888",
+    "name": "STEP.APP",
+    "decimals": 18,
+    "symbol": "FITFI",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x714f020C54cc9D104B6F4f6998C63ce2a31D1888/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xc1d02e488a9ce2481bfdcd797d5373dd2e70a9c2",
+    "name": "SHAKE token by SpaceSwap v2",
+    "decimals": 18,
+    "symbol": "SHAKE",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6006FC2a849fEdABa8330ce36F5133DE01F96189/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xfc6da929c031162841370af240dec19099861d3b",
+    "name": "Domi",
+    "decimals": 18,
+    "symbol": "DOMI",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/domi.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x100cc3a819dd3e8573fd2e46d1e66ee866068f30",
+    "name": "Dragon Crypto Aurum",
+    "decimals": 18,
+    "symbol": "DCAU",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/dcau.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xcaf5191fc480f43e4df80106c7695eca56e48b18",
+    "name": "Akita Inu",
+    "decimals": 18,
+    "symbol": "AKITA",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x3301Ee63Fb29F863f2333Bd4466acb46CD8323E6/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x164caf66c45e483f7ee647ccad275b35b4c75719",
+    "name": "Kenshi",
+    "decimals": 18,
+    "symbol": "KENSHI",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/kenshi.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x97cd1cfe2ed5712660bb6c14053c0ecb031bff7d",
+    "name": "Rai Reflex Index",
+    "decimals": 18,
+    "symbol": "RAI",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x03ab458634910AaD20eF5f1C8ee96F1D6ac54919/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x039d2e8f097331278bd6c1415d839310e0d5ece4",
+    "name": "Linda",
+    "decimals": 18,
+    "symbol": "LINDA",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/linda.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xacfb898cff266e53278cc0124fc2c7c94c8cb9a5",
+    "name": "AVAX HAS NO CHILL",
+    "decimals": 18,
+    "symbol": "NOCHILL",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/nochill.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x6b289cceaa8639e3831095d75a3e43520fabf552",
+    "name": "Cartesi Token",
+    "decimals": 18,
+    "symbol": "CTSI",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/assets/0x2727Ab1c2D22170ABc9b595177B2D5C6E1Ab7B7B/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xd501281565bf7789224523144fe5d98e8b28f267",
+    "name": "1INCH Token",
+    "decimals": 18,
+    "symbol": "1INCH.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xd501281565bf7789224523144Fe5D98e8B28f267/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x32975907733f93305be28e2bfd123666b7a9c863",
+    "name": "INK",
+    "decimals": 18,
+    "symbol": "INK",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/ink.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x7b2b702706d9b361dfe3f00bd138c0cfda7fb2cf",
+    "name": "Pollen",
+    "decimals": 18,
+    "symbol": "PLN",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x7b2B702706D9b361dfE3f00bD138C0CFDA7FB2Cf/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x491a4eb4f1fc3bff8e1d2fc856a6a46663ad556f",
+    "name": "BRZ",
+    "decimals": 4,
+    "symbol": "BRZ",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x71be881e9C5d4465B3FfF61e89c6f3651E69B5bb/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x5a2c298902f5ba4c3d8b88f9f7cf8f5be72303b9",
+    "name": "LOONG",
+    "decimals": 18,
+    "symbol": "LOONG",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/loong.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xdacde03d7ab4d81feddc3a20faa89abac9072ce2",
+    "name": "USP",
+    "decimals": 18,
+    "symbol": "USP",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/usp.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x9e6832d13b29d0b1c1c3465242681039b31c7a05",
+    "name": "Snowtomb Token",
+    "decimals": 18,
+    "symbol": "STOMB",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/stomb.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x5f52010d112bf2ecb95b930d32df24e3393a3f04",
+    "name": "OMNI404",
+    "decimals": 18,
+    "symbol": "O404",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/o404.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x228a48df6819ccc2eca01e2192ebafffdad56c19",
+    "name": "VNX Franc",
+    "decimals": 18,
+    "symbol": "VCHF",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/vchf.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x8888888888f004100c0353d657be6300587a6ccd",
+    "name": "ACryptoS",
+    "decimals": 18,
+    "symbol": "ACS",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/acs.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x1affbc17938a25d245e1b7ec6f2fc949df8e9760",
+    "name": "PAPER",
+    "decimals": 18,
+    "symbol": "PAPER",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/paper.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xf32398dae246c5f672b52a54e9b413dffcae1a44",
+    "name": "Kassandra",
+    "decimals": 18,
+    "symbol": "KACY",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/kacy.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x2f6f07cdcf3588944bf4c42ac74ff24bf56e7590",
+    "name": "StargateToken",
+    "decimals": 18,
+    "symbol": "STG",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x721c299e6bf7d6a430d9bea3364ea197314bce09",
+    "name": "MilkyWay Token by SpaceSwap v2",
+    "decimals": 18,
+    "symbol": "MILK2",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x80c8C3dCfB854f9542567c8Dac3f44D709eBc1de/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x60781c2586d68229fde47564546784ab3faca982",
+    "name": "Pangolin",
+    "decimals": 18,
+    "symbol": "PNG",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x60781C2586D68229fde47564546784ab3fACA982/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x8729438eb15e2c8b576fcc6aecda6a148776c0f5",
+    "name": "BENQI",
+    "decimals": 18,
+    "symbol": "QI",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x8729438EB15e2C8B576fCc6AeCdA6A148776C0F5/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x9ad274e20a153451775ff29d546949a254c4a1bc",
+    "name": "Shack Token",
+    "decimals": 18,
+    "symbol": "SHACK",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/shack.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x885d748c00a279b67a7749ec6b03301700dd0455",
+    "name": "Maximus",
+    "decimals": 18,
+    "symbol": "MAXI",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/maxi.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xb24ca28d4e2742907115fecda335b40dbda07a4c",
+    "name": "USD Coin",
+    "decimals": 6,
+    "symbol": "USDC",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xB24CA28D4e2742907115fECda335b40dbda07a4C/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x9f71b3118d97a448b127bf7677a59ab7454d0a04",
+    "name": "AvaBot",
+    "decimals": 18,
+    "symbol": "AVB",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/avb.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xf30c5083a1479865c9a8916dec6ddadd82e8907b",
+    "name": "Spice",
+    "decimals": 18,
+    "symbol": "SPICE",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/spice.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xe3b3f75f99da4ff26aa867ef70b48f8f6b2d4958",
+    "name": "Megaweapon",
+    "decimals": 9,
+    "symbol": "WEAPON",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/weapon.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x4e3642603a75528489c2d94f86e9507260d3c5a1",
+    "name": "Juggernaut DeFi",
+    "decimals": 18,
+    "symbol": "JGN",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0xC13B7a43223BB9Bf4B69BD68Ab20ca1B79d81C75/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x921f99719eb6c01b4b8f0ba7973a7c24891e740a",
+    "name": "MetaBrands",
+    "decimals": 18,
+    "symbol": "MAGE",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/mage.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xa2cde628d7617956eaf4780e32f68df19cc13d62",
+    "name": "Subava",
+    "decimals": 18,
+    "symbol": "SUBAVA",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/subava.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x39fc9e94caeacb435842fadedecb783589f50f5f",
+    "name": "Kyber Network Crystal v2",
+    "decimals": 18,
+    "symbol": "KNC",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x39fC9e94Caeacb435842FADeDeCB783589F50f5f/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xb9fc547057b7623a86ccc112c675ddcc4d78de76",
+    "name": "AV BOT",
+    "decimals": 18,
+    "symbol": "AVBOT",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/avbot.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xf481eec738c46f675e077ee966a680a19210af11",
+    "name": "Blanc",
+    "decimals": 9,
+    "symbol": "BLANC",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/blanc.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x02bfd11499847003de5f0f5aa081c43854d48815",
+    "name": "RadioShack Token",
+    "decimals": 18,
+    "symbol": "RADIO",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/optimism/assets/0xf899e3909B4492859d44260E1de41A9E663e70F5/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x73178fceb736a9d6c1a9ef1fe413f09cba2d4a68",
+    "name": "FevrToken",
+    "decimals": 18,
+    "symbol": "FEVR",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x82030CDBD9e4B7c5bb0b811A61DA6360D69449cc/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xd18555a6c2fda350069735419900478eec4abd96",
+    "name": "Alvara",
+    "decimals": 18,
+    "symbol": "ALVA",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/alva.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x45506b5fbf81aa128bc5029fac6e30574656214a",
+    "name": "Dancing Toothless",
+    "decimals": 9,
+    "symbol": "TOOTHLESS",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/toothless.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x12d8ce035c5de3ce39b1fdd4c1d5a745eaba3b8c",
+    "name": "Ankr Staked ETH",
+    "decimals": 18,
+    "symbol": "ankrETH",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xE95A203B1a91a908F9B9CE46459d101078c2c3cb/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x564a341df6c126f90cf3ecb92120fd7190acb401",
+    "name": "BiLira",
+    "decimals": 6,
+    "symbol": "TRYB",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2C537E5624e4af88A7ae4060C022609376C8D0EB/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x4a6b1f8872f08daf38d3b675937c7a59751ddbe1",
+    "name": "QE",
+    "decimals": 9,
+    "symbol": "QE",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/qe.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x62d0a8458ed7719fdaf978fe5929c6d342b0bfce",
+    "name": "Beam",
+    "decimals": 18,
+    "symbol": "BEAM",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x62D0A8458eD7719FDAF978fe5929C6D342B0bFcE/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x8bb93979901cd159bf6763b223fbb315c31ccf7b",
+    "name": "INTDESTCOIN",
+    "decimals": 18,
+    "symbol": "INTD",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/intd.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x2c69095d81305f1e3c6ed372336d407231624cea",
+    "name": "Oath Token",
+    "decimals": 18,
+    "symbol": "OATH",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/fantom/assets/0x21Ada0D2aC28C3A5Fa3cD2eE30882dA8812279B6/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x8908ea968d2f79d078d893c0bcecd63eacdd9322",
+    "name": "LIBERA - Multichain High APR Farming",
+    "decimals": 18,
+    "symbol": "LIBERA",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x3A806A3315E35b3F5F46111ADb6E2BAF4B14A70D/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xa7d7079b0fead91f3e65f86e8915cb59c1a4c664",
+    "name": "USD Coin",
+    "decimals": 6,
+    "symbol": "USDC.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xe06fba763c2104db5027f57f6a5be0a0d86308af",
+    "name": "AKITAVAX",
+    "decimals": 18,
+    "symbol": "AKITAX",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/akitax.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x8ebaf22b6f053dffeaf46f4dd9efa95d89ba8580",
+    "name": "Uniswap",
+    "decimals": 18,
+    "symbol": "UNI.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x8eBAf22B6F053dFFeaf46f4Dd9eFA95D89ba8580/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x94960952876e3ed6a7760b198354fcc5319a406a",
+    "name": "RBX",
+    "decimals": 18,
+    "symbol": "RBX",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/rbx.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xe5caef4af8780e59df925470b050fb23c43ca68c",
+    "name": "Ferrum Network Token",
+    "decimals": 18,
+    "symbol": "FRM",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xE5CAeF4Af8780E59Df925470b050Fb23C43CA68C/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xbf1230bb63bfd7f5d628ab7b543bcefa8a24b81b",
+    "name": "Chronicum",
+    "decimals": 18,
+    "symbol": "CHRO",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/chro.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x3f3fea5dd9b1940c2ee4822d7b7a06f19d58656e",
+    "name": "AVAPAY",
+    "decimals": 9,
+    "symbol": "AVAPAY",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/avapay.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xb2f85b7ab3c2b6f62df06de6ae7d09c010a5096e",
+    "name": "XSGD",
+    "decimals": 6,
+    "symbol": "XSGD",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x70e8dE73cE538DA2bEEd35d14187F6959a8ecA96/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x8b82a291f83ca07af22120aba21632088fc92931",
+    "name": "Wrapped Ether",
+    "decimals": 18,
+    "symbol": "WETH",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x8b82A291F83ca07Af22120ABa21632088fC92931/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x2147efff675e4a4ee1c2f918d181cdbd7a8e208f",
+    "name": "AlphaToken",
+    "decimals": 18,
+    "symbol": "ALPHA.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x2147EFFF675e4A4eE1C2f918d181cDBd7a8E208f/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x3712871408a829c5cd4e86da1f4ce727efcd28f6",
+    "name": "Glacier",
+    "decimals": 18,
+    "symbol": "GLCR",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/glcr.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xb44a9b6905af7c801311e8f4e76932ee959c663c",
+    "name": "Anyswap",
+    "decimals": 18,
+    "symbol": "ANY",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xB44a9B6905aF7c801311e8F4E76932ee959c663C/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x6e7f5c0b9f4432716bdd0a77a3601291b9d9e985",
+    "name": "Spore.Finance",
+    "decimals": 9,
+    "symbol": "SPORE",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x33A3d962955A3862C8093D1273344719f03cA17C/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x3eefb18003d033661f84e48360ebecd181a84709",
+    "name": "Islander",
+    "decimals": 18,
+    "symbol": "ISA",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/isa.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x01c2086facfd7aa38f69a6bd8c91bef3bb5adfca",
+    "name": "YAY Games",
+    "decimals": 18,
+    "symbol": "YAY",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x524dF384BFFB18C0C8f3f43d012011F8F9795579/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x771c01e1917b5ab5b791f7b96f0cd69e22f6dbcf",
+    "name": "NunuToken",
+    "decimals": 18,
+    "symbol": "NNT",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/nnt.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xfb98b335551a418cd0737375a2ea0ded62ea213b",
+    "name": "Pendle",
+    "decimals": 18,
+    "symbol": "PENDLE",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/arbitrum/assets/0x0c880f6761F1af8d9Aa9C466984b80DAb9a8c9e8/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x5f018e73c185ab23647c82bd039e762813877f0e",
+    "name": "Build Token",
+    "decimals": 18,
+    "symbol": "BUILD",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/optimism/assets/0xe4dE4B87345815C71aa843ea4841bCdc682637bb/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xd7c295e399ca928a3a14b01d760e794f1adf8990",
+    "name": "DSLA",
+    "decimals": 18,
+    "symbol": "DSLA",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x3aFfCCa64c2A6f4e3B6Bd9c64CD2C969EFd1ECBe/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x96e1056a8814de39c8c3cd0176042d6cecd807d7",
+    "name": "Osaka Protocol",
+    "decimals": 18,
+    "symbol": "OSAK",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/osak.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7",
+    "name": "TetherToken",
+    "decimals": 6,
+    "symbol": "USDt",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xd402298a793948698b9a63311404fbbee944eafd",
+    "name": "SHRAPToken",
+    "decimals": 18,
+    "symbol": "SHRAP",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xd402298a793948698b9a63311404FBBEe944eAfD/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x0ef27ddc8f89d4886e89d630de089962ffc12e43",
+    "name": "Pegaxy",
+    "decimals": 18,
+    "symbol": "PGX",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/assets/0xc1c93D475dc82Fe72DBC7074d55f5a734F8cEEAE/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x872952d3c1caf944852c5adda65633f1ef218a26",
+    "name": "Liquid Crypto",
+    "decimals": 18,
+    "symbol": "LQDX",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/lqdx.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xabc9547b534519ff73921b1fba6e672b5f58d083",
+    "name": "Wootrade Network",
+    "decimals": 18,
+    "symbol": "WOO.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xaBC9547B534519fF73921b1FBA6E672b5f58D083/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x3377aca4c0bfd021be6bd762b5f594975e77f9cf",
+    "name": "Cat wif Hands",
+    "decimals": 18,
+    "symbol": "CATWIF",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/catwif.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xc65bc1e906771e105fbacbd8dfe3862ee7be378e",
+    "name": "Champion",
+    "decimals": 18,
+    "symbol": "CHAM",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/cham.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xd3ac016b1b8c80eeadde4d186a9138c9324e4189",
+    "name": "Okcash",
+    "decimals": 18,
+    "symbol": "OK",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xd3Ac016b1B8C80EeAdDe4D186A9138C9324e4189/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xfab550568c688d5d8a52c7d794cb93edc26ec0ec",
+    "name": "Axelar Wrapped USDC",
+    "decimals": 6,
+    "symbol": "axlUSDC",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xfaB550568C688d5D8A52C7d794cb93Edc26eC0eC/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x961c8c0b1aad0c0b10a51fef6a867e3091bcef17",
+    "name": "DeFiYieldProtocol",
+    "decimals": 18,
+    "symbol": "DYP",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x961C8c0B1aaD0c0b10a51FeF6a867E3091BCef17/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xd24c2ad096400b6fbcd2ad8b24e7acbc21a1da64",
+    "name": "Frax",
+    "decimals": 18,
+    "symbol": "FRAX",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xD24C2Ad096400B6FBcd2ad8B24E7acBc21A1da64/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x027dbca046ca156de9622cd1e2d907d375e53aa7",
+    "name": "Ampleforth secured by Meter Passport",
+    "decimals": 9,
+    "symbol": "AMPL",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xD46bA6D942050d489DBd938a2C909A5d5039A161/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x420fca0121dc28039145009570975747295f2329",
+    "name": "COQINU",
+    "decimals": 18,
+    "symbol": "COQ",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x420FcA0121DC28039145009570975747295f2329/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x7a023a408f51c23760eb31190fc731bc12b52954",
+    "name": "Janus Network",
+    "decimals": 18,
+    "symbol": "JNS",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/jns.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x9fb9a33956351cf4fa040f65a13b835a3c8764e3",
+    "name": "Multichain",
+    "decimals": 18,
+    "symbol": "MULTI",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x65Ef703f5594D2573eb71Aaf55BC0CB548492df4/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x38dcf0532699b880e6a125f7d918380524cd60a6",
+    "name": "Hummingbot Governance Token",
+    "decimals": 18,
+    "symbol": "HBOT",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/hbot.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x62aceea3e666c5706ce1c61055fac1a669d31d93",
+    "name": "Kalmar Token",
+    "decimals": 18,
+    "symbol": "KALM",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x4BA0057f784858a48fe351445C672FF2a3d43515/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x6985884c4392d348587b19cb9eaaf157f13271cd",
+    "name": "LayerZero",
+    "decimals": 18,
+    "symbol": "ZRO",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x6985884C4392D348587B19cb9eAAf157F13271cd/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xc891eb4cbdeff6e073e859e987815ed1505c2acd",
+    "name": "Euro Coin",
+    "decimals": 6,
+    "symbol": "EUROC",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x3419875b4d3bca7f3fdda2db7a476a79fd31b4fe",
+    "name": "DizzyHavoc",
+    "decimals": 18,
+    "symbol": "DZHV",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/dzhv.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x264c1383ea520f73dd837f915ef3a732e204a493",
+    "name": "Binance",
+    "decimals": 18,
+    "symbol": "BNB",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x617724974218a18769020a70162165a539c07e8a",
+    "name": "OliveCash Token",
+    "decimals": 18,
+    "symbol": "OLIVE",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x617724974218A18769020A70162165A539c07E8a/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xafc4d521df3c0566d61931f81f02f1a525bad04d",
+    "name": "Wasdaq",
+    "decimals": 9,
+    "symbol": "WSDQ",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/wsdq.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x1c20e891bab6b1727d14da358fae2984ed9b59eb",
+    "name": "TrueUSD",
+    "decimals": 18,
+    "symbol": "TUSD",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x1C20E891Bab6b1727d14Da358FAe2984Ed9B59EB/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x63682bdc5f875e9bf69e201550658492c9763f89",
+    "name": "Betswap.gg",
+    "decimals": 18,
+    "symbol": "BSGG",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/bsgg.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x637afeff75ca669ff92e4570b14d6399a658902f",
+    "name": "Poly-Peg COOK",
+    "decimals": 18,
+    "symbol": "COOK",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x965b0Df5BDA0E7a0649324D78f03D5F7F2De086a/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x9c9e5fd8bbc25984b178fdce6117defa39d2db39",
+    "name": "BUSD Token",
+    "decimals": 18,
+    "symbol": "BUSD",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x9C9e5fD8bbc25984B178FdCE6117Defa39d2db39/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x9ed7e4b1bff939ad473da5e7a218c771d1569456",
+    "name": "Reunit Token",
+    "decimals": 6,
+    "symbol": "REUNI",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/reuni.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x37b608519f91f70f2eeb0e5ed9af4061722e4f76",
+    "name": "SushiToken",
+    "decimals": 18,
+    "symbol": "SUSHI.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x37B608519F91f70F2EeB0e5Ed9AF4061722e4F76/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xf2f13f0b7008ab2fa4a2418f4ccc3684e49d20eb",
+    "name": "Wrapped Matic",
+    "decimals": 18,
+    "symbol": "WMATIC",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xf2f13f0B7008ab2FA4A2418F4ccC3684E49D20Eb/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xfcaf13227dcbfa2dc2b1928acfca03b85e2d25dd",
+    "name": "Impossible Decentralized Incubator Access Token",
+    "decimals": 18,
+    "symbol": "IDIA",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x0b15Ddf19D47E6a86A56148fb4aFFFc6929BcB89/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xbec243c995409e6520d7c41e404da5deba4b209b",
+    "name": "Synthetix Network Token",
+    "decimals": 18,
+    "symbol": "SNX.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xBeC243C995409E6520D7C41E404da5dEba4b209B/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x2b2c81e08f1af8835a78bb2a90ae924ace0ea4be",
+    "name": "Staked AVAX",
+    "decimals": 18,
+    "symbol": "sAVAX",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x2b2C81e08f1Af8835a78Bb2A90AE924ACE0eA4bE/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xb0a8e082e5f8d2a04e74372c1be47737d85a0e73",
+    "name": "Universal Store of Value",
+    "decimals": 9,
+    "symbol": "USV",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/usv.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xfe6b19286885a4f7f55adad09c3cd1f906d2478f",
+    "name": "Wrapped SOL",
+    "decimals": 9,
+    "symbol": "SOL",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xFE6B19286885a4F7F55AdAD09C3Cd1f906D2478F/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x8a0cac13c7da965a312f08ea4229c37869e85cb9",
+    "name": "Graph Token",
+    "decimals": 18,
+    "symbol": "GRT.e",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x8a0cAc13c7da965a312f08ea4229c37869e85cB9/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x49f519002eeced6902f24c0be72b6d898e4d27fc",
+    "name": "Betswap.gg",
+    "decimals": 18,
+    "symbol": "BSGG",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/bsgg.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x8d88e48465f30acfb8dac0b3e35c9d6d7d36abaf",
+    "name": "Canary",
+    "decimals": 18,
+    "symbol": "CNR",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/cnr.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x0cbd6fadcf8096cc9a43d90b45f65826102e3ece",
+    "name": "CheckDot",
+    "decimals": 18,
+    "symbol": "CDT",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x0cBD6fAdcF8096cC9A43d90B45F65826102e3eCE/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x440abbf18c54b2782a4917b80a1746d3a2c2cce1",
+    "name": "SHIBAVAX",
+    "decimals": 18,
+    "symbol": "SHIBX",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/shibx.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xbee994ad257dcc84672c0c6e6168a4701041f39f",
+    "name": "AvaXlauncher",
+    "decimals": 18,
+    "symbol": "AVXL",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/avxl.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xcc2f1d827b18321254223df4e84de399d9ff116c",
+    "name": "SmartCoin",
+    "decimals": 18,
+    "symbol": "SMRT",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/smrt.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x38f9bf9dce51833ec7f03c9dc218197999999999",
+    "name": "Nya",
+    "decimals": 18,
+    "symbol": "NYA",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x38F9bf9dCe51833Ec7f03C9dC218197999999999/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x44c784266cf024a60e8acf2427b9857ace194c5d",
+    "name": "Axelar",
+    "decimals": 6,
+    "symbol": "AXL",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0x44c784266cf024a60e8acF2427b9857Ace194C5d/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x1785d6f5b076d93efae079744d0c86f2ac77621f",
+    "name": "COINGRAB",
+    "decimals": 18,
+    "symbol": "GRAB",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/grab.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e",
+    "name": "USD Coin",
+    "decimals": 6,
+    "symbol": "USDC",
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/assets/0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E/logo.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x937e077abaea52d3abf879c9b9d3f2ebd15baa21",
+    "name": "Oh! Finance",
+    "decimals": 18,
+    "symbol": "OH",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/oh.png"
+  },
+  {
+    "chain_id": 43114,
+    "erc20_contract_address": "0x72bc9d71dd9ad563f52270c6ce5fb30f617c7a1d",
+    "name": "ONSTON",
+    "decimals": 18,
+    "symbol": "ONSTON",
+    "logo": "https://lcw.nyc3.cdn.digitaloceanspaces.com/production/currencies/64/onston.png"
+  }
+]
