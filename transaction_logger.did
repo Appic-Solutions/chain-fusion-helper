@@ -7,7 +7,7 @@ type AddEvmToIcpTx = record {
   erc20_contract_address : text;
   chain_id : nat;
   from_address : text;
-  oprator : Oprator;
+  operator : Operator;
   icrc_ledger_id : principal;
   total_gas_spent : nat;
 };
@@ -27,7 +27,7 @@ type AddIcpToEvmTx = record {
   erc20_contract_address : text;
   chain_id : nat;
   max_transaction_fee : nat;
-  oprator : Oprator;
+  operator : Operator;
   icrc_ledger_id : principal;
   native_ledger_burn_index : nat;
 };
@@ -51,7 +51,7 @@ type CandidEvmToIcp = record {
   actual_received : opt nat;
   chain_id : nat;
   from_address : text;
-  oprator : Oprator;
+  operator : Operator;
   icrc_ledger_id : opt principal;
   total_gas_spent : opt nat;
 };
@@ -70,7 +70,7 @@ type CandidIcpToEvm = record {
   actual_received : opt nat;
   chain_id : nat;
   max_transaction_fee : opt nat;
-  oprator : Oprator;
+  operator : Operator;
   icrc_ledger_id : opt principal;
   gas_used : opt nat;
   total_gas_spent : opt nat;
@@ -102,19 +102,19 @@ type MinterArgs = record {
   last_observed_event : nat;
   last_scraped_event : nat;
   chain_id : nat;
-  oprator : Oprator;
+  operator : Operator;
   icp_to_evm_fee : nat;
   evm_to_icp_fee : nat;
   minter_id : principal;
 };
-type Oprator = variant { AppicMinter; DfinityCkEthMinter };
+type Operator = variant { AppicMinter; DfinityCkEthMinter };
 type Result = variant { Ok; Err : AddEvmToIcpTxError };
 type Result_1 = variant { Ok; Err : AddIcpToEvmTxError };
 type TokenPair = record {
   ledger_id : principal;
   chain_id : nat;
   erc20_address : text;
-  oprator : Oprator;
+  operator : Operator;
 };
 type Transaction = variant {
   EvmToIcp : CandidEvmToIcp;
@@ -122,7 +122,7 @@ type Transaction = variant {
 };
 type UpdateMinterArgs = record {
   chain_id : nat;
-  oprator : Oprator;
+  operator : Operator;
   icp_to_evm_fee : nat;
   evm_to_icp_fee : nat;
   minter_id : principal;

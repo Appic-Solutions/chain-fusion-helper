@@ -28,7 +28,7 @@ use crate::minter_clinet::appic_minter_types::events::{TransactionReceipt, Trans
 #[derive(
     Clone, Copy, CandidType, PartialEq, PartialOrd, Eq, Ord, Debug, Deserialize, Serialize,
 )]
-pub enum Oprator {
+pub enum Operator {
     DfinityCkEthMinter,
     AppicMinter,
 }
@@ -38,7 +38,7 @@ pub struct Minter {
     pub id: Principal,
     pub last_observed_event: u64,
     pub last_scraped_event: u64,
-    pub oprator: Oprator,
+    pub operator: Operator,
     pub evm_to_icp_fee: Erc20TokenAmount,
     pub icp_to_evm_fee: Erc20TokenAmount,
     pub chain_id: ChainId,
@@ -57,7 +57,7 @@ impl Minter {
         let MinterArgs {
             chain_id,
             minter_id,
-            oprator,
+            operator,
             last_observed_event,
             last_scraped_event,
             evm_to_icp_fee,
@@ -67,7 +67,7 @@ impl Minter {
             id: minter_id,
             last_observed_event: nat_to_u64(&last_observed_event),
             last_scraped_event: nat_to_u64(&last_scraped_event),
-            oprator,
+            operator,
             evm_to_icp_fee: Erc20TokenAmount::try_from(evm_to_icp_fee)
                 .expect("Should not fail converting fees"),
             icp_to_evm_fee: Erc20TokenAmount::try_from(icp_to_evm_fee)
@@ -78,10 +78,10 @@ impl Minter {
 }
 
 #[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
-pub struct MinterKey(pub ChainId, pub Oprator);
+pub struct MinterKey(pub ChainId, pub Operator);
 
 impl MinterKey {
-    pub fn oprator(&self) -> Oprator {
+    pub fn operator(&self) -> Operator {
         self.1
     }
 
@@ -92,7 +92,7 @@ impl MinterKey {
 
 impl From<&Minter> for MinterKey {
     fn from(value: &Minter) -> Self {
-        Self(value.chain_id, value.oprator)
+        Self(value.chain_id, value.operator)
     }
 }
 
@@ -139,7 +139,7 @@ pub struct EvmToIcpTx {
     pub status: EvmToIcpStatus,
     pub verified: bool,
     pub time: u64,
-    pub oprator: Oprator,
+    pub operator: Operator,
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Serialize)]
@@ -194,7 +194,7 @@ pub struct IcpToEvmTx {
     pub icrc_ledger_id: Option<Principal>,
     pub verified: bool,
     pub status: IcpToEvmStatus,
-    pub oprator: Oprator,
+    pub operator: Operator,
 }
 
 #[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
@@ -285,14 +285,14 @@ impl State {
     pub fn get_icrc_twin_for_erc20(
         &self,
         erc20_identifier: &Erc20Identifier,
-        oprator: &Oprator,
+        operator: &Operator,
     ) -> Option<Principal> {
-        match oprator {
-            Oprator::AppicMinter => self
+        match operator {
+            Operator::AppicMinter => self
                 .supported_twin_appic_tokens
                 .get(erc20_identifier)
                 .map(|token_principal| token_principal),
-            Oprator::DfinityCkEthMinter => self
+            Operator::DfinityCkEthMinter => self
                 .supported_ckerc20_tokens
                 .get(erc20_identifier)
                 .map(|token_principal| token_principal),
@@ -322,7 +322,7 @@ impl State {
         erc20_contract_address: String,
         subaccount: Option<[u8; 32]>,
         chain_id: ChainId,
-        oprator: Oprator,
+        operator: Operator,
         timestamp: u64,
     ) {
         // Parse addresses once
@@ -360,12 +360,12 @@ impl State {
                 erc20_contract_address: parsed_erc20_address,
                 icrc_ledger_id: self.get_icrc_twin_for_erc20(
                     &Erc20Identifier(parsed_erc20_address, chain_id),
-                    &oprator,
+                    &operator,
                 ),
                 status: EvmToIcpStatus::Accepted,
                 verified: true,
                 time: timestamp,
-                oprator,
+                operator,
             };
 
             self.record_new_evm_to_icp(identifier, new_tx);
@@ -431,7 +431,7 @@ impl State {
         from: Principal,
         from_subaccount: Option<[u8; 32]>,
         created_at: Option<u64>,
-        oprator: Oprator,
+        operator: Operator,
         chain_id: ChainId,
         timestamp: u64,
     ) {
@@ -466,7 +466,7 @@ impl State {
             self.record_new_icp_to_evm(identifier, new_tx);
         } else {
             let icrc_ledger_id =
-                self.get_icrc_twin_for_erc20(&Erc20Identifier(erc20_address, chain_id), &oprator);
+                self.get_icrc_twin_for_erc20(&Erc20Identifier(erc20_address, chain_id), &operator);
 
             let new_tx = IcpToEvmTx {
                 native_ledger_burn_index,
@@ -483,7 +483,7 @@ impl State {
                 erc20_contract_address: erc20_address,
                 verified: true,
                 status: IcpToEvmStatus::Accepted,
-                oprator,
+                operator,
                 effective_gas_price: None,
                 gas_used: None,
                 transaction_hash: None,
@@ -647,7 +647,7 @@ impl State {
             .map(|(erc20_identifier, ledger_id)| TokenPair {
                 erc20_address: erc20_identifier.erc20_address().to_string(),
                 ledger_id,
-                oprator: Oprator::DfinityCkEthMinter,
+                operator: Operator::DfinityCkEthMinter,
                 chain_id: erc20_identifier.chain_id().into(),
             })
             .chain(
@@ -656,7 +656,7 @@ impl State {
                     .map(|(erc20_identifier, ledger_id)| TokenPair {
                         erc20_address: erc20_identifier.erc20_address().to_string(),
                         ledger_id,
-                        oprator: Oprator::AppicMinter,
+                        operator: Operator::AppicMinter,
                         chain_id: erc20_identifier.chain_id().into(),
                     }),
             )
@@ -920,7 +920,7 @@ mod tests {
     #[test]
     fn compare_bincode_and_ciborium() {
         let tx_identifier: EvmToIcpTxIdentifier = EvmToIcpTxIdentifier(
-            "0x00000034125423542452345241254235245".to_string(),
+            "0x8218f324b45a8cd36f38586b062e3884588d926035f08e1dcd3605160b3ebd42".to_string(),
             ChainId(56),
         );
 
@@ -928,6 +928,7 @@ mod tests {
         let start = Instant::now();
         let bincode_bytes = bincode::serialize(&tx_identifier).unwrap();
         let bincode_serialization_time = start.elapsed();
+        let bincode_size = bincode_bytes.len();
 
         let start = Instant::now();
         let bincode_deserialized: EvmToIcpTxIdentifier =
@@ -942,6 +943,7 @@ mod tests {
         ciborium::ser::into_writer(&tx_identifier, &mut ciborium_buf)
             .expect("Failed to serialize with Ciborium");
         let ciborium_serialization_time = start.elapsed();
+        let ciborium_size = ciborium_buf.len();
 
         let start = Instant::now();
         let ciborium_deserialized: EvmToIcpTxIdentifier =
@@ -953,12 +955,12 @@ mod tests {
 
         // Print results
         println!(
-            "Bincode - Serialization: {:?}, Deserialization: {:?}",
-            bincode_serialization_time, bincode_deserialization_time
+            "Bincode - Serialization: {:?}, Deserialization: {:?}, Size: {} bytes",
+            bincode_serialization_time, bincode_deserialization_time, bincode_size
         );
         println!(
-            "Ciborium - Serialization: {:?}, Deserialization: {:?}",
-            ciborium_serialization_time, ciborium_deserialization_time
+            "Ciborium - Serialization: {:?}, Deserialization: {:?}, Size: {} bytes",
+            ciborium_serialization_time, ciborium_deserialization_time, ciborium_size
         );
     }
 }

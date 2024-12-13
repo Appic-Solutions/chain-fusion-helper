@@ -5,7 +5,7 @@ use crate::{
     numeric::Erc20TokenAmount,
     state::{
         mutate_state, nat_to_ledger_burn_index, read_state, ChainId, EvmToIcpTxIdentifier,
-        IcpToEvmIdentifier, MinterKey, Oprator,
+        IcpToEvmIdentifier, MinterKey, Operator,
     },
 };
 
@@ -109,7 +109,7 @@ pub async fn scrape_events_range(
                 Ok(events) => {
                     apply_state_transition(
                         events,
-                        minter_key.oprator(),
+                        minter_key.operator(),
                         minter_key.chain_id(),
                         evm_to_icp_fee,
                         icp_to_evm_fee,
@@ -159,7 +159,7 @@ pub async fn scrape_events_range(
 
 fn apply_state_transition(
     events: Events,
-    oprator: Oprator,
+    operator: Operator,
     chain_id: ChainId,
     evm_to_icp_fee: Erc20TokenAmount,
     icp_to_evm_fee: Erc20TokenAmount,
@@ -187,7 +187,7 @@ fn apply_state_transition(
                 NATIVE_ERC20_ADDRESS.to_string(),
                 subaccount,
                 chain_id,
-                oprator,
+                operator,
                 event.timestamp,
             ),
             AppicEventPayload::AcceptedErc20Deposit {
@@ -209,7 +209,7 @@ fn apply_state_transition(
                 erc20_contract_address,
                 subaccount,
                 chain_id,
-                oprator,
+                operator,
                 event.timestamp,
             ),
             AppicEventPayload::InvalidDeposit {
@@ -242,7 +242,7 @@ fn apply_state_transition(
                 from,
                 from_subaccount,
                 created_at,
-                oprator,
+                operator,
                 chain_id,
                 event.timestamp,
             ),
@@ -306,7 +306,7 @@ fn apply_state_transition(
                 from,
                 from_subaccount,
                 Some(created_at),
-                oprator,
+                operator,
                 chain_id,
                 event.timestamp,
             ),

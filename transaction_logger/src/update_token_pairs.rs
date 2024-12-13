@@ -16,7 +16,7 @@ const APPIC_LEDGER_MANAGER_ID: &str = "kmcdp-4yaaa-aaaag-ats3q-cai";
 pub async fn update_token_pairs() {
     let appic_ledger_manager_clinet = LsClient::new(
         Principal::from_text(APPIC_LEDGER_MANAGER_ID).unwrap(),
-        crate::state::Oprator::AppicMinter,
+        crate::state::Operator::AppicMinter,
     );
 
     log!(
@@ -32,7 +32,7 @@ pub async fn update_token_pairs() {
                     // Check if token exsits
                     if s.get_icrc_twin_for_erc20(
                         &erc20_identifier,
-                        &crate::state::Oprator::AppicMinter,
+                        &crate::state::Operator::AppicMinter,
                     )
                     .is_none()
                     {
@@ -59,7 +59,7 @@ pub async fn update_token_pairs() {
 
     let dfinity_ledger_manager_clinet = LsClient::new(
         Principal::from_text(LEDGER_SUITE_ORCHESTRATOR_ID).unwrap(),
-        crate::state::Oprator::DfinityCkEthMinter,
+        crate::state::Operator::DfinityCkEthMinter,
     );
 
     log!(
@@ -76,7 +76,7 @@ pub async fn update_token_pairs() {
                     // Check if token exsits
                     if s.get_icrc_twin_for_erc20(
                         &erc20_identifier,
-                        &crate::state::Oprator::DfinityCkEthMinter,
+                        &crate::state::Operator::DfinityCkEthMinter,
                     )
                     .is_none()
                     {

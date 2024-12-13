@@ -4,7 +4,7 @@ use lso_types::OrchestratorInfo;
 
 use crate::{
     minter_clinet::{IcRunTime, Runtime},
-    state::{Erc20Identifier, Oprator},
+    state::{Erc20Identifier, Operator},
 };
 
 // Appic
@@ -16,7 +16,7 @@ pub mod lso_types;
 pub struct LsClient {
     pub runtime: IcRunTime,
     pub id: Principal,
-    pub oprator: Oprator,
+    pub operator: Operator,
 }
 
 pub struct EvmIcpTwinPairs(Vec<(Erc20Identifier, Principal)>);
@@ -28,17 +28,17 @@ impl EvmIcpTwinPairs {
 }
 
 impl LsClient {
-    pub fn new(id: Principal, oprator: Oprator) -> Self {
+    pub fn new(id: Principal, operator: Operator) -> Self {
         Self {
             runtime: IcRunTime(),
             id,
-            oprator,
+            operator,
         }
     }
 
     pub async fn get_erc20_list(&self) -> Result<EvmIcpTwinPairs, crate::minter_clinet::CallError> {
-        match self.oprator {
-            Oprator::DfinityCkEthMinter => {
+        match self.operator {
+            Operator::DfinityCkEthMinter => {
                 let result = self
                     .runtime
                     .call_canister::<_, OrchestratorInfo>(self.id, "get_orchestrator_info", ())
@@ -46,7 +46,7 @@ impl LsClient {
 
                 Ok(EvmIcpTwinPairs::from(result))
             }
-            Oprator::AppicMinter => {
+            Operator::AppicMinter => {
                 let result = self
                     .runtime
                     .call_canister::<_, LedgerManagerInfo>(self.id, "get_lsm_info", ())

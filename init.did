@@ -6,7 +6,7 @@
           last_observed_event = 0 : nat;
           last_scraped_event = 0 : nat;
           chain_id = 1 : nat;
-          oprator = variant { DfinityCkEthMinter };
+          operator = variant { DfinityCkEthMinter };
           icp_to_evm_fee = 0 : nat;
           evm_to_icp_fee = 0 : nat;
           minter_id = principal "sv3dd-oaaaa-aaaar-qacoa-cai";

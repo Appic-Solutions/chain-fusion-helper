@@ -39,7 +39,7 @@ pub fn post_upgrade(upgrade_arg: Option<UpgradeArg>) {
             for update_minter_args in update_minters {
                 let minter_key = MinterKey(
                     ChainId::from(&update_minter_args.chain_id),
-                    update_minter_args.oprator,
+                    update_minter_args.operator,
                 );
 
                 log!(

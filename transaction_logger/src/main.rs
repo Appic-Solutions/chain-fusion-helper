@@ -95,7 +95,7 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
     let icrc_pair = read_state(|s| {
         match s.get_icrc_twin_for_erc20(
             &Erc20Identifier::new(&erc20_contract_address, chain_id),
-            &tx.oprator,
+            &tx.operator,
         ) {
             Some(icrc_id) => Ok(icrc_id),
             None => return Err(AddIcpToEvmTxError::InvalidTokenPairs),
@@ -124,7 +124,7 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
                 icrc_ledger_id: Some(icrc_pair),
                 verified: false,
                 status: IcpToEvmStatus::PendingVerification,
-                oprator: tx.oprator,
+                operator: tx.operator,
                 chain_id,
             },
         )
@@ -156,7 +156,7 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
     let icrc_pair = read_state(|s| {
         match s.get_icrc_twin_for_erc20(
             &Erc20Identifier::new(&erc20_contract_address, chain_id),
-            &tx.oprator,
+            &tx.operator,
         ) {
             Some(icrc_id) => Ok(icrc_id),
             None => return Err(AddEvmToIcpTxError::InvalidTokenPairs),
@@ -176,7 +176,7 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
                 icrc_ledger_id: Some(icrc_pair),
                 verified: false,
                 status: EvmToIcpStatus::PendingVerification,
-                oprator: tx.oprator,
+                operator: tx.operator,
                 from_address,
                 value: nat_to_erc20_amount(tx.value),
                 block_number: None,

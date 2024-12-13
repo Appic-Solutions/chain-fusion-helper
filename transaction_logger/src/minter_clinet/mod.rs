@@ -11,7 +11,7 @@ use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use std::fmt::Debug;
 
-use crate::state::Oprator;
+use crate::state::Operator;
 
 use crate::state::Minter;
 
@@ -68,7 +68,7 @@ impl Runtime for IcRunTime {
 pub struct MinterClient {
     runtime: IcRunTime,
     minter_id: Principal,
-    oprator: Oprator,
+    operator: Operator,
 }
 
 impl From<&Minter> for MinterClient {
@@ -76,25 +76,25 @@ impl From<&Minter> for MinterClient {
         Self {
             runtime: IcRunTime(),
             minter_id: value.id,
-            oprator: value.oprator,
+            operator: value.operator,
         }
     }
 }
 
 impl MinterClient {
-    pub fn new(minter_id: Principal, oprator: Oprator) -> Self {
+    pub fn new(minter_id: Principal, operator: Operator) -> Self {
         Self {
             runtime: IcRunTime(),
             minter_id,
-            oprator,
+            operator,
         }
     }
 
     // Get total evetns count
     pub async fn get_total_events_count(&self) -> u64 {
         // Get total events count
-        let toatl_events_count = match self.oprator {
-            Oprator::DfinityCkEthMinter => {
+        let toatl_events_count = match self.operator {
+            Operator::DfinityCkEthMinter => {
                 self.runtime
                     .call_canister::<DfinityCkGetEventsArg, DfinityCkGetEventsResult>(
                         self.minter_id,
@@ -108,7 +108,7 @@ impl MinterClient {
                     .expect("Call should not fail. will retry in next interval")
                     .total_event_count
             }
-            Oprator::AppicMinter => {
+            Operator::AppicMinter => {
                 self.runtime
                     .call_canister::<AppicGetEventsArg, AppicGetEventsResult>(
                         self.minter_id,
@@ -129,8 +129,8 @@ impl MinterClient {
 
     // scrape events
     pub async fn scrape_events(&self, from_event: u64, length: u64) -> Result<Events, CallError> {
-        match self.oprator {
-            Oprator::DfinityCkEthMinter => self
+        match self.operator {
+            Operator::DfinityCkEthMinter => self
                 .runtime
                 .call_canister::<DfinityCkGetEventsArg, DfinityCkGetEventsResult>(
                     self.minter_id,
@@ -142,7 +142,7 @@ impl MinterClient {
                 )
                 .await
                 .map(|response| response.reduce()),
-            Oprator::AppicMinter => self
+            Operator::AppicMinter => self
                 .runtime
                 .call_canister::<AppicGetEventsArg, AppicGetEventsResult>(
                     self.minter_id,

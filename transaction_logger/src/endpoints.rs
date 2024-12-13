@@ -1,4 +1,4 @@
-use crate::state::{EvmToIcpStatus, EvmToIcpTx, IcpToEvmStatus, IcpToEvmTx, Oprator};
+use crate::state::{EvmToIcpStatus, EvmToIcpTx, IcpToEvmStatus, IcpToEvmTx, Operator};
 use candid::{CandidType, Deserialize, Nat, Principal};
 use serde::Serialize;
 
@@ -21,7 +21,7 @@ pub struct AddEvmToIcpTx {
     pub erc20_contract_address: String,
     pub icrc_ledger_id: Principal,
     pub time: Nat,
-    pub oprator: Oprator,
+    pub operator: Operator,
 }
 
 pub type CandidChainId = Nat;
@@ -47,7 +47,7 @@ pub struct AddIcpToEvmTx {
     pub max_transaction_fee: Nat,
     pub erc20_contract_address: String,
     pub icrc_ledger_id: Principal,
-    pub oprator: Oprator,
+    pub operator: Operator,
     pub chain_id: CandidChainId,
 }
 
@@ -64,7 +64,7 @@ pub enum AddIcpToEvmTxError {
 pub struct MinterArgs {
     pub chain_id: CandidChainId,
     pub minter_id: Principal,
-    pub oprator: Oprator,
+    pub operator: Operator,
     pub last_observed_event: Nat,
     pub last_scraped_event: Nat,
     pub evm_to_icp_fee: Nat,
@@ -77,7 +77,7 @@ pub struct UpdateMinterArgs {
     pub minter_id: Principal,
     pub evm_to_icp_fee: Nat,
     pub icp_to_evm_fee: Nat,
-    pub oprator: Oprator,
+    pub operator: Operator,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -135,7 +135,7 @@ pub struct CandidIcpToEvm {
     pub icrc_ledger_id: Option<Principal>,
     pub verified: bool,
     pub status: IcpToEvmStatus,
-    pub oprator: Oprator,
+    pub operator: Operator,
     pub chain_id: Nat,
 }
 
@@ -159,7 +159,7 @@ impl From<IcpToEvmTx> for CandidIcpToEvm {
             icrc_ledger_id,
             verified,
             status,
-            oprator,
+            operator,
             chain_id,
         } = value;
 
@@ -183,7 +183,7 @@ impl From<IcpToEvmTx> for CandidIcpToEvm {
             icrc_ledger_id,
             verified,
             status,
-            oprator,
+            operator,
             chain_id: Nat::from(chain_id),
         }
     }
@@ -205,7 +205,7 @@ pub struct CandidEvmToIcp {
     pub status: EvmToIcpStatus,
     pub verified: bool,
     pub time: u64,
-    pub oprator: Oprator,
+    pub operator: Operator,
 }
 
 impl From<EvmToIcpTx> for CandidEvmToIcp {
@@ -225,7 +225,7 @@ impl From<EvmToIcpTx> for CandidEvmToIcp {
             status,
             verified,
             time,
-            oprator,
+            operator,
         } = value;
         Self {
             from_address: from_address.to_string(),
@@ -242,7 +242,7 @@ impl From<EvmToIcpTx> for CandidEvmToIcp {
             status,
             verified,
             time,
-            oprator,
+            operator,
         }
     }
 }
@@ -251,6 +251,6 @@ impl From<EvmToIcpTx> for CandidEvmToIcp {
 pub struct TokenPair {
     pub erc20_address: String,
     pub ledger_id: Principal,
-    pub oprator: Oprator,
+    pub operator: Operator,
     pub chain_id: Nat,
 }
