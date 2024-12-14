@@ -1,14 +1,12 @@
 // Token service updates list of available tokens on icp on a daily basis
 // Tokens are fetched from icpswap token list canister and sonic swap
 
-use std::ptr::eq;
-
 use candid::Principal;
 use icp_swap_token_type::TokensListResult;
 use sonic_swap_types::TokenInfoWithType;
 
 use crate::{
-    minter_clinet::{CallError, IcRunTime, Runtime},
+    minter_clinet::{IcRunTime, Runtime},
     state::IcpToken,
 };
 

@@ -12,20 +12,23 @@ pub struct TokenInfoWithType {
     pub fee: candid::Nat,
     pub decimals: u8,
     pub name: String,
-    pub totalSupply: candid::Nat,
-    pub blockStatus: String,
-    pub tokenType: String,
+    #[serde(rename = "totalSupply")]
+    pub total_supply: candid::Nat,
+    #[serde(rename = "blockStatus")]
+    pub block_status: String,
+    #[serde(rename = "tokenType")]
+    pub token_type: String,
     pub symbol: String,
 }
 
 impl From<TokenInfoWithType> for IcpToken {
     fn from(value: TokenInfoWithType) -> Self {
-        let token_type = match value.tokenType.as_str() {
+        let token_type = match value.token_type.as_str() {
             "ICRC1" => IcpTokenType::ICRC1,
             "ICRC2" => IcpTokenType::ICRC2,
             "ICRC3" => IcpTokenType::ICRC3,
             "DIP20" => IcpTokenType::DIP20,
-            _ => IcpTokenType::Other(value.tokenType),
+            _ => IcpTokenType::Other(value.token_type),
         };
         let ledger_id = Principal::from_text(value.id).unwrap_or(Principal::anonymous());
 
