@@ -297,6 +297,7 @@ pub struct CandidIcpToken {
     pub decimals: u8,
     pub symbol: String,
     pub token_type: IcpTokenType,
+    pub fee: u64,
 }
 
 impl From<IcpToken> for CandidIcpToken {
@@ -307,6 +308,7 @@ impl From<IcpToken> for CandidIcpToken {
             decimals: value.decimals,
             symbol: value.symbol,
             token_type: value.token_type,
+            fee: value.fee,
         }
     }
 }

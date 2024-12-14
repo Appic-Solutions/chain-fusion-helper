@@ -1,10 +1,6 @@
 use std::collections::HashSet;
 
-use crate::{
-    icp_tokens_service::TokenService,
-    logs::INFO,
-    state::{mutate_state, IcpToken},
-};
+use crate::{icp_tokens_service::TokenService, logs::INFO, state::mutate_state};
 use ic_canister_log::log;
 pub async fn update_icp_tokens() {
     log!(
@@ -32,6 +28,7 @@ pub async fn update_icp_tokens() {
 
 #[cfg(test)]
 mod tests {
+    use crate::state::IcpToken;
     use crate::state::IcpTokenType;
 
     use super::*;
@@ -45,6 +42,8 @@ mod tests {
             decimals: 8,
             symbol: String::from("TKA"),
             token_type: IcpTokenType::ICRC2,
+            fee: 500,
+            rank: Some(1),
         };
 
         let token2 = IcpToken {
@@ -53,6 +52,8 @@ mod tests {
             decimals: 18,
             symbol: String::from("TKB"),
             token_type: IcpTokenType::DIP20,
+            fee: 500,
+            rank: None,
         };
 
         let token3 = IcpToken {
@@ -61,6 +62,8 @@ mod tests {
             decimals: 6,
             symbol: String::from("TKC"),
             token_type: IcpTokenType::Other("Custom".into()),
+            fee: 500,
+            rank: Some(2),
         };
 
         assert_eq!(token1, token2); // Same ledger_id should mean equality
@@ -76,6 +79,8 @@ mod tests {
                 decimals: 8,
                 symbol: String::from("TKA"),
                 token_type: IcpTokenType::ICRC1,
+                fee: 500,
+                rank: Some(3),
             },
             IcpToken {
                 ledger_id: Principal::from_text("6fvyi-faaaa-aaaam-qbiga-cai").unwrap(),
@@ -83,6 +88,8 @@ mod tests {
                 decimals: 18,
                 symbol: String::from("TKB"),
                 token_type: IcpTokenType::DIP20,
+                fee: 500,
+                rank: Some(2),
             },
         ];
 
@@ -93,6 +100,8 @@ mod tests {
                 decimals: 18,
                 symbol: String::from("TKB2"),
                 token_type: IcpTokenType::DIP20,
+                fee: 500,
+                rank: None,
             },
             IcpToken {
                 ledger_id: Principal::from_text("sr5fw-zqaaa-aaaak-qig5q-cai").unwrap(),
@@ -100,6 +109,8 @@ mod tests {
                 decimals: 6,
                 symbol: String::from("TKC"),
                 token_type: IcpTokenType::Other("Custom".into()),
+                fee: 500,
+                rank: Some(1),
             },
         ];
 
@@ -127,6 +138,8 @@ mod tests {
                 decimals: 8,
                 symbol: String::from("TKA"),
                 token_type: IcpTokenType::ICRC1,
+                fee: 500,
+                rank: Some(2),
             },
             IcpToken {
                 ledger_id: Principal::from_text("dikjh-xaaaa-aaaak-afnba-cai").unwrap(), // Duplicate
@@ -134,6 +147,8 @@ mod tests {
                 decimals: 8,
                 symbol: String::from("TKA"),
                 token_type: IcpTokenType::ICRC2,
+                fee: 500,
+                rank: None,
             },
             IcpToken {
                 ledger_id: Principal::from_text("sr5fw-zqaaa-aaaak-qig5q-cai").unwrap(),
@@ -141,6 +156,8 @@ mod tests {
                 decimals: 18,
                 symbol: String::from("TKB"),
                 token_type: IcpTokenType::DIP20,
+                fee: 500,
+                rank: Some(2),
             },
         ];
 

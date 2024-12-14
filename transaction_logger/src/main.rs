@@ -1,8 +1,6 @@
-use std::io::Chain;
 use std::str::FromStr;
-use std::time::Duration;
 
-use candid::{Nat, Principal};
+use candid::Principal;
 use ic_canister_log::log;
 use ic_cdk::{init, post_upgrade, query, update};
 use ic_cdk_timers;

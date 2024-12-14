@@ -248,7 +248,9 @@ pub struct IcpToken {
     pub name: String,
     pub decimals: u8,
     pub symbol: String,
+    pub fee: u64,
     pub token_type: IcpTokenType,
+    pub rank: Option<u32>,
 }
 
 // Custom implementation of Eq and Hash for IcpToken based only on ledger_id
