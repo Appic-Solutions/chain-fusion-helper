@@ -8,16 +8,18 @@ use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cell::RefCell;
+use std::hash::{Hash, Hasher};
+
 use storage_config::{
-    evm_to_icp_memory, evm_token_list_id, icp_to_evm_memory, minter_memory,
+    evm_to_icp_memory, evm_token_list_id, icp_to_evm_memory, icp_token_list_id, minter_memory,
     supported_appic_tokens_memory_id, supported_ckerc20_tokens_memory_id,
 };
 
 use std::str::FromStr;
 
 use crate::endpoints::{
-    AddEvmToIcpTx, AddIcpToEvmTx, CandidEvmToIcp, CandidIcpToEvm, MinterArgs, TokenPair,
-    Transaction, TransactionSearchParam,
+    AddEvmToIcpTx, AddIcpToEvmTx, CandidEvmToIcp, CandidEvmToken, CandidIcpToEvm, CandidIcpToken,
+    MinterArgs, TokenPair, Transaction, TransactionSearchParam,
 };
 use crate::numeric::{BlockNumber, Erc20TokenAmount, LedgerBurnIndex};
 use crate::scrape_events::NATIVE_ERC20_ADDRESS;
@@ -231,6 +233,7 @@ pub struct EvmToken {
     pub logo: String,
 }
 
+#[derive(CandidType, Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
 pub enum IcpTokenType {
     ICRC1,
     ICRC2,
@@ -239,12 +242,26 @@ pub enum IcpTokenType {
     Other(String),
 }
 
+#[derive(Clone, Eq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct IcpToken {
     pub ledger_id: Principal,
     pub name: String,
     pub decimals: u8,
     pub symbol: String,
     pub token_type: IcpTokenType,
+}
+
+// Custom implementation of Eq and Hash for IcpToken based only on ledger_id
+impl PartialEq for IcpToken {
+    fn eq(&self, other: &Self) -> bool {
+        self.ledger_id == other.ledger_id
+    }
+}
+
+impl Hash for IcpToken {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.ledger_id.hash(state);
+    }
 }
 
 // State Definition,
@@ -262,7 +279,8 @@ pub struct State {
     pub supported_ckerc20_tokens: BTreeMap<Erc20Identifier, Principal, StableMemory>,
     pub supported_twin_appic_tokens: BTreeMap<Erc20Identifier, Principal, StableMemory>,
 
-    pub evm_tokens_list: BTreeMap<Erc20Identifier, EvmToken, StableMemory>,
+    pub evm_token_list: BTreeMap<Erc20Identifier, EvmToken, StableMemory>,
+    pub icp_token_list: BTreeMap<Principal, IcpToken, StableMemory>,
 }
 
 impl State {
@@ -687,22 +705,28 @@ impl State {
     pub fn get_suported_twin_token_pairs(&self) -> Vec<TokenPair> {
         self.supported_ckerc20_tokens
             .iter()
-            .map(|(erc20_identifier, ledger_id)| TokenPair {
-                erc20_address: erc20_identifier.erc20_address().to_string(),
-                ledger_id,
-                operator: Operator::DfinityCkEthMinter,
-                chain_id: erc20_identifier.chain_id().into(),
+            .filter_map(|(erc20_identifier, ledger_id)| {
+                let evm_token = self.get_evm_token_by_identifier(&erc20_identifier)?;
+                let icp_token = self.get_icp_token_by_principal(&ledger_id)?;
+
+                Some(TokenPair {
+                    evm_tokens: CandidEvmToken::from(evm_token),
+                    icp_token: CandidIcpToken::from(icp_token),
+                    operator: Operator::DfinityCkEthMinter,
+                })
             })
-            .chain(
-                self.supported_twin_appic_tokens
-                    .iter()
-                    .map(|(erc20_identifier, ledger_id)| TokenPair {
-                        erc20_address: erc20_identifier.erc20_address().to_string(),
-                        ledger_id,
+            .chain(self.supported_twin_appic_tokens.iter().filter_map(
+                |(erc20_identifier, ledger_id)| {
+                    let evm_token = self.get_evm_token_by_identifier(&erc20_identifier)?;
+                    let icp_token = self.get_icp_token_by_principal(&ledger_id)?;
+
+                    Some(TokenPair {
+                        evm_tokens: CandidEvmToken::from(evm_token),
+                        icp_token: CandidIcpToken::from(icp_token),
                         operator: Operator::AppicMinter,
-                        chain_id: erc20_identifier.chain_id().into(),
-                    }),
-            )
+                    })
+                },
+            ))
             .collect()
     }
 
@@ -773,19 +797,35 @@ impl State {
 
     // Records a single evm token
     pub fn record_evm_token(&mut self, identifier: Erc20Identifier, token: EvmToken) {
-        self.evm_tokens_list.insert(identifier, token);
+        self.evm_token_list.insert(identifier, token);
     }
 
     // Records all evm_tokens in bulk
     pub fn record_evm_tokens_bulk(&mut self, tokens: Vec<EvmToken>) {
         tokens.into_iter().for_each(|token| {
-            self.evm_tokens_list
+            self.evm_token_list
                 .insert(Erc20Identifier::from(&token), token);
         });
     }
 
+    // Records a single icp token
+    pub fn record_icp_token(&mut self, ledger_id: Principal, token: IcpToken) {
+        self.icp_token_list.insert(ledger_id, token);
+    }
+
+    // Records all icp_tokens in bulk
+    pub fn record_icp_tokens_bulk(&mut self, tokens: Vec<IcpToken>) {
+        tokens.into_iter().for_each(|token| {
+            self.icp_token_list.insert(token.ledger_id, token);
+        });
+    }
+
     pub fn get_evm_token_by_identifier(&self, identifier: &Erc20Identifier) -> Option<EvmToken> {
-        self.evm_tokens_list.get(identifier)
+        self.evm_token_list.get(identifier)
+    }
+
+    pub fn get_icp_token_by_principal(&self, ledger_id: &Principal) -> Option<IcpToken> {
+        self.icp_token_list.get(ledger_id)
     }
 }
 
@@ -878,7 +918,8 @@ thread_local! {
                 icp_to_evm_txs: BTreeMap::init(icp_to_evm_memory()),
                 supported_ckerc20_tokens: BTreeMap::init(supported_ckerc20_tokens_memory_id()),
                 supported_twin_appic_tokens:BTreeMap::init(supported_appic_tokens_memory_id()),
-                evm_tokens_list:BTreeMap::init(evm_token_list_id())
+                evm_token_list:BTreeMap::init(evm_token_list_id()),
+                icp_token_list:BTreeMap::init(icp_token_list_id())
 
             })
     );
@@ -928,6 +969,12 @@ mod storage_config {
 
     pub fn evm_token_list_id() -> StableMemory {
         MEMORY_MANAGER.with(|m| m.borrow().get(EVM_TOKEN_LIST))
+    }
+
+    const ICP_TOKEN_LIST: MemoryId = MemoryId::new(6);
+
+    pub fn icp_token_list_id() -> StableMemory {
+        MEMORY_MANAGER.with(|m| m.borrow().get(ICP_TOKEN_LIST))
     }
 
     impl Storable for MinterKey {
@@ -1039,6 +1086,30 @@ mod storage_config {
     }
 
     impl Storable for EvmToken {
+        fn to_bytes(&self) -> Cow<[u8]> {
+            encode(self)
+        }
+
+        fn from_bytes(bytes: Cow<[u8]>) -> Self {
+            decode(bytes)
+        }
+
+        const BOUND: Bound = Bound::Unbounded;
+    }
+
+    impl Storable for IcpToken {
+        fn to_bytes(&self) -> Cow<[u8]> {
+            encode(self)
+        }
+
+        fn from_bytes(bytes: Cow<[u8]>) -> Self {
+            decode(bytes)
+        }
+
+        const BOUND: Bound = Bound::Unbounded;
+    }
+
+    impl Storable for IcpTokenType {
         fn to_bytes(&self) -> Cow<[u8]> {
             encode(self)
         }

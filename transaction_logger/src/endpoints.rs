@@ -1,4 +1,7 @@
-use crate::state::{EvmToIcpStatus, EvmToIcpTx, IcpToEvmStatus, IcpToEvmTx, Operator};
+use crate::state::{
+    EvmToIcpStatus, EvmToIcpTx, EvmToken, IcpToEvmStatus, IcpToEvmTx, IcpToken, IcpTokenType,
+    Operator,
+};
 use candid::{CandidType, Deserialize, Nat, Principal};
 use serde::Serialize;
 
@@ -265,9 +268,52 @@ impl From<EvmToIcpTx> for CandidEvmToIcp {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
-pub struct TokenPair {
-    pub erc20_address: String,
+pub struct CandidEvmToken {
+    pub chain_id: CandidChainId,
+    pub erc20_contract_address: String,
+    pub name: String,
+    pub decimals: u8,
+    pub symbol: String,
+    pub logo: String,
+}
+
+impl From<EvmToken> for CandidEvmToken {
+    fn from(value: EvmToken) -> Self {
+        Self {
+            chain_id: value.chain_id.into(),
+            erc20_contract_address: value.erc20_contract_address.to_string(),
+            name: value.name,
+            decimals: value.decimals,
+            symbol: value.symbol,
+            logo: value.logo,
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub struct CandidIcpToken {
     pub ledger_id: Principal,
+    pub name: String,
+    pub decimals: u8,
+    pub symbol: String,
+    pub token_type: IcpTokenType,
+}
+
+impl From<IcpToken> for CandidIcpToken {
+    fn from(value: IcpToken) -> Self {
+        Self {
+            ledger_id: value.ledger_id,
+            name: value.name,
+            decimals: value.decimals,
+            symbol: value.symbol,
+            token_type: value.token_type,
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub struct TokenPair {
+    pub evm_tokens: CandidEvmToken,
+    pub icp_token: CandidIcpToken,
     pub operator: Operator,
-    pub chain_id: Nat,
 }

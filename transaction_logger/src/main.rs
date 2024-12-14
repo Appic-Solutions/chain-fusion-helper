@@ -1,14 +1,17 @@
+use std::io::Chain;
 use std::str::FromStr;
 use std::time::Duration;
 
-use candid::Principal;
+use candid::{Nat, Principal};
 use ic_canister_log::log;
 use ic_cdk::{init, post_upgrade, query, update};
 use ic_cdk_timers;
 use ic_ethereum_types::Address;
+use transaction_logger::add_evm_tokens::add_evm_tokens_to_state;
 use transaction_logger::endpoints::{
-    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError, GetTxParams,
-    Icrc28TrustedOriginsResponse, TokenPair, Transaction,
+    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError, CandidChainId,
+    CandidEvmToken, CandidIcpToken, GetTxParams, Icrc28TrustedOriginsResponse, TokenPair,
+    Transaction,
 };
 use transaction_logger::lifecycle::{self, init as initialize};
 use transaction_logger::state::{
@@ -16,6 +19,8 @@ use transaction_logger::state::{
     Erc20Identifier, EvmToIcpStatus, EvmToIcpTx, EvmToIcpTxIdentifier, IcpToEvmIdentifier,
     IcpToEvmStatus, IcpToEvmTx,
 };
+use transaction_logger::update_icp_tokens::update_icp_tokens;
+use transaction_logger::UPDATE_ICP_TOKENS;
 use transaction_logger::{
     endpoints::LoggerArgs, logs::INFO, remove_unverified_tx::remove_unverified_tx,
     scrape_events::scrape_events, update_token_pairs::update_token_pairs,
@@ -23,11 +28,6 @@ use transaction_logger::{
 };
 // Setup timers
 fn setup_timers() {
-    // Fetch all Twin tokens
-    ic_cdk_timers::set_timer(Duration::from_secs(0), || {
-        ic_cdk::spawn(update_token_pairs())
-    });
-
     // Start scraping events.
     ic_cdk_timers::set_timer_interval(SCRAPE_EVENTS_INTERVAL, || ic_cdk::spawn(scrape_events()));
 
@@ -38,6 +38,9 @@ fn setup_timers() {
     ic_cdk_timers::set_timer_interval(CHECK_NEW_ICRC_TWIN_TOKENS, || {
         ic_cdk::spawn(update_token_pairs())
     });
+
+    // Update Icp token list
+    ic_cdk_timers::set_timer_interval(UPDATE_ICP_TOKENS, || ic_cdk::spawn(update_icp_tokens()));
 }
 
 #[init]
@@ -53,7 +56,20 @@ pub fn init(init_args: LoggerArgs) {
         }
     }
 
+    ic_cdk::spawn(prepare_canister_state());
+
     setup_timers();
+}
+
+async fn prepare_canister_state() {
+    // Add Evm tokens to state
+    add_evm_tokens_to_state();
+
+    // Get all the icp tokens and save them into state
+    update_icp_tokens().await;
+
+    // Get all pairs from ledger_suite managers
+    update_token_pairs().await;
 }
 
 #[post_upgrade]
@@ -222,6 +238,30 @@ pub fn get_transaction(params: GetTxParams) -> Option<Transaction> {
         read_state(|s| s.get_transaction_by_search_params(params.search_param, chain_id));
 
     search_result
+}
+
+#[query]
+pub fn get_evm_token(address: String, chain_id: CandidChainId) -> Option<CandidEvmToken> {
+    // Validate address and create identifier
+    let identifier = Erc20Identifier::new(
+        &Address::from_str(&address).expect("Wrong Address Provided"),
+        ChainId::from(&chain_id),
+    );
+
+    // Get token from state
+    let token = read_state(|s| s.get_evm_token_by_identifier(&identifier))?;
+
+    // Return Token
+    Some(CandidEvmToken::from(token))
+}
+
+#[query]
+pub fn get_icp_token(ledger_id: Principal) -> Option<CandidIcpToken> {
+    // Get token from state
+    let token = read_state(|s| s.get_icp_token_by_principal(&ledger_id))?;
+
+    // Return Token
+    Some(CandidIcpToken::from(token))
 }
 
 // list every base URL that users will authenticate to your app from
