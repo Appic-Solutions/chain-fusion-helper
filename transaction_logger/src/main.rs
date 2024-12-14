@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::time::Duration;
 
 use candid::Principal;
 use ic_canister_log::log;
@@ -54,20 +55,25 @@ pub fn init(init_args: LoggerArgs) {
         }
     }
 
-    ic_cdk::spawn(prepare_canister_state());
+    prepare_canister_state();
 
     setup_timers();
 }
 
-async fn prepare_canister_state() {
+fn prepare_canister_state() {
     // Add Evm tokens to state
     add_evm_tokens_to_state();
 
     // Get all the icp tokens and save them into state
-    update_icp_tokens().await;
+    ic_cdk_timers::set_timer(
+        Duration::from_secs(0),
+        || ic_cdk::spawn(update_icp_tokens()),
+    );
 
     // Get all pairs from ledger_suite managers
-    update_token_pairs().await;
+    ic_cdk_timers::set_timer(Duration::from_secs(0), || {
+        ic_cdk::spawn(update_token_pairs())
+    });
 }
 
 #[post_upgrade]

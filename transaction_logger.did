@@ -56,6 +56,14 @@ type CandidEvmToIcp = record {
   icrc_ledger_id : opt principal;
   total_gas_spent : opt nat;
 };
+type CandidEvmToken = record {
+  decimals : nat8;
+  logo : text;
+  name : text;
+  erc20_contract_address : text;
+  chain_id : nat;
+  symbol : text;
+};
 type CandidIcpToEvm = record {
   effective_gas_price : opt nat;
   status : IcpToEvmStatus;
@@ -76,6 +84,14 @@ type CandidIcpToEvm = record {
   gas_used : opt nat;
   total_gas_spent : opt nat;
   native_ledger_burn_index : nat;
+};
+type CandidIcpToken = record {
+  fee : nat64;
+  decimals : nat8;
+  name : text;
+  ledger_id : principal;
+  token_type : IcpTokenType;
+  symbol : text;
 };
 type EvmToIcpStatus = variant {
   Invalid : text;
@@ -100,6 +116,7 @@ type IcpToEvmStatus = variant {
   Created;
   FinalizedTransaction;
 };
+type IcpTokenType = variant { ICRC1; ICRC2; ICRC3; DIP20; Other : text };
 type Icrc28TrustedOriginsResponse = record { trusted_origins : vec text };
 type InitArgs = record { minters : vec MinterArgs };
 type LoggerArgs = variant { Upgrade : UpgradeArg; Init : InitArgs };
@@ -117,9 +134,8 @@ type Result = variant { Ok; Err : AddEvmToIcpTxError };
 type Result_1 = variant { Ok; Err : AddIcpToEvmTxError };
 type TokenPair = record {
   operator : Operator;
-  ledger_id : principal;
-  chain_id : nat;
-  erc20_address : text;
+  evm_tokens : CandidEvmToken;
+  icp_token : CandidIcpToken;
 };
 type Transaction = variant {
   EvmToIcp : CandidEvmToIcp;
@@ -144,6 +160,8 @@ type UpgradeArg = record {
 service : (LoggerArgs) -> {
   get_all_tx_by_address : (text) -> (vec Transaction) query;
   get_all_tx_by_principal : (principal) -> (vec Transaction) query;
+  get_evm_token : (text, nat) -> (opt CandidEvmToken) query;
+  get_icp_token : (principal) -> (opt CandidIcpToken) query;
   get_supported_token_pairs : () -> (vec TokenPair) query;
   get_transaction : (GetTxParams) -> (opt Transaction) query;
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
