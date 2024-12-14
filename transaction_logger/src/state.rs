@@ -868,12 +868,20 @@ pub fn nat_to_u64(value: &Nat) -> u64 {
     value.0.to_u64().unwrap()
 }
 
+pub fn checked_nat_to_u64(value: &Nat) -> Option<u64> {
+    value.0.to_u64()
+}
+
 pub fn nat_to_u128(value: &Nat) -> u128 {
     value.0.to_u128().unwrap()
 }
 
 pub fn nat_to_u8(value: &Nat) -> u8 {
     value.0.to_u8().unwrap()
+}
+
+pub fn checked_nat_to_u8(value: &Nat) -> Option<u8> {
+    value.0.to_u8()
 }
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
 #[serde(transparent)]

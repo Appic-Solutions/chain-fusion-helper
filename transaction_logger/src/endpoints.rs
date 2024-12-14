@@ -298,6 +298,7 @@ pub struct CandidIcpToken {
     pub symbol: String,
     pub token_type: IcpTokenType,
     pub fee: u64,
+    pub rank: Option<u32>,
 }
 
 impl From<IcpToken> for CandidIcpToken {
@@ -309,6 +310,7 @@ impl From<IcpToken> for CandidIcpToken {
             symbol: value.symbol,
             token_type: value.token_type,
             fee: value.fee,
+            rank: value.rank,
         }
     }
 }

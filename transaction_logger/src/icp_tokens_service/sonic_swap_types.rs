@@ -4,7 +4,7 @@
 use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_cdk::api::call::CallResult as Result;
 
-use crate::state::{nat_to_u64, IcpToken, IcpTokenType};
+use crate::state::{checked_nat_to_u64, nat_to_u64, IcpToken, IcpTokenType};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct TokenInfoWithType {
@@ -38,7 +38,7 @@ impl From<TokenInfoWithType> for IcpToken {
             decimals: value.decimals,
             symbol: value.symbol,
             token_type,
-            fee: nat_to_u64(&value.fee),
+            fee: checked_nat_to_u64(&value.fee).unwrap_or(0),
             rank: None,
         }
     }
