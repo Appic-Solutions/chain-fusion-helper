@@ -52,7 +52,7 @@ impl TokenService {
 
         let icp_swap_token: TokensListResult = self
             .runtime
-            .call_canister(Principal::from_text(ICP_SWAP_ID).unwrap(), "get_list", ())
+            .call_canister(Principal::from_text(ICP_SWAP_ID).unwrap(), "getList", ())
             .await
             .unwrap();
 

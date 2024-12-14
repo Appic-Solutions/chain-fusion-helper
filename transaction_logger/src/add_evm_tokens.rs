@@ -1,3 +1,4 @@
+use ic_canister_log::log;
 use serde_json;
 
 const ETHEREUM_TOKENS: &str = include_str!("../../evm_tokens/eth_tokens.json");
@@ -9,9 +10,16 @@ const FANTOM_TOKENS: &str = include_str!("../../evm_tokens/fantom_tokens.json");
 const OPTIMISM_TOKENS: &str = include_str!("../../evm_tokens/optimism_tokens.json");
 const POLYGON_TOKENS: &str = include_str!("../../evm_tokens/polygon_tokens.json");
 
-use crate::state::{mutate_state, Erc20Identifier, EvmToken};
+use crate::{
+    logs::INFO,
+    state::{mutate_state, Erc20Identifier, EvmToken},
+};
 
 pub fn add_evm_tokens_to_state() {
+    log!(
+        INFO,
+        "[Add EVM Tokens] Adding new EVM tokens from json files",
+    );
     mutate_state(|s| {
         deserialize_all_tokens()
             .into_iter()
