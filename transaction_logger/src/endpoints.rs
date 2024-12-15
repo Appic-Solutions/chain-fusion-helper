@@ -268,6 +268,12 @@ impl From<EvmToIcpTx> for CandidEvmToIcp {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub struct GetEvmTokenArgs {
+    pub address: String,
+    pub chain_id: CandidChainId,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 pub struct CandidEvmToken {
     pub chain_id: CandidChainId,
     pub erc20_contract_address: String,
@@ -288,6 +294,11 @@ impl From<EvmToken> for CandidEvmToken {
             logo: value.logo,
         }
     }
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub struct GetIcpTokenArgs {
+    pub ledger_id: Principal,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -317,7 +328,7 @@ impl From<IcpToken> for CandidIcpToken {
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 pub struct TokenPair {
-    pub evm_tokens: CandidEvmToken,
+    pub evm_token: CandidEvmToken,
     pub icp_token: CandidIcpToken,
     pub operator: Operator,
 }

@@ -1,7 +1,7 @@
 use crate::state::ChainId as StateChainId;
 use std::str::FromStr;
 
-use super::EvmIcpTwinPairs;
+use super::EvmIcpBridgePairs;
 use crate::{
     scrape_events::NATIVE_ERC20_ADDRESS,
     state::{ChainId, Erc20Identifier},
@@ -153,7 +153,7 @@ pub struct OrchestratorInfo {
     pub managed_pre_existing_ledger_suites: Option<Vec<ManagedLedgerSuite>>,
 }
 
-impl From<OrchestratorInfo> for EvmIcpTwinPairs {
+impl From<OrchestratorInfo> for EvmIcpBridgePairs {
     fn from(value: OrchestratorInfo) -> Self {
         let mut mapped_pairs: Vec<(Erc20Identifier, Principal)> = value
             .managed_canisters

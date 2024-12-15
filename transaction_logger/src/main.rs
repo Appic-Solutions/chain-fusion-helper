@@ -8,9 +8,9 @@ use ic_cdk_timers;
 use ic_ethereum_types::Address;
 use transaction_logger::add_evm_tokens::add_evm_tokens_to_state;
 use transaction_logger::endpoints::{
-    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError, CandidChainId,
-    CandidEvmToken, CandidIcpToken, GetTxParams, Icrc28TrustedOriginsResponse, TokenPair,
-    Transaction,
+    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError, CandidEvmToken,
+    CandidIcpToken, GetEvmTokenArgs, GetIcpTokenArgs, GetTxParams, Icrc28TrustedOriginsResponse,
+    TokenPair, Transaction,
 };
 use transaction_logger::lifecycle::{self, init as initialize};
 use transaction_logger::state::{
@@ -18,28 +18,31 @@ use transaction_logger::state::{
     Erc20Identifier, EvmToIcpStatus, EvmToIcpTx, EvmToIcpTxIdentifier, IcpToEvmIdentifier,
     IcpToEvmStatus, IcpToEvmTx,
 };
-use transaction_logger::update_icp_tokens::update_icp_tokens;
-use transaction_logger::UPDATE_ICP_TOKENS;
+use transaction_logger::update_icp_tokens::{update_icp_tokens, validate_tokens};
 use transaction_logger::{
     endpoints::LoggerArgs, logs::INFO, remove_unverified_tx::remove_unverified_tx,
-    scrape_events::scrape_events, update_token_pairs::update_token_pairs,
-    CHECK_NEW_ICRC_TWIN_TOKENS, REMOVE_UNVERIFIED_TX_INTERVAL, SCRAPE_EVENTS_INTERVAL,
+    scrape_events::scrape_events, update_bridge_pairs::update_bridge_pairs, REMOVE_UNVERIFIED_TX,
+    SCRAPE_EVENTS, UPDATE_BRIDGE_PAIRS,
 };
+use transaction_logger::{REMOVE_INVALID_ICP_TOKENS, UPDATE_ICP_TOKENS};
 // Setup timers
 fn setup_timers() {
     // Start scraping events.
-    ic_cdk_timers::set_timer_interval(SCRAPE_EVENTS_INTERVAL, || ic_cdk::spawn(scrape_events()));
+    ic_cdk_timers::set_timer_interval(SCRAPE_EVENTS, || ic_cdk::spawn(scrape_events()));
 
     // Remove unverified transactions
-    ic_cdk_timers::set_timer_interval(REMOVE_UNVERIFIED_TX_INTERVAL, || remove_unverified_tx());
+    ic_cdk_timers::set_timer_interval(REMOVE_UNVERIFIED_TX, || remove_unverified_tx());
 
     // Check new supported twin tokens
-    ic_cdk_timers::set_timer_interval(CHECK_NEW_ICRC_TWIN_TOKENS, || {
-        ic_cdk::spawn(update_token_pairs())
-    });
+    ic_cdk_timers::set_timer_interval(UPDATE_BRIDGE_PAIRS, || ic_cdk::spawn(update_bridge_pairs()));
 
     // Update Icp token list
     ic_cdk_timers::set_timer_interval(UPDATE_ICP_TOKENS, || ic_cdk::spawn(update_icp_tokens()));
+
+    // Remove invalid icp tokens
+    ic_cdk_timers::set_timer_interval(REMOVE_INVALID_ICP_TOKENS, || {
+        ic_cdk::spawn(validate_tokens())
+    });
 }
 
 #[init]
@@ -72,7 +75,7 @@ fn prepare_canister_state() {
 
     // Get all pairs from ledger_suite managers
     ic_cdk_timers::set_timer(Duration::from_secs(0), || {
-        ic_cdk::spawn(update_token_pairs())
+        ic_cdk::spawn(update_bridge_pairs())
     });
 }
 
@@ -224,7 +227,7 @@ pub fn get_all_tx_by_principal(principal_id: Principal) -> Vec<Transaction> {
 }
 
 #[query]
-pub fn get_supported_token_pairs() -> Vec<TokenPair> {
+pub fn get_supported_bridge_pairs() -> Vec<TokenPair> {
     read_state(|s| s.get_suported_twin_token_pairs())
 }
 
@@ -245,11 +248,11 @@ pub fn get_transaction(params: GetTxParams) -> Option<Transaction> {
 }
 
 #[query]
-pub fn get_evm_token(address: String, chain_id: CandidChainId) -> Option<CandidEvmToken> {
+pub fn get_evm_token(args: GetEvmTokenArgs) -> Option<CandidEvmToken> {
     // Validate address and create identifier
     let identifier = Erc20Identifier::new(
-        &Address::from_str(&address).expect("Wrong Address Provided"),
-        ChainId::from(&chain_id),
+        &Address::from_str(&args.address).expect("Wrong Address Provided"),
+        ChainId::from(&args.chain_id),
     );
 
     // Get token from state
@@ -260,12 +263,24 @@ pub fn get_evm_token(address: String, chain_id: CandidChainId) -> Option<CandidE
 }
 
 #[query]
-pub fn get_icp_token(ledger_id: Principal) -> Option<CandidIcpToken> {
+pub fn get_icp_token(args: GetIcpTokenArgs) -> Option<CandidIcpToken> {
     // Get token from state
-    let token = read_state(|s| s.get_icp_token_by_principal(&ledger_id))?;
+    let token = read_state(|s| s.get_icp_token_by_principal(&args.ledger_id))?;
 
     // Return Token
     Some(CandidIcpToken::from(token))
+}
+
+#[query]
+pub fn get_icp_tokens() -> Vec<CandidIcpToken> {
+    // Get tokens from state
+    let tokens = read_state(|s| s.get_icp_tokens());
+
+    // Return Tokens
+    tokens
+        .into_iter()
+        .map(|token| CandidIcpToken::from(token))
+        .collect()
 }
 
 // list every base URL that users will authenticate to your app from

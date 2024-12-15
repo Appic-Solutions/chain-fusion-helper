@@ -26,8 +26,8 @@ pub async fn scrape_events() {
 
     let minters = read_state(|s| s.get_minters());
 
-    for (minter_key, minter) in minters.into_iter() {
-        let minter_client = MinterClient::from(&minter);
+    for (minter_key, minter) in minters.iter() {
+        let minter_client = MinterClient::from(minter);
 
         // Get the latest event count to update last_observed_event;
         // -1 since the starting index in 0 not 1
@@ -39,15 +39,8 @@ pub async fn scrape_events() {
             break;
         };
 
-        // Updating last observed block nunmber
-        mutate_state(|s| s.update_last_observed_event(&minter_key, latest_event_count));
-
-        log!(
-            INFO,
-            "[Latest Events Count] updating last_observed_event_count from minter {:?} with value {}",
-            minter_key,
-            latest_event_count
-        );
+        // Updating last observed event count
+        mutate_state(|s| s.update_last_observed_event(minter_key, latest_event_count));
 
         let last_scraped_event = minter.last_scraped_event;
 
@@ -61,7 +54,7 @@ pub async fn scrape_events() {
             last_scraped_event,
             MAX_EVENTS_PER_RESPONSE,
             &minter_client,
-            &minter_key,
+            minter_key,
             minter.evm_to_icp_fee,
             minter.icp_to_evm_fee,
         )

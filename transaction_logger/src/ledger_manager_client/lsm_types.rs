@@ -8,7 +8,7 @@ use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_ethereum_types::Address;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromError;
 
-use super::EvmIcpTwinPairs;
+use super::EvmIcpBridgePairs;
 
 type ChainId = Nat;
 
@@ -162,7 +162,7 @@ pub struct LedgerManagerInfo {
     pub ls_creation_appic_fee: Option<Nat>,
 }
 
-impl From<LedgerManagerInfo> for EvmIcpTwinPairs {
+impl From<LedgerManagerInfo> for EvmIcpBridgePairs {
     fn from(value: LedgerManagerInfo) -> Self {
         let mapped_pairs: Vec<(Erc20Identifier, Principal)> = value
             .managed_canisters

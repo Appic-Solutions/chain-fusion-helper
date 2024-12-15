@@ -8,7 +8,9 @@ use std::collections::HashSet;
 pub enum TaskType {
     RemoveUnverified,
     ScrapeEvents,
-    UpdateTokenPairs,
+    UpdateBridgePairs,
+    UpdateIcpTokens,
+    RemoveInvalidTokens,
 }
 
 thread_local! {

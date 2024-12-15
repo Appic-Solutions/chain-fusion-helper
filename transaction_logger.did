@@ -89,6 +89,7 @@ type CandidIcpToken = record {
   fee : nat64;
   decimals : nat8;
   name : text;
+  rank : opt nat32;
   ledger_id : principal;
   token_type : IcpTokenType;
   symbol : text;

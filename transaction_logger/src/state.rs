@@ -266,6 +266,12 @@ impl Hash for IcpToken {
     }
 }
 
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
+pub struct BridgePair {
+    pub icp_token: IcpToken,
+    pub evm_token: EvmToken,
+}
+
 // State Definition,
 // All types of transactions will be sotred in this stable state
 pub struct State {
@@ -278,8 +284,8 @@ pub struct State {
     // list of all icp_to_evm transactions
     pub icp_to_evm_txs: BTreeMap<IcpToEvmIdentifier, IcpToEvmTx, StableMemory>,
 
-    pub supported_ckerc20_tokens: BTreeMap<Erc20Identifier, Principal, StableMemory>,
-    pub supported_twin_appic_tokens: BTreeMap<Erc20Identifier, Principal, StableMemory>,
+    pub supported_ckerc20_tokens: BTreeMap<Erc20Identifier, BridgePair, StableMemory>,
+    pub supported_twin_appic_tokens: BTreeMap<Erc20Identifier, BridgePair, StableMemory>,
 
     pub evm_token_list: BTreeMap<Erc20Identifier, EvmToken, StableMemory>,
     pub icp_token_list: BTreeMap<Principal, IcpToken, StableMemory>,
@@ -348,11 +354,11 @@ impl State {
             Operator::AppicMinter => self
                 .supported_twin_appic_tokens
                 .get(erc20_identifier)
-                .map(|token_principal| token_principal),
+                .map(|bridge_pair| bridge_pair.icp_token.ledger_id),
             Operator::DfinityCkEthMinter => self
                 .supported_ckerc20_tokens
                 .get(erc20_identifier)
-                .map(|token_principal| token_principal),
+                .map(|bridge_pair| bridge_pair.icp_token.ledger_id),
         }
     }
 
@@ -706,29 +712,25 @@ impl State {
     // Gets supported twin token pairs for both Appic and Dfinity NNS Twin tokens
     pub fn get_suported_twin_token_pairs(&self) -> Vec<TokenPair> {
         self.supported_ckerc20_tokens
-            .iter()
-            .filter_map(|(erc20_identifier, ledger_id)| {
-                let evm_token = self.get_evm_token_by_identifier(&erc20_identifier)?;
-                let icp_token = self.get_icp_token_by_principal(&ledger_id)?;
-
+            .values()
+            .filter_map(|bridge_pair| {
                 Some(TokenPair {
-                    evm_tokens: CandidEvmToken::from(evm_token),
-                    icp_token: CandidIcpToken::from(icp_token),
+                    evm_token: CandidEvmToken::from(bridge_pair.evm_token),
+                    icp_token: CandidIcpToken::from(bridge_pair.icp_token),
                     operator: Operator::DfinityCkEthMinter,
                 })
             })
-            .chain(self.supported_twin_appic_tokens.iter().filter_map(
-                |(erc20_identifier, ledger_id)| {
-                    let evm_token = self.get_evm_token_by_identifier(&erc20_identifier)?;
-                    let icp_token = self.get_icp_token_by_principal(&ledger_id)?;
-
-                    Some(TokenPair {
-                        evm_tokens: CandidEvmToken::from(evm_token),
-                        icp_token: CandidIcpToken::from(icp_token),
-                        operator: Operator::AppicMinter,
-                    })
-                },
-            ))
+            .chain(
+                self.supported_twin_appic_tokens
+                    .values()
+                    .filter_map(|bridge_pair| {
+                        Some(TokenPair {
+                            evm_token: CandidEvmToken::from(bridge_pair.evm_token),
+                            icp_token: CandidIcpToken::from(bridge_pair.icp_token),
+                            operator: Operator::AppicMinter,
+                        })
+                    }),
+            )
             .collect()
     }
 
@@ -828,6 +830,14 @@ impl State {
 
     pub fn get_icp_token_by_principal(&self, ledger_id: &Principal) -> Option<IcpToken> {
         self.icp_token_list.get(ledger_id)
+    }
+
+    pub fn get_icp_tokens(&self) -> Vec<IcpToken> {
+        self.icp_token_list.values().collect()
+    }
+
+    pub fn remove_icp_token(&mut self, ledger_id: &Principal) {
+        self.icp_token_list.remove(ledger_id);
     }
 }
 
@@ -1120,6 +1130,18 @@ mod storage_config {
     }
 
     impl Storable for IcpTokenType {
+        fn to_bytes(&self) -> Cow<[u8]> {
+            encode(self)
+        }
+
+        fn from_bytes(bytes: Cow<[u8]>) -> Self {
+            decode(bytes)
+        }
+
+        const BOUND: Bound = Bound::Unbounded;
+    }
+
+    impl Storable for BridgePair {
         fn to_bytes(&self) -> Cow<[u8]> {
             encode(self)
         }

@@ -1,29 +1,102 @@
 use std::collections::HashSet;
 
-use crate::{icp_tokens_service::TokenService, logs::INFO, state::mutate_state};
+use crate::{
+    guard::TimerGuard,
+    icp_tokens_service::TokenService,
+    logs::INFO,
+    state::{mutate_state, read_state},
+};
 use ic_canister_log::log;
+
 pub async fn update_icp_tokens() {
+    // Issue a timer gaurd
+    let _gaurd = match TimerGuard::new(crate::guard::TaskType::UpdateIcpTokens) {
+        Ok(gaurd) => gaurd,
+        Err(_) => return,
+    };
+
     log!(
         INFO,
-        "[Update Icp Tokens] Calling Sonic and Icp swap casniters to get tokens list",
+        "[Update ICP Tokens] Calling Sonic and ICP swap canisters to get tokens list",
     );
-    let icp_swap_tokens = TokenService::new().get_icp_swap_tokens().await;
-    let sonic_swap_tokens = TokenService::new().get_sonic_tokens().await;
+    let tokens_service = TokenService::new();
 
-    // Combine vectors and remove duplicates based on ledger_id
-    let unique_tokens: HashSet<_> = icp_swap_tokens
+    // Fetch tokens concurrently
+    let (icp_swap_tokens, sonic_swap_tokens) = tokio::join!(
+        tokens_service.get_icp_swap_tokens(),
+        tokens_service.get_sonic_tokens()
+    );
+
+    let mut unique_tokens = HashSet::with_capacity(icp_swap_tokens.len() + sonic_swap_tokens.len());
+
+    // Combine vectors and deduplicate on the fly
+    icp_swap_tokens
         .into_iter()
-        .chain(sonic_swap_tokens.into_iter())
-        .collect();
-
-    // Record new icp tokens
-    // If token already exsits, it will stay as the same
-    mutate_state(|s| {
-        unique_tokens.into_iter().for_each(|token| {
-            log!(INFO, "[Update Icp Tokens] Updating token {:?}", token);
-            s.record_icp_token(token.ledger_id, token)
+        .chain(sonic_swap_tokens)
+        .for_each(|token| {
+            unique_tokens.insert(token);
         });
+
+    // Validate tokens, filtering in-place
+    unique_tokens.retain(|token| {
+        // Use `await` safely in retain by offloading validation to a helper
+        tokio::runtime::Handle::current()
+            .block_on(tokens_service.validate_token(token.ledger_id, &token.token_type))
+            .is_ok()
     });
+
+    // Record new ICP tokens
+    log!(
+        INFO,
+        "[Update ICP Tokens] Updating tokens, adding {} tokens in total",
+        unique_tokens.len(),
+    );
+    mutate_state(|s| {
+        for token in unique_tokens {
+            s.record_icp_token(token.ledger_id, token);
+        }
+    });
+}
+
+// Runs every week to remove invalid tokens
+pub async fn validate_tokens() {
+    // Issue a timer gaurd
+    let _gaurd = match TimerGuard::new(crate::guard::TaskType::RemoveInvalidTokens) {
+        Ok(gaurd) => gaurd,
+        Err(_) => return,
+    };
+
+    let tokens_service = TokenService::new();
+
+    // Get all tokens from state
+    let tokens = read_state(|s| s.get_icp_tokens());
+
+    let mut valid_tokens = 0;
+
+    for token in tokens.iter() {
+        let is_valid = tokens_service
+            .validate_token(token.ledger_id, &token.token_type)
+            .await
+            .is_ok();
+
+        if is_valid {
+            valid_tokens += 1;
+        } else {
+            log!(
+                INFO,
+                "[Validate Tokens] Token with ledger_id {:?} is invalid and will be removed",
+                token.ledger_id
+            );
+            mutate_state(|s| s.remove_icp_token(&token.ledger_id))
+        }
+    }
+
+    log!(
+        INFO,
+        "[Validate Tokens] Validation complete. Remaining tokens: {}, removing {}",
+        valid_tokens,
+        tokens.len() - valid_tokens
+    );
 }
 
 #[cfg(test)]
