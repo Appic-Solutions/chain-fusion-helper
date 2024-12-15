@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{borrow::BorrowMut, collections::HashSet};
 
 use crate::{
     guard::TimerGuard,
@@ -22,9 +22,9 @@ pub async fn update_icp_tokens() {
     let tokens_service = TokenService::new();
 
     // Fetch tokens concurrently
-    let (icp_swap_tokens, sonic_swap_tokens) = tokio::join!(
-        tokens_service.get_icp_swap_tokens(),
-        tokens_service.get_sonic_tokens()
+    let (icp_swap_tokens, sonic_swap_tokens) = (
+        tokens_service.get_icp_swap_tokens().await,
+        tokens_service.get_sonic_tokens().await,
     );
 
     let mut unique_tokens = HashSet::with_capacity(icp_swap_tokens.len() + sonic_swap_tokens.len());
@@ -37,22 +37,28 @@ pub async fn update_icp_tokens() {
             unique_tokens.insert(token);
         });
 
-    // Validate tokens, filtering in-place
-    unique_tokens.retain(|token| {
-        // Use `await` safely in retain by offloading validation to a helper
-        tokio::runtime::Handle::current()
-            .block_on(tokens_service.validate_token(token.ledger_id, &token.token_type))
-            .is_ok()
-    });
+    // Validate tokens
+    let mut valid_tokens = Vec::new();
+
+    // Async validation process
+    for token in unique_tokens.into_iter() {
+        match tokens_service
+            .validate_token(token.ledger_id, &token.token_type)
+            .await
+        {
+            Ok(_) => valid_tokens.push(token),
+            Err(_) => {}
+        };
+    }
 
     // Record new ICP tokens
     log!(
         INFO,
         "[Update ICP Tokens] Updating tokens, adding {} tokens in total",
-        unique_tokens.len(),
+        valid_tokens.len(),
     );
     mutate_state(|s| {
-        for token in unique_tokens {
+        for token in valid_tokens {
             s.record_icp_token(token.ledger_id, token);
         }
     });
