@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, collections::HashSet};
+use std::collections::HashSet;
 
 use crate::{
     guard::TimerGuard,
@@ -15,10 +15,6 @@ pub async fn update_icp_tokens() {
         Err(_) => return,
     };
 
-    log!(
-        INFO,
-        "[Update ICP Tokens] Calling Sonic and ICP swap canisters to get tokens list",
-    );
     let tokens_service = TokenService::new();
 
     // Fetch tokens concurrently
@@ -37,11 +33,23 @@ pub async fn update_icp_tokens() {
             unique_tokens.insert(token);
         });
 
+    log!(
+        INFO,
+        "[Update ICP Tokens] Called Sonic and ICP swap to get tokens list, Received {} tokens",
+        unique_tokens.len()
+    );
+
     // Validate tokens
     let mut valid_tokens = Vec::new();
 
     // Async validation process
     for token in unique_tokens.into_iter() {
+        log!(
+            INFO,
+            "Fething decimals for {}, token type: {:?}",
+            token.ledger_id,
+            token.token_type
+        );
         match tokens_service
             .validate_token(token.ledger_id, &token.token_type)
             .await

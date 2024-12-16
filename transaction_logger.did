@@ -101,6 +101,8 @@ type EvmToIcpStatus = variant {
   Accepted;
   Quarantined;
 };
+type GetEvmTokenArgs = record { chain_id : nat; address : text };
+type GetIcpTokenArgs = record { ledger_id : principal };
 type GetTxParams = record {
   chain_id : nat;
   search_param : TransactionSearchParam;
@@ -135,7 +137,7 @@ type Result = variant { Ok; Err : AddEvmToIcpTxError };
 type Result_1 = variant { Ok; Err : AddIcpToEvmTxError };
 type TokenPair = record {
   operator : Operator;
-  evm_tokens : CandidEvmToken;
+  evm_token : CandidEvmToken;
   icp_token : CandidIcpToken;
 };
 type Transaction = variant {
@@ -159,12 +161,13 @@ type UpgradeArg = record {
   update_minters : opt vec UpdateMinterArgs;
 };
 service : (LoggerArgs) -> {
-  get_all_tx_by_address : (text) -> (vec Transaction) query;
-  get_all_tx_by_principal : (principal) -> (vec Transaction) query;
-  get_evm_token : (text, nat) -> (opt CandidEvmToken) query;
-  get_icp_token : (principal) -> (opt CandidIcpToken) query;
-  get_supported_token_pairs : () -> (vec TokenPair) query;
+  get_bridge_pairs : () -> (vec TokenPair) query;
+  get_evm_token : (GetEvmTokenArgs) -> (opt CandidEvmToken) query;
+  get_icp_token : (GetIcpTokenArgs) -> (opt CandidIcpToken) query;
+  get_icp_tokens : () -> (vec CandidIcpToken) query;
   get_transaction : (GetTxParams) -> (opt Transaction) query;
+  get_txs_by_address : (text) -> (vec Transaction) query;
+  get_txs_by_principal : (principal) -> (vec Transaction) query;
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
   new_evm_to_icp_tx : (AddEvmToIcpTx) -> (Result);
   new_icp_to_evm_tx : (AddIcpToEvmTx) -> (Result_1);

@@ -116,7 +116,6 @@ impl TokenService {
                     .runtime
                     .call_canister::<(), u8>(ledger_id, "icrc1_decimals", ())
                     .await;
-
                 // If error try again.
                 match result {
                     Ok(decimals) => Ok(decimals),

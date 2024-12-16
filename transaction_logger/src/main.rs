@@ -12,6 +12,7 @@ use transaction_logger::endpoints::{
     CandidIcpToken, GetEvmTokenArgs, GetIcpTokenArgs, GetTxParams, Icrc28TrustedOriginsResponse,
     TokenPair, Transaction,
 };
+use transaction_logger::guard::{TaskType, TimerGuard};
 use transaction_logger::lifecycle::{self, init as initialize};
 use transaction_logger::state::{
     mutate_state, nat_to_erc20_amount, nat_to_ledger_burn_index, nat_to_u64, read_state, ChainId,
@@ -68,15 +69,20 @@ fn prepare_canister_state() {
     add_evm_tokens_to_state();
 
     // Get all the icp tokens and save them into state
-    ic_cdk_timers::set_timer(
-        Duration::from_secs(0),
-        || ic_cdk::spawn(update_icp_tokens()),
-    );
-
-    // Get all pairs from ledger_suite managers
+    // Then get all bridge pairs
     ic_cdk_timers::set_timer(Duration::from_secs(0), || {
-        ic_cdk::spawn(update_bridge_pairs())
+        ic_cdk::spawn(get_icp_tokens_and_bridge_pairs())
     });
+}
+
+pub async fn get_icp_tokens_and_bridge_pairs() {
+    // Ensures that scraping events will be blocked until
+    // All tokens are added to cansiter state
+    let _guard: TimerGuard =
+        TimerGuard::new(TaskType::ScrapeEvents).expect("No guard should exsist at this point");
+
+    update_icp_tokens().await;
+    update_bridge_pairs().await;
 }
 
 #[post_upgrade]
@@ -216,18 +222,18 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
 }
 
 #[query]
-pub fn get_all_tx_by_address(address: String) -> Vec<Transaction> {
+pub fn get_txs_by_address(address: String) -> Vec<Transaction> {
     let address = Address::from_str(&address).expect("Address should be valid");
     read_state(|s| s.get_transaction_for_address(address))
 }
 
 #[query]
-pub fn get_all_tx_by_principal(principal_id: Principal) -> Vec<Transaction> {
+pub fn get_txs_by_principal(principal_id: Principal) -> Vec<Transaction> {
     read_state(|s| s.get_transaction_for_principal(principal_id))
 }
 
 #[query]
-pub fn get_supported_bridge_pairs() -> Vec<TokenPair> {
+pub fn get_bridge_pairs() -> Vec<TokenPair> {
     read_state(|s| s.get_suported_twin_token_pairs())
 }
 
