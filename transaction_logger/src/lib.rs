@@ -25,8 +25,8 @@ pub const REMOVE_UNVERIFIED_TX: Duration = Duration::from_secs(1 * 60 * 60);
 // 1 Day
 pub const UPDATE_BRIDGE_PAIRS: Duration = Duration::from_secs(24 * 60 * 60);
 
-// 3 Days
-pub const UPDATE_ICP_TOKENS: Duration = Duration::from_secs(3 * 24 * 60 * 60);
+// 1 Week
+pub const UPDATE_ICP_TOKENS: Duration = Duration::from_secs(7 * 24 * 60 * 60);
 
 // 1 Week
-pub const REMOVE_INVALID_ICP_TOKENS: Duration = Duration::from_secs(7 * 24 * 60 * 60);
+pub const REMOVE_INVALID_ICP_TOKENS: Duration = Duration::from_secs(30 * 24 * 60 * 60);

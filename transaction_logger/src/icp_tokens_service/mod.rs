@@ -8,7 +8,7 @@ use sonic_swap_types::TokenInfoWithType;
 
 use crate::{
     logs::INFO,
-    minter_clinet::{CallError, IcRunTime, Runtime},
+    minter_clinet::{CallError, IcRunTime, Reason, Runtime},
     state::{IcpToken, IcpTokenType},
 };
 
@@ -142,7 +142,10 @@ impl TokenService {
                     }
                 }
             }
-            IcpTokenType::Other(_) => Ok(0),
+            IcpTokenType::Other(_) => Err(CallError {
+                method: "Token Type Not supported".to_string(),
+                reason: Reason::InternalError("Token Type Not supported".to_string()),
+            }),
         }
     }
 }
