@@ -19,17 +19,20 @@ use transaction_logger::state::{
     Erc20Identifier, EvmToIcpStatus, EvmToIcpTx, EvmToIcpTxIdentifier, IcpToEvmIdentifier,
     IcpToEvmStatus, IcpToEvmTx,
 };
-use transaction_logger::update_icp_tokens::{update_icp_tokens, validate_tokens};
+use transaction_logger::update_icp_tokens::{update_icp_tokens, update_usd_price, validate_tokens};
 use transaction_logger::{
     endpoints::LoggerArgs, logs::INFO, remove_unverified_tx::remove_unverified_tx,
     scrape_events::scrape_events, update_bridge_pairs::update_bridge_pairs, REMOVE_UNVERIFIED_TX,
     SCRAPE_EVENTS, UPDATE_BRIDGE_PAIRS,
 };
-use transaction_logger::{REMOVE_INVALID_ICP_TOKENS, UPDATE_ICP_TOKENS};
+use transaction_logger::{REMOVE_INVALID_ICP_TOKENS, UPDATE_ICP_TOKENS, UPDATE_USD_PRICE};
 // Setup timers
 fn setup_timers() {
     // Start scraping events.
     ic_cdk_timers::set_timer_interval(SCRAPE_EVENTS, || ic_cdk::spawn(scrape_events()));
+
+    // Update usd price of icp tokens
+    ic_cdk_timers::set_timer_interval(UPDATE_USD_PRICE, || ic_cdk::spawn(update_usd_price()));
 
     // Remove unverified transactions
     ic_cdk_timers::set_timer_interval(REMOVE_UNVERIFIED_TX, || remove_unverified_tx());
@@ -61,7 +64,7 @@ pub fn init(init_args: LoggerArgs) {
 
     prepare_canister_state();
 
-    // setup_timers();
+    setup_timers();
 }
 
 fn prepare_canister_state() {
@@ -76,12 +79,14 @@ fn prepare_canister_state() {
 }
 
 pub async fn get_icp_tokens_and_bridge_pairs() {
-    // Ensures that scraping events will be blocked until
+    // Ensures that scraping events will be blocked and
+    // updating usd price will be blocked until
     // All tokens are added to cansiter state
     let _guard: TimerGuard =
         TimerGuard::new(TaskType::ScrapeEvents).expect("No guard should exsist at this point");
 
     update_icp_tokens().await;
+    update_usd_price().await;
     update_bridge_pairs().await;
 }
 

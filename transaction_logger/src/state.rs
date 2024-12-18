@@ -248,6 +248,8 @@ pub struct IcpToken {
     pub name: String,
     pub decimals: u8,
     pub symbol: String,
+    pub usd_price: String,
+    pub logo: String,
     pub fee: u64,
     pub token_type: IcpTokenType,
     pub rank: Option<u32>,
@@ -838,6 +840,18 @@ impl State {
 
     pub fn remove_icp_token(&mut self, ledger_id: &Principal) {
         self.icp_token_list.remove(ledger_id);
+    }
+
+    pub fn update_icp_token_usd_price(&mut self, ledger_id: Principal, new_usd_price: String) {
+        if let Some(token) = self.icp_token_list.get(&ledger_id) {
+            self.icp_token_list.insert(
+                ledger_id,
+                IcpToken {
+                    usd_price: new_usd_price,
+                    ..token
+                },
+            );
+        };
     }
 }
 

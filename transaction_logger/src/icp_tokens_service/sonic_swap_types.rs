@@ -38,6 +38,11 @@ impl From<TokenInfoWithType> for IcpToken {
             decimals: value.decimals,
             symbol: value.symbol,
             token_type,
+            logo: format!(
+                "https://wqfao-piaaa-aaaag-qj5ba-cai.raw.icp0.io/{}",
+                ledger_id
+            ),
+            usd_price: "0".to_string(),
             fee: checked_nat_to_u64(&value.fee).unwrap_or(0),
             rank: None,
         }

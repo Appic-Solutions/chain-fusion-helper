@@ -11,6 +11,7 @@ pub enum TaskType {
     UpdateBridgePairs,
     UpdateIcpTokens,
     RemoveInvalidTokens,
+    UpdateUsdPrice,
 }
 
 thread_local! {

@@ -1,12 +1,12 @@
-use futures::future::join_all;
-use std::collections::HashSet;
+use std::{collections::HashSet, str::FromStr};
 
 use crate::{
     guard::TimerGuard,
     icp_tokens_service::TokenService,
     logs::INFO,
-    state::{mutate_state, read_state, IcpToken},
+    state::{mutate_state, read_state},
 };
+use candid::Principal;
 use ic_canister_log::log;
 
 pub async fn update_icp_tokens() {
@@ -16,12 +16,12 @@ pub async fn update_icp_tokens() {
         Err(_) => return,
     };
 
-    let token_service = TokenService::new();
+    let tokens_service = TokenService::new();
 
     // Fetch tokens concurrently
     let (icp_swap_tokens, sonic_swap_tokens) = (
-        token_service.get_icp_swap_tokens().await,
-        token_service.get_sonic_tokens().await,
+        tokens_service.get_icp_swap_tokens().await,
+        tokens_service.get_sonic_tokens().await,
     );
 
     let mut unique_tokens = HashSet::with_capacity(icp_swap_tokens.len() + sonic_swap_tokens.len());
@@ -41,25 +41,31 @@ pub async fn update_icp_tokens() {
     );
 
     // Validate tokens
-    // Create a vector of futures for validation
-    let futures = unique_tokens.into_iter().map(|token| {
-        // Spawn an async block for the validation call
-        async {
-            let result = match token_service
-                .validate_token(token.ledger_id, &token.token_type)
-                .await
-            {
-                Ok(_) => Some(token), // Token is valid
-                Err(_) => None,       // Token is invalid
-            };
-            result
-        }
-    });
-    let valid_tokens: Vec<IcpToken> = join_all(futures)
-        .await
-        .into_iter()
-        .filter_map(|token| token)
-        .collect();
+    let mut valid_tokens = Vec::new();
+
+    // Async validation process
+    for token in unique_tokens.into_iter() {
+        log!(
+            INFO,
+            "Fething decimals for {}, token type: {:?}",
+            token.ledger_id,
+            token.token_type
+        );
+        match tokens_service
+            .validate_token(token.ledger_id, &token.token_type)
+            .await
+        {
+            Ok(_) => valid_tokens.push(token),
+            Err(e) => {
+                log!(
+                    INFO,
+                    "Validation failed for {:?}, with reason {:?}",
+                    (token.ledger_id, token.token_type),
+                    e
+                )
+            }
+        };
+    }
 
     // Record new ICP tokens
     log!(
@@ -74,7 +80,34 @@ pub async fn update_icp_tokens() {
     });
 }
 
-// Runs every week to remove invalid tokens
+// Runs Intervaly to update usd price of icp tokens
+pub async fn update_usd_price() {
+    let _gaurd = match TimerGuard::new(crate::guard::TaskType::UpdateUsdPrice) {
+        Ok(gaurd) => gaurd,
+        Err(_) => return,
+    };
+
+    let token_service = TokenService::new();
+
+    let icp_token_with_usd_price = token_service
+        .get_icp_swap_tokens_with_usd_price()
+        .await
+        .expect("Failed to get icp tokens with their price, will retry in next iteration");
+
+    icp_token_with_usd_price
+        .iter()
+        .filter(|token| token.price_usd != 0_f64 && token.volume_usd != 0_f64)
+        .for_each(|token| {
+            mutate_state(|s| {
+                s.update_icp_token_usd_price(
+                    Principal::from_str(&token.address).unwrap_or(Principal::anonymous()),
+                    token.price_usd.to_string(),
+                );
+            })
+        });
+}
+
+// Runs intervaly to remove invalid tokens
 pub async fn validate_tokens() {
     // Issue a timer gaurd
     let _gaurd = match TimerGuard::new(crate::guard::TaskType::RemoveInvalidTokens) {
@@ -133,6 +166,8 @@ mod tests {
             token_type: IcpTokenType::ICRC2,
             fee: 500,
             rank: Some(1),
+            usd_price: "0".to_string(),
+            logo: "".to_string(),
         };
 
         let token2 = IcpToken {
@@ -143,6 +178,8 @@ mod tests {
             token_type: IcpTokenType::DIP20,
             fee: 500,
             rank: None,
+            usd_price: "0".to_string(),
+            logo: "".to_string(),
         };
 
         let token3 = IcpToken {
@@ -153,6 +190,8 @@ mod tests {
             token_type: IcpTokenType::Other("Custom".into()),
             fee: 500,
             rank: Some(2),
+            usd_price: "0".to_string(),
+            logo: "".to_string(),
         };
 
         assert_eq!(token1, token2); // Same ledger_id should mean equality
@@ -160,7 +199,6 @@ mod tests {
     }
 
     #[test]
-
     fn test_remove_duplicates() {
         let vec1 = vec![
             IcpToken {
@@ -171,6 +209,8 @@ mod tests {
                 token_type: IcpTokenType::ICRC1,
                 fee: 500,
                 rank: Some(3),
+                usd_price: "0".to_string(),
+                logo: "".to_string(),
             },
             IcpToken {
                 ledger_id: Principal::from_text("6fvyi-faaaa-aaaam-qbiga-cai").unwrap(),
@@ -180,18 +220,22 @@ mod tests {
                 token_type: IcpTokenType::DIP20,
                 fee: 500,
                 rank: Some(2),
+                usd_price: "0".to_string(),
+                logo: "".to_string(),
             },
         ];
 
         let vec2 = vec![
             IcpToken {
-                ledger_id: Principal::from_text("6fvyi-faaaa-aaaam-qbiga-cai").unwrap(), // Duplicate
+                ledger_id: Principal::from_text("6fvyi-faaaa-aaaam-qbiga-cai").unwrap(),
                 name: String::from("AnotherTokenB"),
                 decimals: 18,
                 symbol: String::from("TKB2"),
                 token_type: IcpTokenType::DIP20,
                 fee: 500,
                 rank: None,
+                usd_price: "0".to_string(),
+                logo: "".to_string(),
             },
             IcpToken {
                 ledger_id: Principal::from_text("sr5fw-zqaaa-aaaak-qig5q-cai").unwrap(),
@@ -201,6 +245,8 @@ mod tests {
                 token_type: IcpTokenType::Other("Custom".into()),
                 fee: 500,
                 rank: Some(1),
+                usd_price: "0".to_string(),
+                logo: "".to_string(),
             },
         ];
 
@@ -230,6 +276,8 @@ mod tests {
                 token_type: IcpTokenType::ICRC1,
                 fee: 500,
                 rank: Some(2),
+                usd_price: "0".to_string(),
+                logo: "".to_string(),
             },
             IcpToken {
                 ledger_id: Principal::from_text("dikjh-xaaaa-aaaak-afnba-cai").unwrap(), // Duplicate
@@ -239,6 +287,8 @@ mod tests {
                 token_type: IcpTokenType::ICRC2,
                 fee: 500,
                 rank: None,
+                usd_price: "0".to_string(),
+                logo: "".to_string(),
             },
             IcpToken {
                 ledger_id: Principal::from_text("sr5fw-zqaaa-aaaak-qig5q-cai").unwrap(),
@@ -248,6 +298,8 @@ mod tests {
                 token_type: IcpTokenType::DIP20,
                 fee: 500,
                 rank: Some(2),
+                usd_price: "0".to_string(),
+                logo: "".to_string(),
             },
         ];
 
