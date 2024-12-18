@@ -1,7 +1,5 @@
-use crate::logs::INFO;
 use crate::numeric::LedgerMintIndex;
 use candid::{CandidType, Nat, Principal};
-use ic_canister_log::log;
 use ic_ethereum_types::Address;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::DefaultMemoryImpl;
@@ -845,13 +843,6 @@ impl State {
     }
 
     pub fn update_icp_token_usd_price(&mut self, ledger_id: Principal, new_usd_price: String) {
-        log!(
-            INFO,
-            "[Update USD price] Updating usd_price for {} with price {}",
-            ledger_id.to_string(),
-            new_usd_price
-        );
-
         if let Some(token) = self.icp_token_list.get(&ledger_id) {
             self.icp_token_list.insert(
                 ledger_id,

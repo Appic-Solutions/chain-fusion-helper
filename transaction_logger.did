@@ -86,7 +86,7 @@ type CandidIcpToEvm = record {
   native_ledger_burn_index : nat;
 };
 type CandidIcpToken = record {
-  fee : nat64;
+  fee : nat;
   decimals : nat8;
   usd_price : text;
   logo : text;

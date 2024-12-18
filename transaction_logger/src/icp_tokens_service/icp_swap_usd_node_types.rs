@@ -3,8 +3,8 @@
 #![allow(dead_code, unused_imports)]
 use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_cdk::api::call::CallResult as Result;
-use serde::Serialize;
-#[derive(CandidType, Deserialize, Serialize)]
+
+#[derive(CandidType, Deserialize)]
 pub enum TransactionType {
     #[serde(rename = "decreaseLiquidity")]
     DecreaseLiquidity,
@@ -18,85 +18,140 @@ pub enum TransactionType {
     IncreaseLiquidity,
 }
 
-#[derive(CandidType, Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[allow(non_snake_case)]
+#[derive(CandidType, Deserialize)]
 pub struct Transaction {
     pub to: String,
     pub action: TransactionType,
-    pub token0_id: String,
-    pub token1_id: String,
-    pub liquidity_total: candid::Nat,
+    pub token0Id: String,
+    pub token1Id: String,
+    pub liquidityTotal: candid::Nat,
     pub from: String,
     pub hash: String,
     pub tick: candid::Int,
-    pub token1_price: f64,
+    pub token1Price: f64,
     pub recipient: String,
-    pub token0_change_amount: f64,
+    pub token0ChangeAmount: f64,
     pub sender: String,
-    pub liquidity_change: candid::Nat,
-    pub token1_standard: String,
-    pub token0_fee: f64,
-    pub token1_fee: f64,
+    pub liquidityChange: candid::Nat,
+    pub token1Standard: String,
+    pub token0Fee: f64,
+    pub token1Fee: f64,
     pub timestamp: candid::Int,
-    pub token1_change_amount: f64,
-    pub token1_decimals: f64,
-    pub token0_standard: String,
-    pub amount_usd: f64,
-    pub amount_token0: f64,
-    pub amount_token1: f64,
-    pub pool_fee: candid::Nat,
-    pub token0_symbol: String,
-    pub token0_decimals: f64,
-    pub token0_price: f64,
-    pub token1_symbol: String,
-    pub pool_id: String,
+    pub token1ChangeAmount: f64,
+    pub token1Decimals: f64,
+    pub token0Standard: String,
+    pub amountUSD: f64,
+    pub amountToken0: f64,
+    pub amountToken1: f64,
+    pub poolFee: candid::Nat,
+    pub token0Symbol: String,
+    pub token0Decimals: f64,
+    pub token0Price: f64,
+    pub token1Symbol: String,
+    pub poolId: String,
 }
 
-#[derive(CandidType, Deserialize, Serialize, Debug)]
-#[serde(rename_all = "snake_case")]
+#[derive(CandidType, Deserialize)]
+pub enum NatResult {
+    #[serde(rename = "ok")]
+    Ok(candid::Nat),
+    #[serde(rename = "err")]
+    Err(String),
+}
+
+#[allow(non_snake_case)]
+#[derive(CandidType, Deserialize)]
 pub struct PublicPoolOverView {
     pub id: candid::Nat,
-    pub token0_total_volume: f64,
-    pub volume_usd1d: f64,
-    pub volume_usd7d: f64,
-    pub token0_id: String,
-    pub token1_id: String,
-    pub token1_volume24h: f64,
-    pub total_volume_usd: f64,
-    pub sqrt_price: f64,
+    pub token0TotalVolume: f64,
+    pub volumeUSD1d: f64,
+    pub volumeUSD7d: f64,
+    pub token0Id: String,
+    pub token1Id: String,
+    pub token1Volume24H: f64,
+    pub totalVolumeUSD: f64,
+    pub sqrtPrice: f64,
     pub pool: String,
     pub tick: candid::Int,
     pub liquidity: candid::Nat,
-    pub token1_price: f64,
-    pub fee_tier: candid::Nat,
-    pub token1_total_volume: f64,
-    pub volume_usd: f64,
-    pub fees_usd: f64,
-    pub token0_volume24h: f64,
-    pub token1_standard: String,
-    pub tx_count: candid::Nat,
-    pub token1_decimals: f64,
-    pub token0_standard: String,
-    pub token0_symbol: String,
-    pub token0_decimals: f64,
-    pub token0_price: f64,
-    pub token1_symbol: String,
+    pub token1Price: f64,
+    pub feeTier: candid::Nat,
+    pub token1TotalVolume: f64,
+    pub volumeUSD: f64,
+    pub feesUSD: f64,
+    pub token0Volume24H: f64,
+    pub token1Standard: String,
+    pub txCount: candid::Nat,
+    pub token1Decimals: f64,
+    pub token0Standard: String,
+    pub token0Symbol: String,
+    pub token0Decimals: f64,
+    pub token0Price: f64,
+    pub token1Symbol: String,
 }
 
-#[derive(CandidType, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[allow(non_snake_case)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct PublicTokenOverview {
     pub id: candid::Nat,
-    pub volume_usd1d: f64,
-    pub volume_usd7d: f64,
-    pub total_volume_usd: f64,
+    pub volumeUSD1d: f64,
+    pub volumeUSD7d: f64,
+    pub totalVolumeUSD: f64,
     pub name: String,
-    pub volume_usd: f64,
-    pub fees_usd: f64,
-    pub price_usd_change: f64,
+    pub volumeUSD: f64,
+    pub feesUSD: f64,
+    pub priceUSDChange: f64,
     pub address: String,
-    pub tx_count: candid::Int,
-    pub price_usd: f64,
+    pub txCount: candid::Int,
+    pub priceUSD: f64,
     pub standard: String,
     pub symbol: String,
 }
+
+#[derive(CandidType, Deserialize)]
+pub struct HeaderField(pub String, pub String);
+
+#[derive(CandidType, Deserialize)]
+pub struct HttpRequest {
+    pub url: String,
+    pub method: String,
+    pub body: serde_bytes::ByteBuf,
+    pub headers: Vec<HeaderField>,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct Token {
+    pub arbitrary_data: String,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct StreamingCallbackHttpResponse {
+    pub token: Option<Token>,
+    pub body: serde_bytes::ByteBuf,
+}
+
+candid::define_function!(pub CallbackStrategyCallback : (Token) -> (
+    StreamingCallbackHttpResponse,
+  ) query);
+#[derive(CandidType, Deserialize)]
+pub struct CallbackStrategy {
+    pub token: Token,
+    pub callback: CallbackStrategyCallback,
+}
+
+#[derive(CandidType, Deserialize)]
+pub enum StreamingStrategy {
+    Callback(CallbackStrategy),
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct HttpResponse {
+    pub body: serde_bytes::ByteBuf,
+    pub headers: Vec<HeaderField>,
+    pub upgrade: Option<bool>,
+    pub streaming_strategy: Option<StreamingStrategy>,
+    pub status_code: u16,
+}
+
+pub type Address = String;

@@ -158,7 +158,7 @@ impl TokenService {
         self.runtime
             .call_canister::<(), Vec<PublicTokenOverview>>(
                 Principal::from_text(ICP_SWAP_NODE).unwrap(),
-                "get_all_tokens",
+                "getAllTokens",
                 (),
             )
             .await
