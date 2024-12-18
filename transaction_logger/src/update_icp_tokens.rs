@@ -1,10 +1,11 @@
+use futures::future::join_all;
 use std::collections::HashSet;
 
 use crate::{
     guard::TimerGuard,
     icp_tokens_service::TokenService,
     logs::INFO,
-    state::{mutate_state, read_state},
+    state::{mutate_state, read_state, IcpToken},
 };
 use ic_canister_log::log;
 
@@ -15,12 +16,12 @@ pub async fn update_icp_tokens() {
         Err(_) => return,
     };
 
-    let tokens_service = TokenService::new();
+    let token_service = TokenService::new();
 
     // Fetch tokens concurrently
     let (icp_swap_tokens, sonic_swap_tokens) = (
-        tokens_service.get_icp_swap_tokens().await,
-        tokens_service.get_sonic_tokens().await,
+        token_service.get_icp_swap_tokens().await,
+        token_service.get_sonic_tokens().await,
     );
 
     let mut unique_tokens = HashSet::with_capacity(icp_swap_tokens.len() + sonic_swap_tokens.len());
@@ -40,24 +41,25 @@ pub async fn update_icp_tokens() {
     );
 
     // Validate tokens
-    let mut valid_tokens = Vec::new();
-
-    // Async validation process
-    for token in unique_tokens.into_iter() {
-        log!(
-            INFO,
-            "Fething decimals for {}, token type: {:?}",
-            token.ledger_id,
-            token.token_type
-        );
-        match tokens_service
-            .validate_token(token.ledger_id, &token.token_type)
-            .await
-        {
-            Ok(_) => valid_tokens.push(token),
-            Err(_) => {}
-        };
-    }
+    // Create a vector of futures for validation
+    let futures = unique_tokens.into_iter().map(|token| {
+        // Spawn an async block for the validation call
+        async {
+            let result = match token_service
+                .validate_token(token.ledger_id, &token.token_type)
+                .await
+            {
+                Ok(_) => Some(token), // Token is valid
+                Err(_) => None,       // Token is invalid
+            };
+            result
+        }
+    });
+    let valid_tokens: Vec<IcpToken> = join_all(futures)
+        .await
+        .into_iter()
+        .filter_map(|token| token)
+        .collect();
 
     // Record new ICP tokens
     log!(
@@ -158,6 +160,7 @@ mod tests {
     }
 
     #[test]
+
     fn test_remove_duplicates() {
         let vec1 = vec![
             IcpToken {

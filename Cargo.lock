@@ -1154,6 +1154,7 @@ dependencies = [
  "candid",
  "ciborium",
  "ethnum",
+ "futures",
  "hex",
  "hex-literal",
  "ic-canister-log",

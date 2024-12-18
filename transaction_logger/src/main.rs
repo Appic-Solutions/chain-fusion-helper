@@ -61,7 +61,7 @@ pub fn init(init_args: LoggerArgs) {
 
     prepare_canister_state();
 
-    setup_timers();
+    // setup_timers();
 }
 
 fn prepare_canister_state() {
@@ -88,7 +88,6 @@ pub async fn get_icp_tokens_and_bridge_pairs() {
 #[post_upgrade]
 fn post_upgrade(upgrade_args: Option<LoggerArgs>) {
     // Upgrade necessary parts if needed
-
     match upgrade_args {
         Some(LoggerArgs::Init(_)) => {
             ic_cdk::trap("cannot upgrade canister state with init args");
@@ -234,7 +233,7 @@ pub fn get_txs_by_principal(principal_id: Principal) -> Vec<Transaction> {
 
 #[query]
 pub fn get_bridge_pairs() -> Vec<TokenPair> {
-    read_state(|s| s.get_suported_twin_token_pairs())
+    read_state(|s| s.get_suported_bridge_pairs())
 }
 
 #[query]

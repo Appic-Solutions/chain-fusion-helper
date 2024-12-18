@@ -4,6 +4,7 @@
 use candid::Principal;
 use ic_canister_log::log;
 use icp_swap_token_type::TokensListResult;
+use icp_swap_usd_node_types::PublicTokenOverview;
 use sonic_swap_types::TokenInfoWithType;
 
 use crate::{
@@ -13,11 +14,12 @@ use crate::{
 };
 
 mod icp_swap_token_type;
+mod icp_swap_usd_node_types;
 mod sonic_swap_types;
 
 const SONIC_ID: &str = "3xwpq-ziaaa-aaaah-qcn4a-cai";
 const ICP_SWAP_ID: &str = "k37c6-riaaa-aaaag-qcyza-cai";
-
+const ICP_SWAP_NODE: &str = "ggzvv-5qaaa-aaaag-qck7a-cai";
 pub struct TokenService {
     runtime: IcRunTime,
 }
@@ -147,5 +149,17 @@ impl TokenService {
                 reason: Reason::InternalError("Token Type Not supported".to_string()),
             }),
         }
+    }
+
+    pub async fn get_icp_swap_tokens_with_usd_price(
+        &self,
+    ) -> Result<Vec<PublicTokenOverview>, CallError> {
+        self.runtime
+            .call_canister::<(), Vec<PublicTokenOverview>>(
+                Principal::from_text(ICP_SWAP_NODE).unwrap(),
+                "get_all_tokens",
+                (),
+            )
+            .await
     }
 }

@@ -5,7 +5,7 @@
     "name": "Binance Smart Chain",
     "decimals": 18,
     "symbol": "BNB",
-    "logo": "https://github.com/trustwallet/assets/blob/master/blockchains/smartchain/info/logo.png"
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/smartchain/info/logo.png"
   },
   {
     "chain_id": 56,

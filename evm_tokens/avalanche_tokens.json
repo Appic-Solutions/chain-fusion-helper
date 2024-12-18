@@ -5,7 +5,7 @@
     "name": "Avalanche",
     "decimals": 18,
     "symbol": "AVAX",
-    "logo": "https://github.com/trustwallet/assets/blob/master/blockchains/avalanchec/info/logo.png"
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/avalanchec/info/logo.png"
   },
   {
     "chain_id": 43114,

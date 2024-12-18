@@ -710,7 +710,7 @@ impl State {
     }
 
     // Gets supported twin token pairs for both Appic and Dfinity NNS Twin tokens
-    pub fn get_suported_twin_token_pairs(&self) -> Vec<TokenPair> {
+    pub fn get_suported_bridge_pairs(&self) -> Vec<TokenPair> {
         self.supported_ckerc20_tokens
             .values()
             .filter_map(|bridge_pair| {

@@ -5,7 +5,7 @@
     "name": "Arbitrum One",
     "decimals": 18,
     "symbol": "ETH",
-    "logo": "https://github.com/trustwallet/assets/blob/master/blockchains/arbitrum/info/logo.png"
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/arbitrum/info/logo.png"
   },
   {
     "chain_id": 42161,

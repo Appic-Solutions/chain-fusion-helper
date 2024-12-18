@@ -82,9 +82,18 @@ where
                             erc20_identifier,
                             source_name
                         );
-                        state
-                            .supported_twin_appic_tokens
-                            .insert(erc20_identifier, bridge_pair);
+                        match operator {
+                            crate::state::Operator::DfinityCkEthMinter => {
+                                state
+                                    .supported_ckerc20_tokens
+                                    .insert(erc20_identifier, bridge_pair);
+                            }
+                            crate::state::Operator::AppicMinter => {
+                                state
+                                    .supported_twin_appic_tokens
+                                    .insert(erc20_identifier, bridge_pair);
+                            }
+                        }
                     }
                 }
             }
