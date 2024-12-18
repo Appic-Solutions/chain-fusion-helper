@@ -310,7 +310,7 @@ pub struct CandidIcpToken {
     pub token_type: IcpTokenType,
     pub logo: String,
     pub usd_price: String,
-    pub fee: u64,
+    pub fee: Nat,
     pub rank: Option<u32>,
 }
 
@@ -324,7 +324,7 @@ impl From<IcpToken> for CandidIcpToken {
             logo: value.logo,
             usd_price: value.usd_price,
             token_type: value.token_type,
-            fee: value.fee,
+            fee: value.fee.into(),
             rank: value.rank,
         }
     }

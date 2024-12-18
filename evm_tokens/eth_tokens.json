@@ -10561,6 +10561,14 @@
   },
   {
     "chain_id": 1,
+    "erc20_contract_address": "0xF5cFBC74057C610c8EF151A439252680AC68c6DC",
+    "name": "Octopus Network Token",
+    "decimals": 18,
+    "symbol": "OCT",
+    "logo": "https://etherscan.io/token/images/octopusnetwork_32.png"
+  },
+  {
+    "chain_id": 1,
     "erc20_contract_address": "0x8af078d5a3e4a18ff62e3aeed4b1c448ab90b304",
     "name": "TouchCon",
     "decimals": 18,

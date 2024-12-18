@@ -1,11 +1,17 @@
 // This is an experimental feature to generate Rust binding from Candid.
 // You may want to manually adjust some of the types.
 #![allow(dead_code, unused_imports)]
+use std::str::FromStr;
+
 use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_cdk::api::call::CallResult as Result;
 
-use crate::state::{
-    checked_nat_to_u64, checked_nat_to_u8, nat_to_u64, nat_to_u8, IcpToken, IcpTokenType,
+use crate::{
+    numeric::Erc20TokenAmount,
+    state::{
+        checked_nat_to_erc20_amount, checked_nat_to_u64, checked_nat_to_u8, nat_to_erc20_amount,
+        nat_to_u64, nat_to_u8, IcpToken, IcpTokenType,
+    },
 };
 
 #[derive(CandidType, Deserialize, Debug)]
@@ -48,6 +54,7 @@ impl From<TokenMetadata> for IcpToken {
             "DIP20" => IcpTokenType::DIP20,
             _ => IcpTokenType::Other(value.standard),
         };
+
         let ledger_id = Principal::from_text(value.canister_id).unwrap_or(Principal::anonymous());
 
         Self {
@@ -61,7 +68,7 @@ impl From<TokenMetadata> for IcpToken {
                 ledger_id
             ),
             usd_price: "0".to_string(),
-            fee: checked_nat_to_u64(&value.fee).unwrap_or(0),
+            fee: checked_nat_to_erc20_amount(value.fee).unwrap_or(Erc20TokenAmount::ZERO),
             rank: Some(value.rank),
         }
     }

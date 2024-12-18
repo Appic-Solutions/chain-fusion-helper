@@ -1,5 +1,7 @@
+use crate::logs::INFO;
 use crate::numeric::LedgerMintIndex;
 use candid::{CandidType, Nat, Principal};
+use ic_canister_log::log;
 use ic_ethereum_types::Address;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::DefaultMemoryImpl;
@@ -250,7 +252,7 @@ pub struct IcpToken {
     pub symbol: String,
     pub usd_price: String,
     pub logo: String,
-    pub fee: u64,
+    pub fee: Erc20TokenAmount,
     pub token_type: IcpTokenType,
     pub rank: Option<u32>,
 }
@@ -843,6 +845,13 @@ impl State {
     }
 
     pub fn update_icp_token_usd_price(&mut self, ledger_id: Principal, new_usd_price: String) {
+        log!(
+            INFO,
+            "[Update USD price] Updating usd_price for {} with price {}",
+            ledger_id.to_string(),
+            new_usd_price
+        );
+
         if let Some(token) = self.icp_token_list.get(&ledger_id) {
             self.icp_token_list.insert(
                 ledger_id,
@@ -886,6 +895,10 @@ pub fn nat_to_block_number(value: Nat) -> BlockNumber {
 
 pub fn nat_to_erc20_amount(value: Nat) -> Erc20TokenAmount {
     Erc20TokenAmount::try_from(value).expect("Failed to convert nat into Erc20TokenAmount")
+}
+
+pub fn checked_nat_to_erc20_amount(value: Nat) -> Option<Erc20TokenAmount> {
+    Erc20TokenAmount::try_from(value).ok()
 }
 
 pub fn nat_to_u64(value: &Nat) -> u64 {

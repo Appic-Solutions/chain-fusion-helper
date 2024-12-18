@@ -26,6 +26,11 @@ pub async fn update_icp_tokens() {
 
     let mut unique_tokens = HashSet::with_capacity(icp_swap_tokens.len() + sonic_swap_tokens.len());
 
+    // Filter the tokens that already exsist in the state
+    unique_tokens.retain(|token: &crate::state::IcpToken| {
+        read_state(|s| s.get_icp_token_by_principal(&token.ledger_id).is_none())
+    });
+
     // Combine vectors and deduplicate on the fly
     icp_swap_tokens
         .into_iter()
@@ -89,6 +94,8 @@ pub async fn update_usd_price() {
 
     let token_service = TokenService::new();
 
+    log!(INFO, "[Update USD price] Updating icp tokens usd_price");
+
     let icp_token_with_usd_price = token_service
         .get_icp_swap_tokens_with_usd_price()
         .await
@@ -150,6 +157,7 @@ pub async fn validate_tokens() {
 
 #[cfg(test)]
 mod tests {
+    use crate::numeric::Erc20TokenAmount;
     use crate::state::IcpToken;
     use crate::state::IcpTokenType;
 
@@ -164,7 +172,7 @@ mod tests {
             decimals: 8,
             symbol: String::from("TKA"),
             token_type: IcpTokenType::ICRC2,
-            fee: 500,
+            fee: Erc20TokenAmount::from(500_u64),
             rank: Some(1),
             usd_price: "0".to_string(),
             logo: "".to_string(),
@@ -176,7 +184,7 @@ mod tests {
             decimals: 18,
             symbol: String::from("TKB"),
             token_type: IcpTokenType::DIP20,
-            fee: 500,
+            fee: Erc20TokenAmount::from(500_u64),
             rank: None,
             usd_price: "0".to_string(),
             logo: "".to_string(),
@@ -188,7 +196,7 @@ mod tests {
             decimals: 6,
             symbol: String::from("TKC"),
             token_type: IcpTokenType::Other("Custom".into()),
-            fee: 500,
+            fee: Erc20TokenAmount::from(500_u64),
             rank: Some(2),
             usd_price: "0".to_string(),
             logo: "".to_string(),
@@ -207,7 +215,7 @@ mod tests {
                 decimals: 8,
                 symbol: String::from("TKA"),
                 token_type: IcpTokenType::ICRC1,
-                fee: 500,
+                fee: Erc20TokenAmount::from(500_u64),
                 rank: Some(3),
                 usd_price: "0".to_string(),
                 logo: "".to_string(),
@@ -218,7 +226,7 @@ mod tests {
                 decimals: 18,
                 symbol: String::from("TKB"),
                 token_type: IcpTokenType::DIP20,
-                fee: 500,
+                fee: Erc20TokenAmount::from(500_u64),
                 rank: Some(2),
                 usd_price: "0".to_string(),
                 logo: "".to_string(),
@@ -232,7 +240,7 @@ mod tests {
                 decimals: 18,
                 symbol: String::from("TKB2"),
                 token_type: IcpTokenType::DIP20,
-                fee: 500,
+                fee: Erc20TokenAmount::from(500_u64),
                 rank: None,
                 usd_price: "0".to_string(),
                 logo: "".to_string(),
@@ -243,7 +251,7 @@ mod tests {
                 decimals: 6,
                 symbol: String::from("TKC"),
                 token_type: IcpTokenType::Other("Custom".into()),
-                fee: 500,
+                fee: Erc20TokenAmount::from(500_u64),
                 rank: Some(1),
                 usd_price: "0".to_string(),
                 logo: "".to_string(),
@@ -274,7 +282,7 @@ mod tests {
                 decimals: 8,
                 symbol: String::from("TKA"),
                 token_type: IcpTokenType::ICRC1,
-                fee: 500,
+                fee: Erc20TokenAmount::from(500_u64),
                 rank: Some(2),
                 usd_price: "0".to_string(),
                 logo: "".to_string(),
@@ -285,7 +293,7 @@ mod tests {
                 decimals: 8,
                 symbol: String::from("TKA"),
                 token_type: IcpTokenType::ICRC2,
-                fee: 500,
+                fee: Erc20TokenAmount::from(500_u64),
                 rank: None,
                 usd_price: "0".to_string(),
                 logo: "".to_string(),
@@ -296,7 +304,7 @@ mod tests {
                 decimals: 18,
                 symbol: String::from("TKB"),
                 token_type: IcpTokenType::DIP20,
-                fee: 500,
+                fee: Erc20TokenAmount::from(500_u64),
                 rank: Some(2),
                 usd_price: "0".to_string(),
                 logo: "".to_string(),

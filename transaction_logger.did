@@ -88,6 +88,8 @@ type CandidIcpToEvm = record {
 type CandidIcpToken = record {
   fee : nat64;
   decimals : nat8;
+  usd_price : text;
+  logo : text;
   name : text;
   rank : opt nat32;
   ledger_id : principal;

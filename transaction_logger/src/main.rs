@@ -80,9 +80,8 @@ fn prepare_canister_state() {
 
 pub async fn get_icp_tokens_and_bridge_pairs() {
     // Ensures that scraping events will be blocked and
-    // updating usd price will be blocked until
     // All tokens are added to cansiter state
-    let _guard: TimerGuard =
+    let _guard_scraping_events: TimerGuard =
         TimerGuard::new(TaskType::ScrapeEvents).expect("No guard should exsist at this point");
 
     update_icp_tokens().await;

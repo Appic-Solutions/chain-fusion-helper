@@ -10,6 +10,7 @@ use sonic_swap_types::TokenInfoWithType;
 use crate::{
     logs::INFO,
     minter_clinet::{CallError, IcRunTime, Reason, Runtime},
+    numeric::Erc20TokenAmount,
     state::{IcpToken, IcpTokenType},
 };
 
@@ -82,7 +83,7 @@ impl TokenService {
                     .filter(|mapped_token| {
                         mapped_token.ledger_id != Principal::anonymous()
                             && mapped_token.decimals != 0
-                            && mapped_token.fee != 0
+                            && mapped_token.fee != Erc20TokenAmount::ZERO
                     })
                     .collect(),
                 TokensListResult::Err(e) => {
