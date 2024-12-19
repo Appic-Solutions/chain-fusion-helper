@@ -716,9 +716,16 @@ impl State {
         self.supported_ckerc20_tokens
             .values()
             .filter_map(|bridge_pair| {
+                // Update usd price
+                let icp_token_with_new_usd_price = IcpToken {
+                    usd_price: self
+                        .get_icp_token_price(&bridge_pair.icp_token.ledger_id)
+                        .unwrap_or("0".to_string()),
+                    ..bridge_pair.icp_token
+                };
                 Some(TokenPair {
                     evm_token: CandidEvmToken::from(bridge_pair.evm_token),
-                    icp_token: CandidIcpToken::from(bridge_pair.icp_token),
+                    icp_token: CandidIcpToken::from(icp_token_with_new_usd_price),
                     operator: Operator::DfinityCkEthMinter,
                 })
             })
@@ -726,9 +733,16 @@ impl State {
                 self.supported_twin_appic_tokens
                     .values()
                     .filter_map(|bridge_pair| {
+                        // Update usd price
+                        let icp_token_with_new_usd_price = IcpToken {
+                            usd_price: self
+                                .get_icp_token_price(&bridge_pair.icp_token.ledger_id)
+                                .unwrap_or("0".to_string()),
+                            ..bridge_pair.icp_token
+                        };
                         Some(TokenPair {
                             evm_token: CandidEvmToken::from(bridge_pair.evm_token),
-                            icp_token: CandidIcpToken::from(bridge_pair.icp_token),
+                            icp_token: CandidIcpToken::from(icp_token_with_new_usd_price),
                             operator: Operator::AppicMinter,
                         })
                     }),
@@ -754,7 +768,7 @@ impl State {
     }
 
     // Searches for a transaction by burn index id in icp_to_evm_tx
-    fn get_transaction_by_burn_idex(
+    fn get_transaction_by_burn_index(
         &self,
         ledger_burn_index: LedgerBurnIndex,
         chain_id: ChainId,
@@ -791,7 +805,7 @@ impl State {
             }
 
             TransactionSearchParam::TxWithdrawalId(withdrawal_id) => self
-                .get_transaction_by_burn_idex(nat_to_ledger_burn_index(&withdrawal_id), chain_id),
+                .get_transaction_by_burn_index(nat_to_ledger_burn_index(&withdrawal_id), chain_id),
 
             TransactionSearchParam::TxMintId(mint_id) => {
                 self.get_transaction_by_mint_id(nat_to_ledger_mint_index(&mint_id), chain_id)
@@ -836,6 +850,12 @@ impl State {
 
     pub fn get_icp_tokens(&self) -> Vec<IcpToken> {
         self.icp_token_list.values().collect()
+    }
+
+    pub fn get_icp_token_price(&self, ledger_id: &Principal) -> Option<String> {
+        self.icp_token_list
+            .get(ledger_id)
+            .map(|token| token.usd_price)
     }
 
     pub fn remove_icp_token(&mut self, ledger_id: &Principal) {
