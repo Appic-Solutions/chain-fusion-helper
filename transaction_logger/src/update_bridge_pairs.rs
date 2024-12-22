@@ -8,8 +8,8 @@ use crate::{
     state::{mutate_state, BridgePair},
 };
 
-const LEDGER_SUITE_ORCHESTRATOR_ID: &str = "vxkom-oyaaa-aaaar-qafda-cai";
-const APPIC_LEDGER_MANAGER_ID: &str = "kmcdp-4yaaa-aaaag-ats3q-cai";
+pub const LEDGER_SUITE_ORCHESTRATOR_ID: &str = "vxkom-oyaaa-aaaar-qafda-cai";
+pub const APPIC_LEDGER_MANAGER_ID: &str = "kmcdp-4yaaa-aaaag-ats3q-cai";
 
 /// Checks twin tokens supported by ledger_suite_orchestrator and ledger_suite_manager on an interval basis.
 /// If there are new twin tokens, they are added to the state.

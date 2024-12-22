@@ -10,15 +10,11 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::hash::{Hash, Hasher};
 
-use storage_config::{
-    evm_to_icp_memory, evm_token_list_id, icp_to_evm_memory, icp_token_list_id, minter_memory,
-    supported_appic_tokens_memory_id, supported_ckerc20_tokens_memory_id,
-};
-
 use std::str::FromStr;
 
 use crate::endpoints::{
-    AddEvmToIcpTx, AddIcpToEvmTx, CandidEvmToIcp, CandidEvmToken, CandidIcpToEvm, CandidIcpToken,
+    AddEvmToIcpTx, AddIcpToEvmTx, CandidErc20TwinLedgerSuiteFee, CandidErc20TwinLedgerSuiteStatus,
+    CandidEvmToIcp, CandidEvmToken, CandidIcpToEvm, CandidIcpToken, CandidLedgerSuiteRequest,
     MinterArgs, TokenPair, Transaction, TransactionSearchParam,
 };
 use crate::numeric::{BlockNumber, Erc20TokenAmount, LedgerBurnIndex};
@@ -27,6 +23,14 @@ use crate::scrape_events::NATIVE_ERC20_ADDRESS;
 use std::fmt::Debug;
 
 use crate::minter_clinet::appic_minter_types::events::{TransactionReceipt, TransactionStatus};
+
+mod config;
+
+use config::{
+    erc20_twin_ledger_requests_id, evm_to_icp_memory, evm_token_list_id, icp_to_evm_memory,
+    icp_token_list_id, minter_memory, supported_appic_tokens_memory_id,
+    supported_ckerc20_tokens_memory_id,
+};
 
 #[derive(
     Clone, Copy, CandidType, PartialEq, PartialOrd, Eq, Ord, Debug, Deserialize, Serialize,
@@ -274,6 +278,52 @@ pub struct BridgePair {
     pub evm_token: EvmToken,
 }
 
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
+pub enum Erc20TwinLedgerSuiteStatus {
+    PendingApproval,
+    Created,
+    Installed,
+}
+
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
+pub enum Erc20TwinLedgerSuiteFee {
+    Icp(u128),
+    Appic(u128),
+}
+
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
+pub struct Erc20TwinLedgerSuiteRequest {
+    pub creator: Principal,
+    pub evm_token: Option<EvmToken>,
+    pub erc20_contract_address: Address,
+    pub chain_id: ChainId,
+    pub ledger_id: Option<Principal>,
+    pub icp_token_name: String,
+    pub icp_token_symbol: String,
+    pub icp_token: Option<IcpToken>,
+    pub status: Erc20TwinLedgerSuiteStatus,
+    pub created_at: u64,
+    pub fee_charged: Erc20TwinLedgerSuiteFee,
+}
+
+impl From<Erc20TwinLedgerSuiteRequest> for CandidLedgerSuiteRequest {
+    fn from(value: Erc20TwinLedgerSuiteRequest) -> Self {
+        let status: CandidErc20TwinLedgerSuiteStatus = value.status.into();
+        let fee_charged: CandidErc20TwinLedgerSuiteFee = value.fee_charged.into();
+
+        Self {
+            creator: value.creator,
+            evm_token: value.evm_token.map(|token| token.into()),
+            icp_token: value.icp_token.map(|token| token.into()),
+            erc20_contract: value.erc20_contract_address.to_string(),
+            chain_id: value.chain_id.into(),
+            status,
+            created_at: value.created_at,
+            fee_charged,
+        }
+    }
+}
+
 // State Definition,
 // All types of transactions will be sotred in this stable state
 pub struct State {
@@ -291,6 +341,9 @@ pub struct State {
 
     pub evm_token_list: BTreeMap<Erc20Identifier, EvmToken, StableMemory>,
     pub icp_token_list: BTreeMap<Principal, IcpToken, StableMemory>,
+
+    // List of new erc20 -> icERC20 requests
+    pub twin_erc20_requests: BTreeMap<Erc20Identifier, Erc20TwinLedgerSuiteRequest, StableMemory>,
 }
 
 impl State {
@@ -873,6 +926,22 @@ impl State {
             );
         };
     }
+
+    pub fn get_erc20_ls_requests_by_principal(
+        &self,
+        principal: Principal,
+    ) -> Vec<Erc20TwinLedgerSuiteRequest> {
+        self.twin_erc20_requests
+            .iter()
+            .filter_map(|(_identifier, request)| {
+                if request.creator == principal {
+                    return Some(request);
+                } else {
+                    return None;
+                }
+            })
+            .collect()
+    }
 }
 
 pub fn is_native_token(address: &Address) -> bool {
@@ -977,232 +1046,13 @@ thread_local! {
                 supported_ckerc20_tokens: BTreeMap::init(supported_ckerc20_tokens_memory_id()),
                 supported_twin_appic_tokens:BTreeMap::init(supported_appic_tokens_memory_id()),
                 evm_token_list:BTreeMap::init(evm_token_list_id()),
-                icp_token_list:BTreeMap::init(icp_token_list_id())
+                icp_token_list:BTreeMap::init(icp_token_list_id()),
+                twin_erc20_requests: BTreeMap::init(erc20_twin_ledger_requests_id())
 
             })
     );
 }
 
-mod storage_config {
-    use super::*;
-
-    thread_local! {
-        static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
-            MemoryManager::init(DefaultMemoryImpl::default())
-        );
-
-    }
-
-    const MINTERS_MEMORY_ID: MemoryId = MemoryId::new(0);
-
-    pub fn minter_memory() -> StableMemory {
-        MEMORY_MANAGER.with(|m| m.borrow().get(MINTERS_MEMORY_ID))
-    }
-
-    const EVM_TO_ICP_MEMORY_ID: MemoryId = MemoryId::new(1);
-
-    pub fn evm_to_icp_memory() -> StableMemory {
-        MEMORY_MANAGER.with(|m| m.borrow().get(EVM_TO_ICP_MEMORY_ID))
-    }
-
-    const ICP_TO_EVM_MEMORY_ID: MemoryId = MemoryId::new(2);
-
-    pub fn icp_to_evm_memory() -> StableMemory {
-        MEMORY_MANAGER.with(|m| m.borrow().get(ICP_TO_EVM_MEMORY_ID))
-    }
-
-    const SUPPORTED_CK_MEMORY_ID: MemoryId = MemoryId::new(3);
-
-    pub fn supported_ckerc20_tokens_memory_id() -> StableMemory {
-        MEMORY_MANAGER.with(|m| m.borrow().get(SUPPORTED_CK_MEMORY_ID))
-    }
-
-    const SUPPORTED_APPIC_MEMORY_ID: MemoryId = MemoryId::new(4);
-
-    pub fn supported_appic_tokens_memory_id() -> StableMemory {
-        MEMORY_MANAGER.with(|m| m.borrow().get(SUPPORTED_APPIC_MEMORY_ID))
-    }
-
-    const EVM_TOKEN_LIST: MemoryId = MemoryId::new(5);
-
-    pub fn evm_token_list_id() -> StableMemory {
-        MEMORY_MANAGER.with(|m| m.borrow().get(EVM_TOKEN_LIST))
-    }
-
-    const ICP_TOKEN_LIST: MemoryId = MemoryId::new(6);
-
-    pub fn icp_token_list_id() -> StableMemory {
-        MEMORY_MANAGER.with(|m| m.borrow().get(ICP_TOKEN_LIST))
-    }
-
-    impl Storable for MinterKey {
-        fn to_bytes(&self) -> Cow<[u8]> {
-            encode(self)
-        }
-
-        fn from_bytes(bytes: Cow<[u8]>) -> Self {
-            decode(bytes)
-        }
-
-        const BOUND: Bound = Bound::Unbounded;
-    }
-
-    impl Storable for Minter {
-        fn to_bytes(&self) -> Cow<[u8]> {
-            encode(self)
-        }
-
-        fn from_bytes(bytes: Cow<[u8]>) -> Self {
-            decode(bytes)
-        }
-
-        const BOUND: Bound = Bound::Unbounded;
-    }
-
-    impl Storable for EvmToIcpTxIdentifier {
-        fn to_bytes(&self) -> Cow<[u8]> {
-            encode(self)
-        }
-
-        fn from_bytes(bytes: Cow<[u8]>) -> Self {
-            decode(bytes)
-        }
-
-        const BOUND: Bound = Bound::Unbounded;
-    }
-
-    impl Storable for EvmToIcpStatus {
-        fn to_bytes(&self) -> Cow<[u8]> {
-            encode(self)
-        }
-
-        fn from_bytes(bytes: Cow<[u8]>) -> Self {
-            decode(bytes)
-        }
-
-        const BOUND: Bound = Bound::Unbounded;
-    }
-
-    impl Storable for EvmToIcpTx {
-        fn to_bytes(&self) -> Cow<[u8]> {
-            encode(self)
-        }
-
-        fn from_bytes(bytes: Cow<[u8]>) -> Self {
-            decode(bytes)
-        }
-
-        const BOUND: Bound = Bound::Unbounded;
-    }
-
-    impl Storable for IcpToEvmIdentifier {
-        fn to_bytes(&self) -> Cow<[u8]> {
-            encode(self)
-        }
-
-        fn from_bytes(bytes: Cow<[u8]>) -> Self {
-            decode(bytes)
-        }
-
-        const BOUND: Bound = Bound::Unbounded;
-    }
-
-    impl Storable for IcpToEvmStatus {
-        fn to_bytes(&self) -> Cow<[u8]> {
-            encode(self)
-        }
-
-        fn from_bytes(bytes: Cow<[u8]>) -> Self {
-            decode(bytes)
-        }
-
-        const BOUND: Bound = Bound::Unbounded;
-    }
-
-    impl Storable for IcpToEvmTx {
-        fn to_bytes(&self) -> Cow<[u8]> {
-            encode(self)
-        }
-
-        fn from_bytes(bytes: Cow<[u8]>) -> Self {
-            decode(bytes)
-        }
-
-        const BOUND: Bound = Bound::Unbounded;
-    }
-
-    impl Storable for Erc20Identifier {
-        fn to_bytes(&self) -> Cow<[u8]> {
-            encode(self)
-        }
-
-        fn from_bytes(bytes: Cow<[u8]>) -> Self {
-            decode(bytes)
-        }
-
-        const BOUND: Bound = Bound::Unbounded;
-    }
-
-    impl Storable for EvmToken {
-        fn to_bytes(&self) -> Cow<[u8]> {
-            encode(self)
-        }
-
-        fn from_bytes(bytes: Cow<[u8]>) -> Self {
-            decode(bytes)
-        }
-
-        const BOUND: Bound = Bound::Unbounded;
-    }
-
-    impl Storable for IcpToken {
-        fn to_bytes(&self) -> Cow<[u8]> {
-            encode(self)
-        }
-
-        fn from_bytes(bytes: Cow<[u8]>) -> Self {
-            decode(bytes)
-        }
-
-        const BOUND: Bound = Bound::Unbounded;
-    }
-
-    impl Storable for IcpTokenType {
-        fn to_bytes(&self) -> Cow<[u8]> {
-            encode(self)
-        }
-
-        fn from_bytes(bytes: Cow<[u8]>) -> Self {
-            decode(bytes)
-        }
-
-        const BOUND: Bound = Bound::Unbounded;
-    }
-
-    impl Storable for BridgePair {
-        fn to_bytes(&self) -> Cow<[u8]> {
-            encode(self)
-        }
-
-        fn from_bytes(bytes: Cow<[u8]>) -> Self {
-            decode(bytes)
-        }
-
-        const BOUND: Bound = Bound::Unbounded;
-    }
-
-    fn encode<T: ?Sized + serde::Serialize>(value: &T) -> Cow<[u8]> {
-        let bytes = bincode::serialize(value).expect("failed to encode");
-        Cow::Owned(bytes)
-    }
-
-    fn decode<T: for<'a> serde::Deserialize<'a>>(bytes: Cow<[u8]>) -> T {
-        bincode::deserialize(bytes.as_ref())
-            .unwrap_or_else(|e| panic!("failed to decode bytes {}: {e}", hex::encode(bytes)))
-    }
-}
-
-// Testing which state serialization is faster
 #[cfg(test)]
 mod tests {
     use super::*;

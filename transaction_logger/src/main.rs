@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::str::FromStr;
 use std::time::Duration;
 
@@ -8,17 +9,19 @@ use ic_cdk_timers;
 use ic_ethereum_types::Address;
 use transaction_logger::add_evm_tokens::add_evm_tokens_to_state;
 use transaction_logger::endpoints::{
-    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError, CandidEvmToken,
-    CandidIcpToken, GetEvmTokenArgs, GetIcpTokenArgs, GetTxParams, Icrc28TrustedOriginsResponse,
-    TokenPair, Transaction,
+    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError,
+    CandidAddErc20TwinLedgerSuiteRequest, CandidEvmToken, CandidIcpToken, CandidLedgerSuiteRequest,
+    GetEvmTokenArgs, GetIcpTokenArgs, GetTxParams, Icrc28TrustedOriginsResponse, TokenPair,
+    Transaction,
 };
 use transaction_logger::guard::{TaskType, TimerGuard};
 use transaction_logger::lifecycle::{self, init as initialize};
 use transaction_logger::state::{
     mutate_state, nat_to_erc20_amount, nat_to_ledger_burn_index, nat_to_u64, read_state, ChainId,
-    Erc20Identifier, EvmToIcpStatus, EvmToIcpTx, EvmToIcpTxIdentifier, IcpToEvmIdentifier,
-    IcpToEvmStatus, IcpToEvmTx,
+    Erc20Identifier, Erc20TwinLedgerSuiteRequest, EvmToIcpStatus, EvmToIcpTx, EvmToIcpTxIdentifier,
+    IcpToEvmIdentifier, IcpToEvmStatus, IcpToEvmTx,
 };
+use transaction_logger::update_bridge_pairs::APPIC_LEDGER_MANAGER_ID;
 use transaction_logger::update_icp_tokens::{update_icp_tokens, update_usd_price, validate_tokens};
 use transaction_logger::{
     endpoints::LoggerArgs, logs::INFO, remove_unverified_tx::remove_unverified_tx,
@@ -290,6 +293,41 @@ pub fn get_icp_tokens() -> Vec<CandidIcpToken> {
         .into_iter()
         .map(|token| CandidIcpToken::from(token))
         .collect()
+}
+
+// Can only be called by lsm
+#[update]
+pub fn new_twin_ls_request(request: CandidAddErc20TwinLedgerSuiteRequest) {
+    if ic_cdk::caller() != Principal::from_text(APPIC_LEDGER_MANAGER_ID).unwrap() {
+        panic!("Endpoint can only be called by appic lsm");
+    }
+    let erc20_identifier: Erc20Identifier = request.borrow().into();
+    let erc20_twin_ls_request: Erc20TwinLedgerSuiteRequest = request.into();
+
+    mutate_state(|s| {
+        s.twin_erc20_requests
+            .insert(erc20_identifier, erc20_twin_ls_request)
+    });
+}
+
+#[update]
+pub fn update_twin_ls_request(updated_request: CandidAddErc20TwinLedgerSuiteRequest) {
+    if ic_cdk::caller() != Principal::from_text(APPIC_LEDGER_MANAGER_ID).unwrap() {
+        panic!("Endpoint can only be called by appic lsm");
+    }
+    let erc20_identifier: Erc20Identifier = updated_request.borrow().into();
+    let erc20_twin_ls_request: Erc20TwinLedgerSuiteRequest = updated_request.into();
+
+    mutate_state(|s| {
+        s.twin_erc20_requests
+            .insert(erc20_identifier, erc20_twin_ls_request)
+    });
+}
+
+#[query]
+pub fn get_erc20s_twin_ls_reqests_by_creator(creator: Principal) -> Vec<CandidLedgerSuiteRequest> {
+    let requests = read_state(|s| s.get_erc20_ls_requests_by_principal(creator));
+    requests.into_iter().map(|request| request.into()).collect()
 }
 
 // list every base URL that users will authenticate to your app from

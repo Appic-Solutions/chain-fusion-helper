@@ -1,8 +1,12 @@
+use std::str::FromStr;
+
 use crate::state::{
-    EvmToIcpStatus, EvmToIcpTx, EvmToken, IcpToEvmStatus, IcpToEvmTx, IcpToken, IcpTokenType,
-    Operator,
+    nat_to_u128, read_state, ChainId, Erc20Identifier, Erc20TwinLedgerSuiteFee,
+    Erc20TwinLedgerSuiteRequest, Erc20TwinLedgerSuiteStatus, EvmToIcpStatus, EvmToIcpTx, EvmToken,
+    IcpToEvmStatus, IcpToEvmTx, IcpToken, IcpTokenType, Operator,
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
+use ic_ethereum_types::Address;
 use serde::Serialize;
 
 #[derive(Debug, CandidType, Deserialize)]
@@ -335,4 +339,112 @@ pub struct TokenPair {
     pub evm_token: CandidEvmToken,
     pub icp_token: CandidIcpToken,
     pub operator: Operator,
+}
+
+#[derive(Clone, CandidType, PartialEq, Eq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
+pub enum CandidErc20TwinLedgerSuiteStatus {
+    PendingApproval,
+    Created,
+    Installed,
+}
+
+impl From<CandidErc20TwinLedgerSuiteStatus> for Erc20TwinLedgerSuiteStatus {
+    fn from(value: CandidErc20TwinLedgerSuiteStatus) -> Self {
+        match value {
+            CandidErc20TwinLedgerSuiteStatus::PendingApproval => Self::PendingApproval,
+            CandidErc20TwinLedgerSuiteStatus::Created => Self::Created,
+            CandidErc20TwinLedgerSuiteStatus::Installed => Self::Installed,
+        }
+    }
+}
+
+impl From<Erc20TwinLedgerSuiteStatus> for CandidErc20TwinLedgerSuiteStatus {
+    fn from(value: Erc20TwinLedgerSuiteStatus) -> Self {
+        match value {
+            Erc20TwinLedgerSuiteStatus::PendingApproval => Self::PendingApproval,
+            Erc20TwinLedgerSuiteStatus::Created => Self::Created,
+            Erc20TwinLedgerSuiteStatus::Installed => Self::Installed,
+        }
+    }
+}
+
+#[derive(Clone, CandidType, PartialEq, Eq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
+pub enum CandidErc20TwinLedgerSuiteFee {
+    Icp(Nat),
+    Appic(Nat),
+}
+
+impl From<CandidErc20TwinLedgerSuiteFee> for Erc20TwinLedgerSuiteFee {
+    fn from(value: CandidErc20TwinLedgerSuiteFee) -> Self {
+        match value {
+            CandidErc20TwinLedgerSuiteFee::Icp(nat) => Self::Icp(nat_to_u128(&nat)),
+            CandidErc20TwinLedgerSuiteFee::Appic(nat) => Self::Appic(nat_to_u128(&nat)),
+        }
+    }
+}
+impl From<Erc20TwinLedgerSuiteFee> for CandidErc20TwinLedgerSuiteFee {
+    fn from(value: Erc20TwinLedgerSuiteFee) -> Self {
+        match value {
+            Erc20TwinLedgerSuiteFee::Icp(amount) => Self::Icp(amount.into()),
+            Erc20TwinLedgerSuiteFee::Appic(amount) => Self::Appic(amount.into()),
+        }
+    }
+}
+#[derive(CandidType, Clone, PartialEq, Eq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
+pub struct CandidAddErc20TwinLedgerSuiteRequest {
+    creator: Principal,
+    evm_token_contract: String,
+    evm_token_chain_id: CandidChainId,
+    icp_token_name: String,
+    icp_token_symbol: String,
+    icp_ledger_id: Option<Principal>,
+    status: CandidErc20TwinLedgerSuiteStatus,
+    created_at: u64,
+    fee_charged: CandidErc20TwinLedgerSuiteFee,
+}
+
+impl From<&CandidAddErc20TwinLedgerSuiteRequest> for Erc20Identifier {
+    fn from(value: &CandidAddErc20TwinLedgerSuiteRequest) -> Self {
+        let erc20_address = Address::from_str(&value.evm_token_contract).unwrap();
+        let chain_id = ChainId::from(&value.evm_token_chain_id);
+        Erc20Identifier::new(&erc20_address, chain_id)
+    }
+}
+
+impl From<CandidAddErc20TwinLedgerSuiteRequest> for Erc20TwinLedgerSuiteRequest {
+    fn from(value: CandidAddErc20TwinLedgerSuiteRequest) -> Self {
+        let erc20_address = Address::from_str(&value.evm_token_contract).unwrap();
+        let chain_id = ChainId::from(&value.evm_token_chain_id);
+        let identifier = Erc20Identifier::new(&erc20_address, chain_id);
+        let evm_token = read_state(|s| s.get_evm_token_by_identifier(&identifier));
+        let icp_token = read_state(|s| {
+            s.get_icp_token_by_principal(&value.icp_ledger_id.unwrap_or(Principal::anonymous()))
+        });
+
+        Self {
+            creator: value.creator,
+            evm_token,
+            ledger_id: value.icp_ledger_id,
+            icp_token_name: value.icp_token_name,
+            icp_token_symbol: value.icp_token_symbol,
+            icp_token,
+            status: value.status.into(),
+            created_at: value.created_at,
+            fee_charged: value.fee_charged.into(),
+            erc20_contract_address: erc20_address,
+            chain_id,
+        }
+    }
+}
+
+#[derive(CandidType, Clone, PartialEq, Eq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
+pub struct CandidLedgerSuiteRequest {
+    pub creator: Principal,
+    pub evm_token: Option<CandidEvmToken>,
+    pub icp_token: Option<CandidIcpToken>,
+    pub erc20_contract: String,
+    pub chain_id: CandidChainId,
+    pub status: CandidErc20TwinLedgerSuiteStatus,
+    pub created_at: u64,
+    pub fee_charged: CandidErc20TwinLedgerSuiteFee,
 }
