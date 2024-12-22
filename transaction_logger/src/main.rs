@@ -19,7 +19,7 @@ use transaction_logger::lifecycle::{self, init as initialize};
 use transaction_logger::state::{
     mutate_state, nat_to_erc20_amount, nat_to_ledger_burn_index, nat_to_u64, read_state, ChainId,
     Erc20Identifier, Erc20TwinLedgerSuiteRequest, EvmToIcpStatus, EvmToIcpTx, EvmToIcpTxIdentifier,
-    IcpToEvmIdentifier, IcpToEvmStatus, IcpToEvmTx,
+    IcpToEvmIdentifier, IcpToEvmStatus, IcpToEvmTx, IcpToken,
 };
 use transaction_logger::update_bridge_pairs::APPIC_LEDGER_MANAGER_ID;
 use transaction_logger::update_icp_tokens::{update_icp_tokens, update_usd_price, validate_tokens};
@@ -283,6 +283,16 @@ pub fn get_icp_token(args: GetIcpTokenArgs) -> Option<CandidIcpToken> {
     Some(CandidIcpToken::from(token))
 }
 
+#[update]
+// Can only be called by lsm
+pub fn add_icp_token(token: CandidIcpToken) {
+    if ic_cdk::caller() != Principal::from_text(APPIC_LEDGER_MANAGER_ID).unwrap() {
+        panic!("Endpoint can only be called by appic lsm");
+    }
+    let token: IcpToken = token.into();
+    mutate_state(|s| s.record_icp_token(token.ledger_id, token))
+}
+
 #[query]
 pub fn get_icp_tokens() -> Vec<CandidIcpToken> {
     // Get tokens from state
@@ -310,6 +320,7 @@ pub fn new_twin_ls_request(request: CandidAddErc20TwinLedgerSuiteRequest) {
     });
 }
 
+// Can only be called by lsm
 #[update]
 pub fn update_twin_ls_request(updated_request: CandidAddErc20TwinLedgerSuiteRequest) {
     if ic_cdk::caller() != Principal::from_text(APPIC_LEDGER_MANAGER_ID).unwrap() {
@@ -322,6 +333,14 @@ pub fn update_twin_ls_request(updated_request: CandidAddErc20TwinLedgerSuiteRequ
         s.twin_erc20_requests
             .insert(erc20_identifier, erc20_twin_ls_request)
     });
+}
+
+// Can only be called by lsm
+#[update]
+pub fn request_update_bridge_pairs() {
+    if ic_cdk::caller() != Principal::from_text(APPIC_LEDGER_MANAGER_ID).unwrap() {
+        panic!("Endpoint can only be called by appic lsm");
+    }
 }
 
 #[query]

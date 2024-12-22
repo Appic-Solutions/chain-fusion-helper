@@ -1,9 +1,10 @@
 use std::str::FromStr;
 
 use crate::state::{
-    nat_to_u128, read_state, ChainId, Erc20Identifier, Erc20TwinLedgerSuiteFee,
-    Erc20TwinLedgerSuiteRequest, Erc20TwinLedgerSuiteStatus, EvmToIcpStatus, EvmToIcpTx, EvmToken,
-    IcpToEvmStatus, IcpToEvmTx, IcpToken, IcpTokenType, Operator,
+    checked_nat_to_erc20_amount, nat_to_u128, read_state, ChainId, Erc20Identifier,
+    Erc20TwinLedgerSuiteFee, Erc20TwinLedgerSuiteRequest, Erc20TwinLedgerSuiteStatus,
+    EvmToIcpStatus, EvmToIcpTx, EvmToken, IcpToEvmStatus, IcpToEvmTx, IcpToken, IcpTokenType,
+    Operator,
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_ethereum_types::Address;
@@ -329,6 +330,22 @@ impl From<IcpToken> for CandidIcpToken {
             usd_price: value.usd_price,
             token_type: value.token_type,
             fee: value.fee.into(),
+            rank: value.rank,
+        }
+    }
+}
+
+impl From<CandidIcpToken> for IcpToken {
+    fn from(value: CandidIcpToken) -> Self {
+        Self {
+            ledger_id: value.ledger_id,
+            name: value.name,
+            decimals: value.decimals,
+            symbol: value.symbol,
+            logo: value.logo,
+            usd_price: value.usd_price,
+            token_type: value.token_type,
+            fee: checked_nat_to_erc20_amount(value.fee).unwrap(),
             rank: value.rank,
         }
     }
