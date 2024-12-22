@@ -344,7 +344,7 @@ pub fn request_update_bridge_pairs() {
 }
 
 #[query]
-pub fn get_erc20s_twin_ls_reqests_by_creator(creator: Principal) -> Vec<CandidLedgerSuiteRequest> {
+pub fn get_erc20_twin_ls_reqests_by_creator(creator: Principal) -> Vec<CandidLedgerSuiteRequest> {
     let requests = read_state(|s| s.get_erc20_ls_requests_by_principal(creator));
     requests.into_iter().map(|request| request.into()).collect()
 }

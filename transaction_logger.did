@@ -190,8 +190,9 @@ type UpgradeArg = record {
   update_minters : opt vec UpdateMinterArgs;
 };
 service : (LoggerArgs) -> {
+  add_icp_token : (CandidIcpToken) -> ();
   get_bridge_pairs : () -> (vec TokenPair) query;
-  get_erc20s_twin_ls_reqests_by_creator : (principal) -> (
+  get_erc20_twin_ls_reqests_by_creator : (principal) -> (
       vec CandidLedgerSuiteRequest,
     ) query;
   get_evm_token : (GetEvmTokenArgs) -> (opt CandidEvmToken) query;
@@ -204,5 +205,6 @@ service : (LoggerArgs) -> {
   new_evm_to_icp_tx : (AddEvmToIcpTx) -> (Result);
   new_icp_to_evm_tx : (AddIcpToEvmTx) -> (Result_1);
   new_twin_ls_request : (CandidAddErc20TwinLedgerSuiteRequest) -> ();
+  request_update_bridge_pairs : () -> ();
   update_twin_ls_request : (CandidAddErc20TwinLedgerSuiteRequest) -> ();
 }
