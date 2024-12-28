@@ -14,9 +14,9 @@ pub const APPIC_LEDGER_MANAGER_ID: &str = "kmcdp-4yaaa-aaaag-ats3q-cai";
 /// Checks twin tokens supported by ledger_suite_orchestrator and ledger_suite_manager on an interval basis.
 /// If there are new twin tokens, they are added to the state.
 pub async fn update_bridge_pairs() {
-    // Issue a timer gaurd
-    let _gaurd = match TimerGuard::new(crate::guard::TaskType::UpdateBridgePairs) {
-        Ok(gaurd) => gaurd,
+    // Issue a timer guard
+    let _guard = match TimerGuard::new(crate::guard::TaskType::UpdateBridgePairs) {
+        Ok(guard) => guard,
         Err(_) => return,
     };
 

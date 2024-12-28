@@ -3,7 +3,7 @@ use lsm_types::LedgerManagerInfo;
 use lso_types::OrchestratorInfo;
 
 use crate::{
-    minter_clinet::{IcRunTime, Runtime},
+    minter_client::{IcRunTime, Runtime},
     state::{Erc20Identifier, Operator},
 };
 
@@ -38,7 +38,7 @@ impl LsClient {
 
     pub async fn get_erc20_list(
         &self,
-    ) -> Result<EvmIcpBridgePairs, crate::minter_clinet::CallError> {
+    ) -> Result<EvmIcpBridgePairs, crate::minter_client::CallError> {
         match self.operator {
             Operator::DfinityCkEthMinter => {
                 let result = self

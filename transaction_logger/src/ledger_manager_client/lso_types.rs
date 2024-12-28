@@ -9,7 +9,7 @@ use crate::{
 use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_ethereum_types::Address;
 
-// Dfinity cketh ledger suite orchestrator types
+// Dfinity ckEth ledger suite orchestrator types
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum OrchestratorArg {
@@ -171,8 +171,8 @@ impl From<OrchestratorInfo> for EvmIcpBridgePairs {
             })
             .collect();
         match value.managed_pre_existing_ledger_suites {
-            Some(pre_exisiting) => {
-                let native_ledger_suite: Vec<(Erc20Identifier, Principal)> = pre_exisiting
+            Some(pre_existing) => {
+                let native_ledger_suite: Vec<(Erc20Identifier, Principal)> = pre_existing
                     .into_iter()
                     .filter_map(|canisters| match canisters.ledger {
                         Some(ledger_id) => Some((

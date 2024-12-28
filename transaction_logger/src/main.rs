@@ -83,9 +83,9 @@ fn prepare_canister_state() {
 
 pub async fn get_icp_tokens_and_bridge_pairs() {
     // Ensures that scraping events will be blocked and
-    // All tokens are added to cansiter state
+    // All tokens are added to canister state
     let _guard_scraping_events: TimerGuard =
-        TimerGuard::new(TaskType::ScrapeEvents).expect("No guard should exsist at this point");
+        TimerGuard::new(TaskType::ScrapeEvents).expect("No guard should exist at this point");
 
     update_icp_tokens().await;
     update_usd_price().await;
@@ -114,7 +114,7 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
     let chain_id = ChainId::from(&tx.chain_id);
 
     if let true = read_state(|s| s.if_icp_to_evm_tx_exists(&tx_identifier)) {
-        return Err(AddIcpToEvmTxError::TxAlreadyExsits);
+        return Err(AddIcpToEvmTxError::TxAlreadyExists);
     };
 
     if let true = read_state(|s| s.if_chain_id_exists(chain_id)) {
@@ -175,7 +175,7 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
     let chain_id = ChainId::from(&tx.chain_id);
 
     if let true = read_state(|s| s.if_evm_to_icp_tx_exists(&tx_identifier)) {
-        return Err(AddEvmToIcpTxError::TxAlreadyExsits);
+        return Err(AddEvmToIcpTxError::TxAlreadyExists);
     };
 
     if let true = read_state(|s| s.if_chain_id_exists(chain_id)) {
@@ -240,7 +240,7 @@ pub fn get_txs_by_principal(principal_id: Principal) -> Vec<Transaction> {
 
 #[query]
 pub fn get_bridge_pairs() -> Vec<TokenPair> {
-    read_state(|s| s.get_suported_bridge_pairs())
+    read_state(|s| s.get_supported_bridge_pairs())
 }
 
 #[query]
@@ -344,7 +344,7 @@ pub fn request_update_bridge_pairs() {
 }
 
 #[query]
-pub fn get_erc20_twin_ls_reqests_by_creator(creator: Principal) -> Vec<CandidLedgerSuiteRequest> {
+pub fn get_erc20_twin_ls_requests_by_creator(creator: Principal) -> Vec<CandidLedgerSuiteRequest> {
     let requests = read_state(|s| s.get_erc20_ls_requests_by_principal(creator));
     requests.into_iter().map(|request| request.into()).collect()
 }

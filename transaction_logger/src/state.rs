@@ -22,7 +22,7 @@ use crate::scrape_events::NATIVE_ERC20_ADDRESS;
 
 use std::fmt::Debug;
 
-use crate::minter_clinet::appic_minter_types::events::{TransactionReceipt, TransactionStatus};
+use crate::minter_client::appic_minter_types::events::{TransactionReceipt, TransactionStatus};
 
 mod config;
 
@@ -174,7 +174,6 @@ pub enum IcpToEvmStatus {
     Accepted,
     Created,
     SignedTransaction,
-    FinalizedTransaction,
     ReplacedTransaction,
     Reimbursed,
     QuarantinedReimbursement,
@@ -325,9 +324,9 @@ impl From<Erc20TwinLedgerSuiteRequest> for CandidLedgerSuiteRequest {
 }
 
 // State Definition,
-// All types of transactions will be sotred in this stable state
+// All types of transactions will be sorted in this stable state
 pub struct State {
-    // List of all minters including (cketh dfinity and appic minters)
+    // List of all minters including (ckEth dfinity and appic minters)
     pub minters: BTreeMap<MinterKey, Minter, StableMemory>,
 
     // List of all evm_to_icp transactions
@@ -765,7 +764,7 @@ impl State {
     }
 
     // Gets supported twin token pairs for both Appic and Dfinity NNS Twin tokens
-    pub fn get_suported_bridge_pairs(&self) -> Vec<TokenPair> {
+    pub fn get_supported_bridge_pairs(&self) -> Vec<TokenPair> {
         self.supported_ckerc20_tokens
             .values()
             .filter_map(|bridge_pair| {
@@ -946,7 +945,7 @@ impl State {
 
 pub fn is_native_token(address: &Address) -> bool {
     address
-        == &Address::from_str(NATIVE_ERC20_ADDRESS).expect("Should not fail converintg to address")
+        == &Address::from_str(NATIVE_ERC20_ADDRESS).expect("Should not fail converting to address")
 }
 
 impl From<&Nat> for ChainId {

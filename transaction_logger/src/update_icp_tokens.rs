@@ -12,16 +12,16 @@ use std::{collections::HashSet, str::FromStr};
 const VALIDATION_BATCH_SIZE: usize = 5;
 
 pub async fn update_icp_tokens() {
-    // Issue a timer gaurd
-    let _gaurd = match TimerGuard::new(crate::guard::TaskType::UpdateIcpTokens) {
-        Ok(gaurd) => gaurd,
+    // Issue a timer guard
+    let _guard = match TimerGuard::new(crate::guard::TaskType::UpdateIcpTokens) {
+        Ok(guard) => guard,
         Err(_) => return,
     };
 
     // While upgrading icp token, it is recommended to prevent usd price
     // updates.
-    let _usd_price_gaurd = match TimerGuard::new(crate::guard::TaskType::UpdateUsdPrice) {
-        Ok(gaurd) => gaurd,
+    let _usd_price_guard = match TimerGuard::new(crate::guard::TaskType::UpdateUsdPrice) {
+        Ok(guard) => guard,
         Err(_) => return,
     };
 
@@ -35,7 +35,7 @@ pub async fn update_icp_tokens() {
 
     let mut unique_tokens = HashSet::with_capacity(icp_swap_tokens.len() + sonic_swap_tokens.len());
 
-    // Filter the tokens that already exsist in the state
+    // Filter the tokens that already exist in the state
     unique_tokens.retain(|token: &IcpToken| {
         read_state(|s| s.get_icp_token_by_principal(&token.ledger_id).is_none())
     });
@@ -73,10 +73,10 @@ pub async fn update_icp_tokens() {
     });
 }
 
-// Runs Intervaly to update usd price of icp tokens
+// Runs on interval basis to update usd price of icp tokens
 pub async fn update_usd_price() {
-    let _gaurd = match TimerGuard::new(crate::guard::TaskType::UpdateUsdPrice) {
-        Ok(gaurd) => gaurd,
+    let _guard = match TimerGuard::new(crate::guard::TaskType::UpdateUsdPrice) {
+        Ok(guard) => guard,
         Err(_) => return,
     };
 
@@ -100,11 +100,11 @@ pub async fn update_usd_price() {
         });
 }
 
-// Runs intervaly to remove invalid tokens
+// Runs on interval basis to remove invalid tokens
 pub async fn validate_tokens() {
-    // Issue a timer gaurd
-    let _gaurd = match TimerGuard::new(crate::guard::TaskType::RemoveInvalidTokens) {
-        Ok(gaurd) => gaurd,
+    // Issue a timer guard
+    let _guard = match TimerGuard::new(crate::guard::TaskType::RemoveInvalidTokens) {
+        Ok(guard) => guard,
         Err(_) => return,
     };
 

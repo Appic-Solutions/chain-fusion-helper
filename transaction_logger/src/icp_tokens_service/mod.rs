@@ -9,7 +9,7 @@ use sonic_swap_types::TokenInfoWithType;
 
 use crate::{
     logs::INFO,
-    minter_clinet::{CallError, IcRunTime, Reason, Runtime},
+    minter_client::{CallError, IcRunTime, Reason, Runtime},
     numeric::Erc20TokenAmount,
     state::{IcpToken, IcpTokenType},
 };
@@ -101,12 +101,12 @@ impl TokenService {
     }
 
     // Validate tokens on icp
-    // There might be somce tokens that are not valid for somce reasons
+    // There might be some tokens that are not valid for some reasons
     // 1. Tokens wasm was removed and canister is not functional
-    // 2. Token casniter ran out of cycles
-    // 3. Tokens was a scam And the casniter is removed
-    // This function checks if the tokens casniter is still working by simply calling the icrc1_decimals() and if cansiter
-    // Returns a value, it means the token casniter is still oprating
+    // 2. Token canister ran out of cycles
+    // 3. Tokens was a scam And the canister is removed
+    // This function checks if the tokens canister is still working by simply calling the icrc1_decimals() and if canister
+    // Returns a value, it means the token canister is still operating
 
     pub async fn validate_token(
         &self,

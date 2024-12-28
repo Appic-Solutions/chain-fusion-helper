@@ -35,7 +35,7 @@ pub struct AddEvmToIcpTx {
 pub type CandidChainId = Nat;
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 pub enum AddEvmToIcpTxError {
-    TxAlreadyExsits,
+    TxAlreadyExists,
     InvalidTokenPairs,
     ChinNotSupported,
     InvalidTokenContract,
@@ -43,7 +43,7 @@ pub enum AddEvmToIcpTxError {
 }
 
 // Transactions for icp to evm
-// unique identifier= native ledger bunr index and chain id
+// unique identifier= native ledger burn index and chain id
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 pub struct AddIcpToEvmTx {
     pub native_ledger_burn_index: Nat,
@@ -61,7 +61,7 @@ pub struct AddIcpToEvmTx {
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 pub enum AddIcpToEvmTxError {
-    TxAlreadyExsits,
+    TxAlreadyExists,
     InvalidTokenPairs,
     ChinNotSupported,
     InvalidDestination,
@@ -254,7 +254,7 @@ impl From<EvmToIcpTx> for CandidEvmToIcp {
             from_address: from_address.to_string(),
             transaction_hash,
             value: value.into(),
-            block_number: block_number.map(|blokc_number| blokc_number.into()),
+            block_number: block_number.map(|block_number| block_number.into()),
             ledger_mint_index: ledger_mint_index
                 .map(|ledger_mint_index| ledger_mint_index.get().into()),
             actual_received: actual_received.map(|actual_received| actual_received.into()),

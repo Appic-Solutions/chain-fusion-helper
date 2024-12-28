@@ -90,10 +90,10 @@ impl MinterClient {
         }
     }
 
-    // Get total evetns count
+    // Get total events count
     pub async fn get_total_events_count(&self) -> u64 {
         // Get total events count
-        let toatl_events_count = match self.operator {
+        let total_events_count = match self.operator {
             Operator::DfinityCkEthMinter => {
                 self.runtime
                     .call_canister::<DfinityCkGetEventsArg, DfinityCkGetEventsResult>(
@@ -124,7 +124,7 @@ impl MinterClient {
             }
         };
 
-        toatl_events_count
+        total_events_count
     }
 
     // scrape events

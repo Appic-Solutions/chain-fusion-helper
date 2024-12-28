@@ -81,7 +81,7 @@ mod tests {
 
     #[test]
     fn should_deserialize_all_tokens() {
-        // There should be 8 native tokens in deserilized tokens.
+        // There should be 8 native tokens in deserialized tokens.
         let filtered_native_token_list: Vec<EvmToken> = deserialize_all_tokens()
             .into_iter()
             .filter(|token| {

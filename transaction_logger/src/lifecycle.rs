@@ -24,10 +24,10 @@ pub fn post_upgrade(upgrade_arg: Option<UpgradeArg>) {
     if let Some(args) = upgrade_arg {
         log!(INFO, "[upgrade]: upgrading logger with arg: {:?}", args);
 
-        if let Some(new_mintres) = args.new_minters {
-            log!(INFO, "[init]: adding new minters: {:?}", new_mintres);
+        if let Some(new_minters) = args.new_minters {
+            log!(INFO, "[init]: adding new minters: {:?}", new_minters);
 
-            let minters_iter = new_mintres
+            let minters_iter = new_minters
                 .into_iter()
                 .map(|minter| Minter::from_minter_args(minter));
             for minter in minters_iter {

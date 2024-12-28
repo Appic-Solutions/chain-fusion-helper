@@ -1,4 +1,4 @@
-use crate::minter_clinet::appic_minter_types::events::{
+use crate::minter_client::appic_minter_types::events::{
     ReimbursementIndex as AppicReimbursementIndex, TransactionReceipt as AppicTransactionReceipt,
     TransactionStatus as AppicTransactionStatus, UnsignedTransaction as AppicUnsignedTransaction,
 };

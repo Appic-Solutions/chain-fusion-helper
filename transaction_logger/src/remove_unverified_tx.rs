@@ -12,9 +12,9 @@ use crate::{
 const ONE_HOUR_IN_NS: u64 = 3_600_000_000_000;
 
 pub fn remove_unverified_tx() {
-    // Issue a timer gaurd
-    let _gaurd = match TimerGuard::new(crate::guard::TaskType::RemoveUnverified) {
-        Ok(gaurd) => gaurd,
+    // Issue a timer guard
+    let _guard = match TimerGuard::new(crate::guard::TaskType::RemoveUnverified) {
+        Ok(guard) => guard,
         Err(_) => return,
     };
 

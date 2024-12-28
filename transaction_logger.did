@@ -16,7 +16,7 @@ type AddEvmToIcpTxError = variant {
   ChinNotSupported;
   InvalidTokenPairs;
   InvalidTokenContract;
-  TxAlreadyExsits;
+  TxAlreadyExists;
 };
 type AddIcpToEvmTx = record {
   destination : text;
@@ -36,7 +36,7 @@ type AddIcpToEvmTxError = variant {
   ChinNotSupported;
   InvalidTokenPairs;
   InvalidTokenContract;
-  TxAlreadyExsits;
+  TxAlreadyExists;
 };
 type CandidAddErc20TwinLedgerSuiteRequest = record {
   status : CandidErc20TwinLedgerSuiteStatus;
@@ -146,7 +146,6 @@ type IcpToEvmStatus = variant {
   Reimbursed;
   Successful;
   Created;
-  FinalizedTransaction;
 };
 type IcpTokenType = variant { ICRC1; ICRC2; ICRC3; DIP20; Other : text };
 type Icrc28TrustedOriginsResponse = record { trusted_origins : vec text };
@@ -192,7 +191,7 @@ type UpgradeArg = record {
 service : (LoggerArgs) -> {
   add_icp_token : (CandidIcpToken) -> ();
   get_bridge_pairs : () -> (vec TokenPair) query;
-  get_erc20_twin_ls_reqests_by_creator : (principal) -> (
+  get_erc20_twin_ls_requests_by_creator : (principal) -> (
       vec CandidLedgerSuiteRequest,
     ) query;
   get_evm_token : (GetEvmTokenArgs) -> (opt CandidEvmToken) query;

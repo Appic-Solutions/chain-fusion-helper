@@ -1,7 +1,7 @@
 use crate::{
     guard::TimerGuard,
     logs::{DEBUG, INFO},
-    minter_clinet::MinterClient,
+    minter_client::MinterClient,
     numeric::Erc20TokenAmount,
     state::{
         mutate_state, nat_to_ledger_burn_index, nat_to_ledger_mint_index, read_state, ChainId,
@@ -9,18 +9,18 @@ use crate::{
     },
 };
 
-use crate::minter_clinet::appic_minter_types::events::EventPayload as AppicEventPayload;
+use crate::minter_client::appic_minter_types::events::EventPayload as AppicEventPayload;
 use ic_canister_log::log;
 
-use crate::minter_clinet::event_conversion::Events;
+use crate::minter_client::event_conversion::Events;
 const MAX_EVENTS_PER_RESPONSE: u64 = 100;
 
 pub const NATIVE_ERC20_ADDRESS: &str = "0x0000000000000000000000000000000000000000";
 
 pub async fn scrape_events() {
-    // Issue a timer gaurd
-    let _gaurd = match TimerGuard::new(crate::guard::TaskType::ScrapeEvents) {
-        Ok(gaurd) => gaurd,
+    // Issue a timer guard
+    let _guard = match TimerGuard::new(crate::guard::TaskType::ScrapeEvents) {
+        Ok(guard) => guard,
         Err(_) => return,
     };
 
@@ -33,7 +33,7 @@ pub async fn scrape_events() {
         // -1 since the starting index in 0 not 1
         let latest_event_count = minter_client.get_total_events_count().await - 1;
 
-        // Check if the previos last_observed_event is greater or equal to latest one;
+        // Check if the previous last_observed_event is greater or equal to latest one;
         // If yes there should be no scraping for events and last_observed_event should not be updated
         if minter.last_observed_event >= latest_event_count {
             break;
@@ -46,8 +46,8 @@ pub async fn scrape_events() {
 
         // Scraping logs between specified ranges
         // MAX_EVENT_RESPONSE= 100 so the log range should not be more than 100
-        // min((last_observed_evnet - last_scraped_event),100) will be the specified range
-        // If last_observed_evnet - last_scraped_event contains more than 100, the event scaping will be divided into multiple calls
+        // min((last_observed_event - last_scraped_event),100) will be the specified range
+        // If last_observed_event - last_scraped_event contains more than 100, the event scaping will be divided into multiple calls
 
         scrape_events_range(
             latest_event_count,

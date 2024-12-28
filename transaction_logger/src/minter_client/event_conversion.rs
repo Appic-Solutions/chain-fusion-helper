@@ -1,9 +1,9 @@
-use crate::minter_clinet::appic_minter_types::events::Event as AppicEvent;
+use crate::minter_client::appic_minter_types::events::Event as AppicEvent;
 
-use crate::minter_clinet::appic_minter_types::events::EventPayload as AppicEventPayload;
-use crate::minter_clinet::dfinity_ck_minter_types::events::EventPayload as DfinityEventPayload;
+use crate::minter_client::appic_minter_types::events::EventPayload as AppicEventPayload;
+use crate::minter_client::dfinity_ck_minter_types::events::EventPayload as DfinityEventPayload;
 
-use crate::minter_clinet::{AppicGetEventsResult, DfinityCkGetEventsResult};
+use crate::minter_client::{AppicGetEventsResult, DfinityCkGetEventsResult};
 
 use super::appic_minter_types::events::EventSource as AppicEventSource;
 
