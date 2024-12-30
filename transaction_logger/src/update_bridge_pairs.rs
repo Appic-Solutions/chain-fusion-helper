@@ -58,41 +58,35 @@ pub async fn update_bridge_pairs() {
     }
 }
 
-/// Processes bridge pairs, checking if they exist and adding them to the state if they do not.
-/// Processes bridge pairs, checking if they exist and adding them to the state if they do not.
+// Processes bridge pairs
 fn process_bridge_pairs<I>(bridge_pairs: I, operator: crate::state::Operator, source_name: &str)
 where
     I: Iterator<Item = (crate::state::Erc20Identifier, candid::Principal)>,
 {
     mutate_state(|state| {
         for (erc20_identifier, principal_id) in bridge_pairs {
-            if state
-                .get_icrc_twin_for_erc20(&erc20_identifier, &operator)
-                .is_none()
-            {
-                if let Some(evm_token) = state.get_evm_token_by_identifier(&erc20_identifier) {
-                    if let Some(icp_token) = state.get_icp_token_by_principal(&principal_id) {
-                        let bridge_pair = BridgePair {
-                            icp_token,
-                            evm_token,
-                        };
-                        log!(
-                            INFO,
-                            "[Scrape new bridge pairs] Recording new bridge pair {:?} from {}",
-                            erc20_identifier,
-                            source_name
-                        );
-                        match operator {
-                            crate::state::Operator::DfinityCkEthMinter => {
-                                state
-                                    .supported_ckerc20_tokens
-                                    .insert(erc20_identifier, bridge_pair);
-                            }
-                            crate::state::Operator::AppicMinter => {
-                                state
-                                    .supported_twin_appic_tokens
-                                    .insert(erc20_identifier, bridge_pair);
-                            }
+            if let Some(evm_token) = state.get_evm_token_by_identifier(&erc20_identifier) {
+                if let Some(icp_token) = state.get_icp_token_by_principal(&principal_id) {
+                    let bridge_pair = BridgePair {
+                        icp_token,
+                        evm_token,
+                    };
+                    log!(
+                        INFO,
+                        "[Scrape new bridge pairs] Recording new bridge pair {:?} from {}",
+                        erc20_identifier,
+                        source_name
+                    );
+                    match operator {
+                        crate::state::Operator::DfinityCkEthMinter => {
+                            state
+                                .supported_ckerc20_tokens
+                                .insert(erc20_identifier, bridge_pair);
+                        }
+                        crate::state::Operator::AppicMinter => {
+                            state
+                                .supported_twin_appic_tokens
+                                .insert(erc20_identifier, bridge_pair);
                         }
                     }
                 }
