@@ -105,8 +105,9 @@ pub enum LoggerArgs {
     Upgrade(UpgradeArg),
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
-
+#[derive(
+    CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Hash,
+)]
 pub enum Transaction {
     IcpToEvm(CandidIcpToEvm),
     EvmToIcp(CandidEvmToIcp),
@@ -137,7 +138,9 @@ impl From<CandidEvmToIcp> for Transaction {
     }
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(
+    CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Hash,
+)]
 pub struct CandidIcpToEvm {
     pub transaction_hash: Option<String>,
     pub native_ledger_burn_index: Nat,
@@ -210,7 +213,9 @@ impl From<IcpToEvmTx> for CandidIcpToEvm {
     }
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(
+    CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Hash,
+)]
 pub struct CandidEvmToIcp {
     pub from_address: String,
     pub transaction_hash: String,

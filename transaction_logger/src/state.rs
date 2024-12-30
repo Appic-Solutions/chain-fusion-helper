@@ -33,7 +33,7 @@ use config::{
 };
 
 #[derive(
-    Clone, Copy, CandidType, PartialEq, PartialOrd, Eq, Ord, Debug, Deserialize, Serialize,
+    Clone, Copy, CandidType, PartialEq, PartialOrd, Eq, Ord, Debug, Deserialize, Serialize, Hash,
 )]
 pub enum Operator {
     DfinityCkEthMinter,
@@ -121,7 +121,9 @@ impl From<&AddEvmToIcpTx> for EvmToIcpTxIdentifier {
     }
 }
 
-#[derive(Clone, CandidType, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+#[derive(
+    Clone, CandidType, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize, Hash,
+)]
 pub enum EvmToIcpStatus {
     PendingVerification,
     Accepted,
@@ -168,7 +170,9 @@ impl From<&AddIcpToEvmTx> for IcpToEvmIdentifier {
     }
 }
 
-#[derive(CandidType, Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
+#[derive(
+    CandidType, Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize, Hash,
+)]
 pub enum IcpToEvmStatus {
     PendingVerification,
     Accepted,

@@ -1,4 +1,5 @@
 use std::borrow::Borrow;
+use std::collections::HashSet;
 use std::str::FromStr;
 use std::time::Duration;
 
@@ -29,6 +30,9 @@ use transaction_logger::{
     SCRAPE_EVENTS, UPDATE_BRIDGE_PAIRS,
 };
 use transaction_logger::{REMOVE_INVALID_ICP_TOKENS, UPDATE_ICP_TOKENS, UPDATE_USD_PRICE};
+
+const ADMIN_ID: &str = "tb3vi-54bcb-4oudm-fmp2s-nntjp-rmhd3-ukvnq-lawfq-vk5vy-mnlc7-pae";
+
 // Setup timers
 fn setup_timers() {
     // Start scraping events.
@@ -50,6 +54,14 @@ fn setup_timers() {
     ic_cdk_timers::set_timer_interval(REMOVE_INVALID_ICP_TOKENS, || {
         ic_cdk::spawn(validate_tokens())
     });
+}
+
+fn is_authorized_caller(caller: Principal) -> bool {
+    let appic_ledger_manager_id =
+        Principal::from_text(APPIC_LEDGER_MANAGER_ID).expect("Invalid APPIC_LEDGER_MANAGER_ID");
+    let admin_id = Principal::from_text(ADMIN_ID).expect("Invalid ADMIN_ID");
+
+    caller == appic_ledger_manager_id || caller == admin_id
 }
 
 #[init]
@@ -239,6 +251,29 @@ pub fn get_txs_by_principal(principal_id: Principal) -> Vec<Transaction> {
 }
 
 #[query]
+pub fn get_txs_by_address_principal_combination(
+    address: String,
+    principal_id: Principal,
+) -> Vec<Transaction> {
+    let address = Address::from_str(&address).expect("Address should be valid");
+
+    // get transactions by address and principal
+    let txs_by_address = read_state(|s| s.get_transaction_for_address(address));
+    let txs_by_principal = read_state(|s| s.get_transaction_for_principal(principal_id));
+
+    // Use a HashSet to remove duplicates
+    let mut unique_txs_set: HashSet<Transaction> = HashSet::new();
+    txs_by_address.into_iter().for_each(|tx| {
+        unique_txs_set.insert(tx);
+    });
+    txs_by_principal.into_iter().for_each(|tx| {
+        unique_txs_set.insert(tx);
+    });
+
+    // Convert the HashSet back to a Vec and return
+    unique_txs_set.into_iter().collect()
+}
+#[query]
 pub fn get_bridge_pairs() -> Vec<TokenPair> {
     read_state(|s| s.get_supported_bridge_pairs())
 }
@@ -286,9 +321,10 @@ pub fn get_icp_token(args: GetIcpTokenArgs) -> Option<CandidIcpToken> {
 #[update]
 // Can only be called by lsm
 pub fn add_icp_token(token: CandidIcpToken) {
-    if ic_cdk::caller() != Principal::from_text(APPIC_LEDGER_MANAGER_ID).unwrap() {
-        panic!("Endpoint can only be called by appic lsm");
+    if !is_authorized_caller(ic_cdk::caller()) {
+        panic!("Only admins can change icp tokens details")
     }
+
     let token: IcpToken = token.into();
     mutate_state(|s| s.record_icp_token(token.ledger_id, token))
 }
@@ -308,8 +344,8 @@ pub fn get_icp_tokens() -> Vec<CandidIcpToken> {
 // Can only be called by lsm
 #[update]
 pub fn new_twin_ls_request(request: CandidAddErc20TwinLedgerSuiteRequest) {
-    if ic_cdk::caller() != Principal::from_text(APPIC_LEDGER_MANAGER_ID).unwrap() {
-        panic!("Endpoint can only be called by appic lsm");
+    if !is_authorized_caller(ic_cdk::caller()) {
+        panic!("Only admins can change twin token details")
     }
     let erc20_identifier: Erc20Identifier = request.borrow().into();
     let erc20_twin_ls_request: Erc20TwinLedgerSuiteRequest = request.into();
@@ -323,8 +359,8 @@ pub fn new_twin_ls_request(request: CandidAddErc20TwinLedgerSuiteRequest) {
 // Can only be called by lsm
 #[update]
 pub fn update_twin_ls_request(updated_request: CandidAddErc20TwinLedgerSuiteRequest) {
-    if ic_cdk::caller() != Principal::from_text(APPIC_LEDGER_MANAGER_ID).unwrap() {
-        panic!("Endpoint can only be called by appic lsm");
+    if !is_authorized_caller(ic_cdk::caller()) {
+        panic!("Only admins can change twin token details")
     }
     let erc20_identifier: Erc20Identifier = updated_request.borrow().into();
     let erc20_twin_ls_request: Erc20TwinLedgerSuiteRequest = updated_request.into();
@@ -337,10 +373,11 @@ pub fn update_twin_ls_request(updated_request: CandidAddErc20TwinLedgerSuiteRequ
 
 // Can only be called by lsm
 #[update]
-pub fn request_update_bridge_pairs() {
-    if ic_cdk::caller() != Principal::from_text(APPIC_LEDGER_MANAGER_ID).unwrap() {
-        panic!("Endpoint can only be called by appic lsm");
+pub async fn request_update_bridge_pairs() {
+    if !is_authorized_caller(ic_cdk::caller()) {
+        panic!("Only admins request update bride pairs")
     }
+    update_bridge_pairs().await;
 }
 
 #[query]
