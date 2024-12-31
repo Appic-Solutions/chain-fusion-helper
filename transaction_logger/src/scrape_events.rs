@@ -26,7 +26,8 @@ pub async fn scrape_events() {
 
     let minters = read_state(|s| s.get_minters());
 
-    for (minter_key, minter) in minters.iter() {
+    // Scrape only active minters
+    for (minter_key, minter) in minters.iter().filter(|minter| minter.1.enabled == true) {
         let minter_client = MinterClient::from(minter);
 
         // Get the latest event count to update last_observed_event;

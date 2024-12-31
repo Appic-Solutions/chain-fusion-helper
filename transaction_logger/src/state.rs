@@ -49,6 +49,8 @@ pub struct Minter {
     pub evm_to_icp_fee: Erc20TokenAmount,
     pub icp_to_evm_fee: Erc20TokenAmount,
     pub chain_id: ChainId,
+    // False by default, only changes if lsm native token for that minter is returned
+    pub enabled: bool,
 }
 
 impl Minter {
@@ -80,6 +82,7 @@ impl Minter {
             icp_to_evm_fee: Erc20TokenAmount::try_from(icp_to_evm_fee)
                 .expect("Should not fail converting fees"),
             chain_id: ChainId::from(&chain_id),
+            enabled: false,
         }
     }
 }
@@ -363,6 +366,16 @@ impl State {
                 ..minter
             };
             self.record_minter(new_minter);
+        }
+    }
+
+    pub fn enable_minter(&mut self, minter_key: &MinterKey) {
+        if let Some(minter) = self.minters.get(minter_key) {
+            let updated_minter = Minter {
+                enabled: true,
+                ..minter
+            };
+            self.record_minter(updated_minter);
         }
     }
 

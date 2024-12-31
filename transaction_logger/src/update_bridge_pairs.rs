@@ -5,7 +5,7 @@ use crate::{
     guard::TimerGuard,
     ledger_manager_client::LsClient,
     logs::{DEBUG, INFO},
-    state::{mutate_state, BridgePair},
+    state::{mutate_state, BridgePair, MinterKey},
 };
 
 pub const LEDGER_SUITE_ORCHESTRATOR_ID: &str = "vxkom-oyaaa-aaaar-qafda-cai";
@@ -67,6 +67,12 @@ where
         for (erc20_identifier, principal_id) in bridge_pairs {
             if let Some(evm_token) = state.get_evm_token_by_identifier(&erc20_identifier) {
                 if let Some(icp_token) = state.get_icp_token_by_principal(&principal_id) {
+                    let chain_id = erc20_identifier.chain_id();
+                    let minter_key = MinterKey(chain_id, operator);
+
+                    // enable minter
+                    state.enable_minter(&minter_key);
+
                     let bridge_pair = BridgePair {
                         icp_token,
                         evm_token,
