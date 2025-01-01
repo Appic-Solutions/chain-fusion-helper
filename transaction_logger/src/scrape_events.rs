@@ -4,8 +4,8 @@ use crate::{
     minter_client::MinterClient,
     numeric::Erc20TokenAmount,
     state::{
-        mutate_state, nat_to_ledger_burn_index, nat_to_ledger_mint_index, read_state, ChainId,
-        EvmToIcpTxIdentifier, IcpToEvmIdentifier, MinterKey, Operator,
+        mutate_state, nat_to_erc20_amount, nat_to_ledger_burn_index, nat_to_ledger_mint_index,
+        read_state, ChainId, EvmToIcpTxIdentifier, IcpToEvmIdentifier, MinterKey, Operator,
     },
 };
 
@@ -232,7 +232,12 @@ fn apply_state_transition(
             } => s.record_accepted_icp_to_evm(
                 IcpToEvmIdentifier::new(nat_to_ledger_burn_index(&ledger_burn_index), chain_id),
                 None,
-                withdrawal_amount,
+                // Withdrawal provided from minter does not include the minter fees user paid
+                // In order to find the accurate withdrawal amount user paid, we have to add withdrawal amount plus minter withdrawal fee
+                nat_to_erc20_amount(withdrawal_amount)
+                    .checked_add(icp_to_evm_fee)
+                    .unwrap_or(Erc20TokenAmount::ZERO)
+                    .into(),
                 NATIVE_ERC20_ADDRESS.to_string(),
                 destination,
                 ledger_burn_index,
