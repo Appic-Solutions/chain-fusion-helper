@@ -24,10 +24,10 @@ pub async fn scrape_events() {
         Err(_) => return,
     };
 
-    let minters = read_state(|s| s.get_minters());
+    let minters = read_state(|s| s.get_active_minters());
 
     // Scrape only active minters
-    for (minter_key, minter) in minters.iter().filter(|minter| minter.1.enabled == true) {
+    for (minter_key, minter) in minters.iter() {
         let minter_client = MinterClient::from(minter);
 
         // Get the latest event count to update last_observed_event;
@@ -37,7 +37,7 @@ pub async fn scrape_events() {
         // Check if the previous last_observed_event is greater or equal to latest one;
         // If yes there should be no scraping for events and last_observed_event should not be updated
         if minter.last_observed_event >= latest_event_count {
-            break;
+            continue;
         };
 
         // Updating last observed event count

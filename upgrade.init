@@ -1,0 +1,18 @@
+(
+  variant {
+    Upgrade = record {
+      new_minters = opt vec {
+        record {
+          last_observed_event = 0 : nat;
+          last_scraped_event = 0 : nat;
+          operator = variant { AppicMinter };
+          chain_id = 56 : nat;
+          icp_to_evm_fee = 100_000_000_000_000 : nat;
+          evm_to_icp_fee = 100_000_000_000_000 : nat;
+          minter_id = principal "2ztvj-yaaaa-aaaap-ahiza-cai";
+        };
+      };
+      update_minters = null;
+    }
+  },
+)

@@ -197,6 +197,7 @@ service : (LoggerArgs) -> {
   get_evm_token : (GetEvmTokenArgs) -> (opt CandidEvmToken) query;
   get_icp_token : (GetIcpTokenArgs) -> (opt CandidIcpToken) query;
   get_icp_tokens : () -> (vec CandidIcpToken) query;
+  get_minters : () -> (vec MinterArgs) query;
   get_transaction : (GetTxParams) -> (opt Transaction) query;
   get_txs_by_address : (text) -> (vec Transaction) query;
   get_txs_by_address_principal_combination : (text, principal) -> (

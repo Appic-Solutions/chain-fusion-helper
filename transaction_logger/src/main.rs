@@ -12,8 +12,8 @@ use transaction_logger::add_evm_tokens::add_evm_tokens_to_state;
 use transaction_logger::endpoints::{
     AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError,
     CandidAddErc20TwinLedgerSuiteRequest, CandidEvmToken, CandidIcpToken, CandidLedgerSuiteRequest,
-    GetEvmTokenArgs, GetIcpTokenArgs, GetTxParams, Icrc28TrustedOriginsResponse, TokenPair,
-    Transaction,
+    GetEvmTokenArgs, GetIcpTokenArgs, GetTxParams, Icrc28TrustedOriginsResponse, MinterArgs,
+    TokenPair, Transaction,
 };
 use transaction_logger::guard::{TaskType, TimerGuard};
 use transaction_logger::lifecycle::{self, init as initialize};
@@ -384,6 +384,15 @@ pub async fn request_update_bridge_pairs() {
 pub fn get_erc20_twin_ls_requests_by_creator(creator: Principal) -> Vec<CandidLedgerSuiteRequest> {
     let requests = read_state(|s| s.get_erc20_ls_requests_by_principal(creator));
     requests.into_iter().map(|request| request.into()).collect()
+}
+
+// Get minters
+#[query]
+pub fn get_minters() -> Vec<MinterArgs> {
+    read_state(|s| s.get_minters())
+        .into_iter()
+        .map(|(key, minter)| minter.to_candid_minter_args())
+        .collect()
 }
 
 // list every base URL that users will authenticate to your app from

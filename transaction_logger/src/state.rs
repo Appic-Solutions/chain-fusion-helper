@@ -85,6 +85,17 @@ impl Minter {
             enabled: false,
         }
     }
+    pub fn to_candid_minter_args(self) -> MinterArgs {
+        MinterArgs {
+            chain_id: self.chain_id.into(),
+            minter_id: self.id,
+            operator: self.operator,
+            last_observed_event: self.last_observed_event.into(),
+            last_scraped_event: self.last_scraped_event.into(),
+            evm_to_icp_fee: self.evm_to_icp_fee.into(),
+            icp_to_evm_fee: self.icp_to_evm_fee.into(),
+        }
+    }
 }
 
 #[derive(Clone, PartialEq, Ord, Eq, PartialOrd, Debug, Deserialize, Serialize)]
@@ -401,6 +412,13 @@ impl State {
 
     pub fn get_minters(&self) -> Vec<(MinterKey, Minter)> {
         self.minters.iter().collect()
+    }
+
+    pub fn get_active_minters(&self) -> Vec<(MinterKey, Minter)> {
+        self.minters
+            .iter()
+            .filter(|minter| minter.1.enabled == true)
+            .collect()
     }
 
     pub fn if_chain_id_exists(&self, chain_id: ChainId) -> bool {
