@@ -18,7 +18,7 @@ use transaction_logger::endpoints::{
 use transaction_logger::guard::{TaskType, TimerGuard};
 use transaction_logger::lifecycle::{self, init as initialize};
 use transaction_logger::state::{
-    mutate_state, nat_to_erc20_amount, nat_to_ledger_burn_index, nat_to_u64, read_state, ChainId,
+    mutate_state, nat_to_erc20_amount, nat_to_ledger_burn_index, read_state, ChainId,
     Erc20Identifier, Erc20TwinLedgerSuiteRequest, EvmToIcpStatus, EvmToIcpTx, EvmToIcpTxIdentifier,
     IcpToEvmIdentifier, IcpToEvmStatus, IcpToEvmTx, IcpToken,
 };
@@ -129,8 +129,8 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
         return Err(AddIcpToEvmTxError::TxAlreadyExists);
     };
 
-    if let true = read_state(|s| s.if_chain_id_exists(chain_id)) {
-        return Err(AddIcpToEvmTxError::ChinNotSupported);
+    if let false = read_state(|s| s.if_chain_id_exists(chain_id)) {
+        return Err(AddIcpToEvmTxError::ChainNotSupported);
     };
 
     let destination =
@@ -161,7 +161,7 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
                 destination,
                 from: tx.from,
                 from_subaccount: tx.from_subaccount,
-                time: nat_to_u64(&tx.time),
+                time: ic_cdk::api::time(),
                 max_transaction_fee: Some(nat_to_erc20_amount(tx.max_transaction_fee)),
                 effective_gas_price: None,
                 gas_used: None,
@@ -190,8 +190,8 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
         return Err(AddEvmToIcpTxError::TxAlreadyExists);
     };
 
-    if let true = read_state(|s| s.if_chain_id_exists(chain_id)) {
-        return Err(AddEvmToIcpTxError::ChinNotSupported);
+    if let false = read_state(|s| s.if_chain_id_exists(chain_id)) {
+        return Err(AddEvmToIcpTxError::ChainNotSupported);
     };
 
     let from_address =

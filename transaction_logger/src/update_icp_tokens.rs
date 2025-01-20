@@ -35,11 +35,6 @@ pub async fn update_icp_tokens() {
 
     let mut unique_tokens = HashSet::with_capacity(icp_swap_tokens.len() + sonic_swap_tokens.len());
 
-    // Filter the tokens that already exist in the state
-    unique_tokens.retain(|token: &IcpToken| {
-        read_state(|s| s.get_icp_token_by_principal(&token.ledger_id).is_none())
-    });
-
     // Combine vectors and deduplicate on the fly
     icp_swap_tokens
         .into_iter()
@@ -47,6 +42,11 @@ pub async fn update_icp_tokens() {
         .for_each(|token| {
             unique_tokens.insert(token);
         });
+
+    // Filter the tokens that already exist in the state
+    unique_tokens.retain(|token: &IcpToken| {
+        read_state(|s| s.get_icp_token_by_principal(&token.ledger_id).is_none())
+    });
 
     log!(
         INFO,

@@ -422,12 +422,9 @@ impl State {
     }
 
     pub fn if_chain_id_exists(&self, chain_id: ChainId) -> bool {
-        for (_minter_key, minter) in self.get_minters() {
-            if minter.chain_id == chain_id {
-                return true;
-            }
-        }
-        false
+        self.minters
+            .iter()
+            .any(|(_key, minter)| minter.chain_id == chain_id)
     }
 
     pub fn record_minter(&mut self, minter: Minter) {

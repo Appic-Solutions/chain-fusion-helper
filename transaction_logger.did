@@ -3,7 +3,6 @@ type AddEvmToIcpTx = record {
   transaction_hash : text;
   value : nat;
   operator : Operator;
-  time : nat;
   subaccount : opt blob;
   erc20_contract_address : text;
   chain_id : nat;
@@ -13,7 +12,7 @@ type AddEvmToIcpTx = record {
 };
 type AddEvmToIcpTxError = variant {
   InvalidAddress;
-  ChinNotSupported;
+  ChainNotSupported;
   InvalidTokenPairs;
   InvalidTokenContract;
   TxAlreadyExists;
@@ -23,7 +22,6 @@ type AddIcpToEvmTx = record {
   withdrawal_amount : nat;
   from : principal;
   operator : Operator;
-  time : nat;
   from_subaccount : opt blob;
   erc20_contract_address : text;
   chain_id : nat;
@@ -33,7 +31,7 @@ type AddIcpToEvmTx = record {
 };
 type AddIcpToEvmTxError = variant {
   InvalidDestination;
-  ChinNotSupported;
+  ChainNotSupported;
   InvalidTokenPairs;
   InvalidTokenContract;
   TxAlreadyExists;

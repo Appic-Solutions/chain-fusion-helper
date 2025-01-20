@@ -28,7 +28,6 @@ pub struct AddEvmToIcpTx {
     pub total_gas_spent: Nat,
     pub erc20_contract_address: String,
     pub icrc_ledger_id: Principal,
-    pub time: Nat,
     pub operator: Operator,
 }
 
@@ -37,7 +36,7 @@ pub type CandidChainId = Nat;
 pub enum AddEvmToIcpTxError {
     TxAlreadyExists,
     InvalidTokenPairs,
-    ChinNotSupported,
+    ChainNotSupported,
     InvalidTokenContract,
     InvalidAddress,
 }
@@ -51,7 +50,6 @@ pub struct AddIcpToEvmTx {
     pub destination: String,
     pub from: Principal,
     pub from_subaccount: Option<[u8; 32]>,
-    pub time: Nat,
     pub max_transaction_fee: Nat,
     pub erc20_contract_address: String,
     pub icrc_ledger_id: Principal,
@@ -63,7 +61,7 @@ pub struct AddIcpToEvmTx {
 pub enum AddIcpToEvmTxError {
     TxAlreadyExists,
     InvalidTokenPairs,
-    ChinNotSupported,
+    ChainNotSupported,
     InvalidDestination,
     InvalidTokenContract,
 }
