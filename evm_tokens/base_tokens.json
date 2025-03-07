@@ -5,7 +5,7 @@
     "name": "Base",
     "decimals": 18,
     "symbol": "ETH",
-    "logo": "https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/base/info/logo.png"
+    "logo": "https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/ethereum/info/logo.png
   },
   {
     "chain_id": 8453,

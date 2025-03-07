@@ -304,6 +304,20 @@ impl From<EvmToken> for CandidEvmToken {
     }
 }
 
+impl From<CandidEvmToken> for EvmToken {
+    fn from(value: CandidEvmToken) -> Self {
+        Self {
+            chain_id: ChainId::from(&value.chain_id),
+            erc20_contract_address: Address::from_str(&value.erc20_contract_address)
+                .expect("Invalid contract address"),
+            name: value.name,
+            decimals: value.decimals,
+            symbol: value.symbol,
+            logo: value.logo,
+        }
+    }
+}
+
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 pub struct GetIcpTokenArgs {
     pub ledger_id: Principal,

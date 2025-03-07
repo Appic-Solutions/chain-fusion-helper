@@ -20,7 +20,7 @@ use transaction_logger::lifecycle::{self, init as initialize};
 use transaction_logger::state::{
     mutate_state, nat_to_erc20_amount, nat_to_ledger_burn_index, read_state, ChainId,
     Erc20Identifier, Erc20TwinLedgerSuiteRequest, EvmToIcpStatus, EvmToIcpTx, EvmToIcpTxIdentifier,
-    IcpToEvmIdentifier, IcpToEvmStatus, IcpToEvmTx, IcpToken,
+    EvmToken, IcpToEvmIdentifier, IcpToEvmStatus, IcpToEvmTx, IcpToken,
 };
 use transaction_logger::update_bridge_pairs::APPIC_LEDGER_MANAGER_ID;
 use transaction_logger::update_icp_tokens::{update_icp_tokens, update_usd_price, validate_tokens};
@@ -329,6 +329,22 @@ pub fn add_icp_token(token: CandidIcpToken) {
     mutate_state(|s| s.record_icp_token(token.ledger_id, token))
 }
 
+#[update]
+// Can only be called by lsm
+pub fn add_evm_token(token: CandidEvmToken) {
+    if !is_authorized_caller(ic_cdk::caller()) {
+        panic!("Only admins can change icp tokens details")
+    }
+
+    let token: EvmToken = token.into();
+    mutate_state(|s| {
+        s.record_evm_token(
+            Erc20Identifier::new(&token.erc20_contract_address, token.chain_id),
+            token,
+        )
+    })
+}
+
 #[query]
 pub fn get_icp_tokens() -> Vec<CandidIcpToken> {
     // Get tokens from state
@@ -391,7 +407,7 @@ pub fn get_erc20_twin_ls_requests_by_creator(creator: Principal) -> Vec<CandidLe
 pub fn get_minters() -> Vec<MinterArgs> {
     read_state(|s| s.get_minters())
         .into_iter()
-        .map(|(key, minter)| minter.to_candid_minter_args())
+        .map(|(_key, minter)| minter.to_candid_minter_args())
         .collect()
 }
 
