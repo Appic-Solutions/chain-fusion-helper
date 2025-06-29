@@ -16,11 +16,14 @@ opt-level = 'z'
 candid = "0.10"
 ic-cdk = "0.16"
 ic-canister-log = "0.2.0"
-ic-cdk-timers = "0.10" # Feel free to remove this dependency if you don't need timers
+ic-cdk-timers = "0.10" 
 ic-stable-structures="0.6.5"
 icrc-ledger-types={ git = "https://github.com/dfinity/ic.git"}
 ic-ethereum-types = { git = "https://github.com/dfinity/ic.git"}
+ic-http-types = "0.1.0"
 
+
+base64 = "0.22.1"
 
 futures = "0.3.31"
 async-trait = "0.1.81"

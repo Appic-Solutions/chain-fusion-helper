@@ -45,35 +45,6 @@ pub struct TokenMetadata {
     pub canister_id: String,
 }
 
-impl From<TokenMetadata> for IcpToken {
-    fn from(value: TokenMetadata) -> Self {
-        let token_type = match value.standard.as_str() {
-            "ICRC1" => IcpTokenType::ICRC1,
-            "ICRC2" => IcpTokenType::ICRC2,
-            "ICRC3" => IcpTokenType::ICRC3,
-            "DIP20" => IcpTokenType::DIP20,
-            _ => IcpTokenType::Other(value.standard),
-        };
-
-        let ledger_id = Principal::from_text(value.canister_id).unwrap_or(Principal::anonymous());
-
-        Self {
-            ledger_id,
-            name: value.name,
-            decimals: checked_nat_to_u8(&value.decimals).unwrap_or(0),
-            symbol: value.symbol,
-            token_type,
-            logo: format!(
-                "https://wqfao-piaaa-aaaag-qj5ba-cai.raw.icp0.io/{}",
-                ledger_id
-            ),
-            usd_price: "0".to_string(),
-            fee: checked_nat_to_erc20_amount(value.fee).unwrap_or(Erc20TokenAmount::ZERO),
-            rank: Some(value.rank),
-        }
-    }
-}
-
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Result2 {
     #[serde(rename = "ok")]

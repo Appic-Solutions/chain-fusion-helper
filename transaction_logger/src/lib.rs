@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 pub mod add_evm_tokens;
+pub mod appic_dex_types;
 pub mod checked_amount;
 pub mod endpoints;
 pub mod guard;
@@ -15,6 +16,9 @@ pub mod scrape_events;
 pub mod state;
 pub mod update_bridge_pairs;
 pub mod update_icp_tokens;
+
+#[cfg(test)]
+pub mod tests;
 
 // 1 Minute
 pub const SCRAPE_EVENTS: Duration = Duration::from_secs(1 * 60);

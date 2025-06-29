@@ -343,7 +343,10 @@ impl From<IcpToken> for CandidIcpToken {
             name: value.name,
             decimals: value.decimals,
             symbol: value.symbol,
-            logo: value.logo,
+            logo: format!(
+                "https://zjydy-zyaaa-aaaaj-qnfka-cai.raw.icp0.io/logo/{}",
+                value.ledger_id
+            ),
             usd_price: value.usd_price,
             token_type: value.token_type,
             fee: value.fee.into(),

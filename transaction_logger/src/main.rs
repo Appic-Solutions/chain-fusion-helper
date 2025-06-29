@@ -1,13 +1,14 @@
-use std::borrow::Borrow;
-use std::collections::HashSet;
-use std::str::FromStr;
-use std::time::Duration;
-
+use base64::{engine::general_purpose, Engine as _};
 use candid::Principal;
 use ic_canister_log::log;
 use ic_cdk::{init, post_upgrade, query, update};
 use ic_cdk_timers;
 use ic_ethereum_types::Address;
+use ic_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
+use std::borrow::Borrow;
+use std::collections::HashSet;
+use std::str::FromStr;
+use std::time::Duration;
 use transaction_logger::add_evm_tokens::add_evm_tokens_to_state;
 use transaction_logger::endpoints::{
     AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError,
@@ -409,6 +410,49 @@ pub fn get_minters() -> Vec<MinterArgs> {
         .into_iter()
         .map(|(_key, minter)| minter.to_candid_minter_args())
         .collect()
+}
+
+#[query(hidden = true)]
+fn http_request(request: HttpRequest) -> HttpResponse {
+    let path = request.url.trim_start_matches('/');
+    let path_parts: Vec<&str> = path.split('/').collect();
+
+    if path_parts.len() == 2 && path_parts[0] == "logo" {
+        match Principal::from_text(path_parts[1]) {
+            Ok(ledger_id) => match read_state(|s| s.get_icp_token_by_principal(&ledger_id)) {
+                Some(token) => {
+                    let parts: Vec<&str> = token.logo.splitn(2, ';').collect();
+                    let content_type = if parts.len() > 0 && parts[0].starts_with("data:") {
+                        parts[0].strip_prefix("data:").unwrap_or("image/png")
+                    } else {
+                        "image/png" // Fallback
+                    };
+
+                    // Extract base64 data from the data URL
+                    let base64_start = token.logo.find("base64,").map(|pos| pos + 7).unwrap_or(0);
+                    let base64_data = &token.logo[base64_start..];
+
+                    // Decode base64 to binary
+                    match general_purpose::STANDARD.decode(base64_data) {
+                        Ok(decoded) => HttpResponseBuilder::ok()
+                            .header("Content-Type", content_type)
+                            .body(decoded)
+                            .build(),
+
+                        Err(e) => {
+                            HttpResponseBuilder::server_error(format!("Base64 decode error: {}", e))
+                                .body(format!("Base64 decode error: {}", e))
+                                .build()
+                        }
+                    }
+                }
+                None => HttpResponseBuilder::not_found().build(),
+            },
+            Err(_) => HttpResponseBuilder::bad_request().build(),
+        }
+    } else {
+        HttpResponseBuilder::bad_request().build()
+    }
 }
 
 // list every base URL that users will authenticate to your app from

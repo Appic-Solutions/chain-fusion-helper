@@ -4,12 +4,9 @@ use crate::{
     logs::INFO,
     state::{mutate_state, read_state, IcpToken},
 };
-use candid::Principal;
-use futures::future::join_all;
-use ic_canister_log::log;
-use std::{collections::HashSet, str::FromStr};
 
-const VALIDATION_BATCH_SIZE: usize = 5;
+use ic_canister_log::log;
+use std::collections::HashSet;
 
 pub async fn update_icp_tokens() {
     // Issue a timer guard
@@ -27,18 +24,18 @@ pub async fn update_icp_tokens() {
 
     let token_service = TokenService::new();
 
-    // Fetch tokens concurrently
-    let (icp_swap_tokens, sonic_swap_tokens) = (
+    // Fetch tokens
+    let (appic_dex_token, icp_swap_tokens) = (
+        token_service.get_appic_dex_tokens().await,
         token_service.get_icp_swap_tokens().await,
-        token_service.get_sonic_tokens().await,
     );
 
-    let mut unique_tokens = HashSet::with_capacity(icp_swap_tokens.len() + sonic_swap_tokens.len());
+    let mut unique_tokens = HashSet::with_capacity(appic_dex_token.len() + icp_swap_tokens.len());
 
     // Combine vectors and deduplicate on the fly
-    icp_swap_tokens
+    appic_dex_token
         .into_iter()
-        .chain(sonic_swap_tokens)
+        .chain(icp_swap_tokens)
         .for_each(|token| {
             unique_tokens.insert(token);
         });
@@ -50,24 +47,22 @@ pub async fn update_icp_tokens() {
 
     log!(
         INFO,
-        "[Update ICP Tokens] Called Sonic and ICP swap to get tokens list, Received {} tokens",
+        "[Update ICP Tokens] Called appic_dex and icp_swap to get tokens list, Received {} tokens",
         unique_tokens.len()
     );
 
     // Validate process
     let icp_tokens: Vec<IcpToken> = unique_tokens.into_iter().collect();
 
-    let validated_token =
-        validate_tokens_in_batch(&icp_tokens, VALIDATION_BATCH_SIZE, &token_service).await;
-
     // Record new ICP tokens
     log!(
         INFO,
         "[Update ICP Tokens] Updating tokens, adding {} tokens in total",
-        validated_token.len(),
+        icp_tokens.len(),
     );
+
     mutate_state(|s| {
-        for token in validated_token {
+        for token in icp_tokens {
             s.record_icp_token(token.ledger_id, token.clone());
         }
     });
@@ -82,20 +77,23 @@ pub async fn update_usd_price() {
 
     let token_service = TokenService::new();
 
-    let icp_token_with_usd_price = token_service
-        .get_icp_swap_tokens_with_usd_price()
-        .await
-        .expect("Failed to get icp tokens with their price, will retry in next iteration");
+    let (appic_dex_token_usd_price, icp_swap_tokens_usd_price) = (
+        token_service
+            .get_appic_dex_tokens_usd_price()
+            .await
+            .expect("Failed to get appic dex tokens with usd price"),
+        token_service
+            .get_icp_swap_tokens_with_usd_price()
+            .await
+            .expect("Failed to get icp swap tokens with usd price"),
+    );
 
-    icp_token_with_usd_price
+    icp_swap_tokens_usd_price
         .iter()
-        .filter(|token| token.priceUSD != 0_f64 && token.volumeUSD7d != 0_f64)
-        .for_each(|token| {
+        .chain(appic_dex_token_usd_price.iter())
+        .for_each(|(ledger_id, usd_price)| {
             mutate_state(|s| {
-                s.update_icp_token_usd_price(
-                    Principal::from_str(&token.address).unwrap_or(Principal::anonymous()),
-                    token.priceUSD.to_string(),
-                );
+                s.update_icp_token_usd_price(*ledger_id, usd_price.to_string());
             })
         });
 }
@@ -117,7 +115,7 @@ pub async fn validate_tokens() {
 
     for token in tokens.iter() {
         let is_valid = tokens_service
-            .validate_token(token.ledger_id, &token.token_type)
+            .validate_token(token.ledger_id, token.rank)
             .await
             .is_ok();
 
@@ -139,54 +137,6 @@ pub async fn validate_tokens() {
         valid_tokens,
         tokens.len() - valid_tokens
     );
-}
-
-async fn validate_tokens_in_batch<'a>(
-    icp_tokens: &'a [IcpToken], // Borrow tokens as a slice to avoid ownership transfer
-    batch_size: usize,
-    token_service: &TokenService,
-) -> Vec<&'a IcpToken> {
-    // Return references to the valid tokens
-    let mut valid_tokens = Vec::new();
-
-    // Chunk tokens into batches of `batch_size`
-    for batch in icp_tokens.chunks(batch_size) {
-        // Create futures for the current batch
-        let futures = batch.iter().map(|token| {
-            async move {
-                match token_service
-                    .validate_token(token.ledger_id, &token.token_type)
-                    .await
-                {
-                    Ok(_) => {
-                        log!(
-                            INFO,
-                            "[Validate Tokens] token {}, is valid",
-                            token.ledger_id.to_string(),
-                        );
-                        Some(token)
-                    } // Token is valid
-                    Err(e) => {
-                        log!(
-                            INFO,
-                            "[Validate Tokens] Failed to validate token: {}, Error: {:?}",
-                            token.ledger_id.to_string(),
-                            e
-                        );
-                        None // Token is invalid
-                    }
-                }
-            }
-        });
-
-        // Execute all futures in the batch concurrently
-        let results: Vec<Option<&IcpToken>> = join_all(futures).await;
-
-        // Collect valid tokens from the results
-        valid_tokens.extend(results.into_iter().flatten());
-    }
-
-    valid_tokens
 }
 
 #[cfg(test)]
