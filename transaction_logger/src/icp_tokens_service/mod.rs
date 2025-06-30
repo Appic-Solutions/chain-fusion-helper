@@ -30,6 +30,9 @@ pub enum MetadataValue {
 mod icp_swap_token_type;
 mod icp_swap_usd_node_types;
 
+#[cfg(test)]
+pub mod tests;
+
 const ICP_SWAP_ID: &str = "k37c6-riaaa-aaaag-qcyza-cai";
 const ICP_SWAP_NODE: &str = "ggzvv-5qaaa-aaaag-qck7a-cai";
 const APPIC_DEX_CANISTER_ID: &str = "nbepk-iyaaa-aaaad-qhlma-cai";
@@ -242,30 +245,15 @@ impl TokenService {
 
         // Process each relevant pool
         let mut results = Vec::new();
-        let q96 = U256::ONE << 96;
 
         for (pool_id, pool_state, other_token) in relevant_pools {
-            // Convert sqrt_price_x96 from Nat to f64
-            let sqrt_price_x96 =
-                big_uint_to_u256(pool_state.sqrt_price_x96.0).expect("BUG: Should fit in a U256");
-
-            let p: U256 = (sqrt_price_x96.wrapping_div(q96)).pow(2_u32);
-
-            let d_usdc = decimals_cache[&ck_usdc] as i32;
-            let d_other = decimals_cache[&other_token] as i32;
-
-            let usd_price = if pool_id.token0 == ck_usdc {
-                // Case 1: ckUSDC is token0, other_token is token1
-                // USD price = 10^d_other / (P * 10^d_usdc)
-                10.0_f64.powi(d_other)
-                    / (f64::try_from(p).unwrap_or(f64::MAX) * 10.0_f64.powi(d_usdc))
-            } else {
-                // Case 2: ckUSDC is token1, other_token is token0
-                // USD price = (P * 10^d_other) / 10^d_usdc
-                (f64::try_from(p).unwrap_or(f64::MAX) * 10.0_f64.powi(d_other))
-                    / 10.0_f64.powi(d_usdc)
-            };
-
+            let usd_price = claculate_usd_price_based_on_ck_usdc(
+                &pool_id,
+                pool_state,
+                &other_token,
+                &ck_usdc,
+                &decimals_cache,
+            );
             // Format the price as a string with 8 decimal places
             results.push((other_token, usd_price));
         }
@@ -375,4 +363,43 @@ pub fn big_uint_to_u256(biguint: BigUint) -> Result<U256, String> {
         return Err(format!("does not fit in a U256: {}", biguint));
     }
     Ok(U256::from_be_bytes(value_u256))
+}
+
+pub fn claculate_usd_price_based_on_ck_usdc(
+    pool_id: &CandidPoolId,
+    pool_state: CandidPoolState,
+    other_token: &Principal,
+    ck_usdc_ledger_id: &Principal,
+    decimals_cache: &HashMap<Principal, u8>,
+) -> f64 {
+    let q96 = 79228162514264337593543950336_f64;
+
+    // Convert sqrt_price_x96 from Nat to f64
+    let sqrt_price_x96 = pool_state
+        .sqrt_price_x96
+        .0
+        .to_string()
+        .parse::<f64>()
+        .expect("sqrt_price_x96 should fit in a f64");
+
+    let p: f64 = (sqrt_price_x96 / q96).powi(2_i32);
+
+    println!("Q96: {}", q96);
+    println!(" sqrt_price_x96: {}", sqrt_price_x96);
+    println!(" calculated p: {}", p);
+
+    let d_usdc = decimals_cache[ck_usdc_ledger_id] as i32;
+    let d_other = decimals_cache[other_token] as i32;
+
+    let usd_price = if &pool_id.token0 == ck_usdc_ledger_id {
+        // Case 1: ckUSDC is token0, other_token is token1
+        // USD price = 10^d_other / (P * 10^d_usdc)
+        10.0_f64.powi(d_other) / (p * 10.0_f64.powi(d_usdc))
+    } else {
+        // Case 2: ckUSDC is token1, other_token is token0
+        // USD price = (P * 10^d_other) / 10^d_usdc
+        (p * 10.0_f64.powi(d_other)) / 10.0_f64.powi(d_usdc)
+    };
+
+    usd_price
 }
