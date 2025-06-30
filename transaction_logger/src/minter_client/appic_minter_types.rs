@@ -93,36 +93,37 @@ pub struct UpgradeArg {
 
 pub mod events {
 
-    use super::*;
     use crate::{numeric::LedgerBurnIndex, state::nat_to_ledger_burn_index};
+
+    use super::*;
     use candid::{CandidType, Deserialize, Nat, Principal};
     use serde_bytes::ByteBuf;
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+    #[derive(CandidType, Deserialize, Debug, Clone)]
     pub struct GetEventsArg {
         pub start: u64,
         pub length: u64,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+    #[derive(CandidType, Deserialize, Debug, Clone)]
     pub struct GetEventsResult {
         pub events: Vec<Event>,
         pub total_event_count: u64,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
     pub struct Event {
         pub timestamp: u64,
         pub payload: EventPayload,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
     pub struct EventSource {
         pub transaction_hash: String,
         pub log_index: Nat,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
     pub enum ReimbursementIndex {
         Native {
             ledger_burn_index: Nat,
@@ -131,6 +132,11 @@ pub mod events {
             native_ledger_burn_index: Nat,
             ledger_id: Principal,
             erc20_ledger_burn_index: Nat,
+        },
+        IcrcWrap {
+            native_ledger_burn_index: Nat,
+            icrc_token: Principal,
+            icrc_ledger_lock_index: Nat,
         },
     }
 
@@ -142,20 +148,25 @@ pub mod events {
                 }
                 ReimbursementIndex::Erc20 {
                     native_ledger_burn_index,
-                    ledger_id: _,
-                    erc20_ledger_burn_index: _,
+                    ledger_id,
+                    erc20_ledger_burn_index,
+                } => nat_to_ledger_burn_index(&native_ledger_burn_index),
+                ReimbursementIndex::IcrcWrap {
+                    native_ledger_burn_index,
+                    icrc_token,
+                    icrc_ledger_lock_index,
                 } => nat_to_ledger_burn_index(&native_ledger_burn_index),
             }
         }
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
     pub struct AccessListItem {
         pub address: String,
         pub storage_keys: Vec<ByteBuf>,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
     pub struct UnsignedTransaction {
         pub chain_id: Nat,
         pub nonce: Nat,
@@ -168,13 +179,13 @@ pub mod events {
         pub access_list: Vec<AccessListItem>,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
     pub enum TransactionStatus {
         Success,
         Failure,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
     pub struct TransactionReceipt {
         pub block_hash: String,
         pub block_number: Nat,
@@ -184,7 +195,7 @@ pub mod events {
         pub transaction_hash: String,
     }
 
-    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
     pub enum EventPayload {
         Init(InitArg),
         Upgrade(UpgradeArg),
@@ -226,6 +237,8 @@ pub mod events {
             from: Principal,
             from_subaccount: Option<[u8; 32]>,
             created_at: Option<u64>,
+            l1_fee: Option<Nat>,
+            withdrawal_fee: Option<Nat>,
         },
         CreatedTransaction {
             withdrawal_id: Nat,
@@ -277,6 +290,9 @@ pub mod events {
             from: Principal,
             from_subaccount: Option<[u8; 32]>,
             created_at: u64,
+            l1_fee: Option<Nat>,
+            withdrawal_fee: Option<Nat>,
+            is_wrapped_mint: bool,
         },
         FailedErc20WithdrawalRequest {
             withdrawal_id: Nat,
@@ -295,6 +311,54 @@ pub mod events {
         },
         QuarantinedReimbursement {
             index: ReimbursementIndex,
+        },
+
+        AcceptedWrappedIcrcBurn {
+            transaction_hash: String,
+            block_number: Nat,
+            log_index: Nat,
+            from_address: String,
+            value: Nat,
+            principal: Principal,
+            wrapped_erc20_contract_address: String,
+            icrc_token_principal: Principal,
+            subaccount: Option<[u8; 32]>,
+        },
+        InvalidEvent {
+            event_source: EventSource,
+            reason: String,
+        },
+        DeployedWrappedIcrcToken {
+            transaction_hash: String,
+            block_number: Nat,
+            log_index: Nat,
+            base_token: Principal,
+            deployed_wrapped_erc20: String,
+        },
+        // The release event was quarantined due to transfer errors, will retry later
+        QuarantinedRelease {
+            event_source: EventSource,
+        },
+
+        ReleasedIcrcToken {
+            event_source: EventSource,
+            release_block_index: Nat,
+            transfer_fee: Nat,
+        },
+        FailedIcrcLockRequest {
+            withdrawal_id: Nat,
+            reimbursed_amount: Nat,
+            to: Principal,
+            to_subaccount: Option<[u8; 32]>,
+        },
+        ReimbursedIcrcWrap {
+            native_ledger_burn_index: Nat,
+            lock_in_block: Nat,
+            reimbursed_in_block: Nat,
+            reimbursed_icrc_token: Principal,
+            reimbursed_amount: Nat,
+            transaction_hash: Option<String>,
+            transfer_fee: Option<Nat>,
         },
     }
 }

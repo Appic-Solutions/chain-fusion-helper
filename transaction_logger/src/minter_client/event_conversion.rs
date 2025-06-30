@@ -148,6 +148,8 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         from,
                         from_subaccount,
                         created_at,
+                        l1_fee: None,
+                        withdrawal_fee: None,
                     }),
 
                     DfinityEventPayload::CreatedTransaction {
@@ -232,6 +234,9 @@ impl From<DfinityCkGetEventsResult> for AppicGetEventsResult {
                         from,
                         from_subaccount,
                         created_at,
+                        l1_fee: None,
+                        withdrawal_fee: None,
+                        is_wrapped_mint: false,
                     }),
 
                     DfinityEventPayload::MintedCkErc20 {

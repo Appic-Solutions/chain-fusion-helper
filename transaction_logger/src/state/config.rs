@@ -1,3 +1,5 @@
+use bincode::Options;
+
 use super::*;
 
 thread_local! {
@@ -253,8 +255,5 @@ fn encode<T: ?Sized + serde::Serialize>(value: &T) -> Cow<[u8]> {
 }
 
 fn decode<T: for<'a> serde::Deserialize<'a>>(bytes: Cow<[u8]>) -> T {
-    bincode::deserialize(bytes.as_ref())
-        .unwrap_or_else(|e| panic!("failed to decode bytes {}: {e}", hex::encode(bytes)))
+    bincode::deserialize(bytes.as_ref()).unwrap_or_else(|_| panic!("Failed to decode bytes"))
 }
-
-// Testing

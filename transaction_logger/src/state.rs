@@ -6,6 +6,7 @@ use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::{storable::Bound, BTreeMap, Storable};
 use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
+use serde_json::from_str;
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::hash::{Hash, Hasher};
@@ -525,16 +526,17 @@ impl State {
     pub fn record_minted_evm_to_icp(
         &mut self,
         identifier: EvmToIcpTxIdentifier,
-        evm_to_icp_fee: Erc20TokenAmount,
         ledger_mint_index: LedgerMintIndex,
+        transfer_fee: Option<Nat>,
     ) {
         if let Some(tx) = self.evm_to_icp_txs.get(&identifier) {
             // Fee calculation
-            let actual_received = if is_native_token(&tx.erc20_contract_address) {
-                Some(tx.value.checked_sub(evm_to_icp_fee).unwrap_or(tx.value))
-            } else {
-                Some(tx.value)
-            };
+            let transfer_fee = nat_to_erc20_amount(transfer_fee.unwrap_or(Nat::from(0_u8)));
+            let actual_received = Some(
+                tx.value
+                    .checked_sub(transfer_fee)
+                    .unwrap_or(Erc20TokenAmount::ZERO),
+            );
 
             // Transaction update
             let new_tx = EvmToIcpTx {
@@ -586,12 +588,23 @@ impl State {
         operator: Operator,
         chain_id: ChainId,
         timestamp: u64,
+        l1_fee: Option<Nat>,
+        withdrawal_fee: Option<Nat>,
     ) {
+        let l1_fee = nat_to_erc20_amount(l1_fee.unwrap_or(Nat::from(0_u8)));
+        let withdrawal_fee = nat_to_erc20_amount(withdrawal_fee.unwrap_or(Nat::from(0_u8)));
+        let max_transaction_fee =
+            nat_to_erc20_amount(max_transaction_fee.unwrap_or(Nat::from(0_u8)));
+
         let destination_address = Address::from_str(&destination)
             .expect("Should not fail converting destination to Address");
         let erc20_address = Address::from_str(&erc20_contract_address)
             .expect("Should not fail converting ERC20 contract address to Address");
-        let max_transaction_fee = max_transaction_fee.map(|max_fee| nat_to_erc20_amount(max_fee));
+        let total_transaction_fee = l1_fee
+            .checked_add(withdrawal_fee)
+            .unwrap()
+            .checked_add(max_transaction_fee)
+            .unwrap_or(Erc20TokenAmount::MAX);
 
         let withdrawal_amount = nat_to_erc20_amount(withdrawal_amount);
 
@@ -603,7 +616,7 @@ impl State {
         if let Some(tx) = self.icp_to_evm_txs.get(&identifier) {
             let new_tx = IcpToEvmTx {
                 verified: true,
-                max_transaction_fee,
+                max_transaction_fee: Some(total_transaction_fee),
                 withdrawal_amount,
                 erc20_contract_address: erc20_address,
                 destination: destination_address,
@@ -628,7 +641,7 @@ impl State {
                 from,
                 from_subaccount,
                 time: created_at.unwrap_or(timestamp),
-                max_transaction_fee,
+                max_transaction_fee: Some(total_transaction_fee),
                 erc20_ledger_burn_index,
                 icrc_ledger_id,
                 chain_id,
@@ -680,17 +693,12 @@ impl State {
         &mut self,
         identifier: IcpToEvmIdentifier,
         receipt: TransactionReceipt,
-        icp_to_evm_fee: Erc20TokenAmount,
     ) {
         if let Some(tx) = self.icp_to_evm_txs.get(&identifier) {
             let gas_used = nat_to_erc20_amount(receipt.gas_used);
             let effective_gas_price = nat_to_erc20_amount(receipt.effective_gas_price);
 
-            let total_gas_spent = gas_used
-                .checked_mul(effective_gas_price)
-                .unwrap()
-                .checked_add(icp_to_evm_fee)
-                .unwrap();
+            let total_gas_spent = gas_used.checked_mul(effective_gas_price).unwrap();
 
             let actual_received = if is_native_token(&tx.erc20_contract_address) {
                 tx.withdrawal_amount.checked_sub(total_gas_spent)
@@ -733,6 +741,36 @@ impl State {
             };
             self.record_new_icp_to_evm(identifier, new_tx);
         }
+    }
+
+    pub fn record_deployed_wrapped_icrc_token(
+        &mut self,
+        icrc_token: Principal,
+        wrapped_token: Erc20Identifier,
+    ) {
+        match self.get_icp_token_by_principal(&icrc_token) {
+            Some(token) => {
+                let evm_token = EvmToken {
+                    chain_id: wrapped_token.chain_id(),
+                    erc20_contract_address: wrapped_token.erc20_address(),
+                    name: token.name.clone(),
+                    decimals: token.decimals,
+                    symbol: token.symbol.clone(),
+                    logo: token.logo.clone(),
+                };
+                self.evm_token_list
+                    .insert(wrapped_token.clone(), evm_token.clone());
+
+                self.supported_twin_appic_tokens.insert(
+                    wrapped_token,
+                    BridgePair {
+                        icp_token: token,
+                        evm_token,
+                    },
+                );
+            }
+            None => {}
+        };
     }
 
     pub fn all_unverified_icp_to_evm(&self) -> Vec<(IcpToEvmIdentifier, u64)> {
