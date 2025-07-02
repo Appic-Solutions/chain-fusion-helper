@@ -2,10 +2,9 @@
 
 use std::str::FromStr;
 
-use crate::state::ChainId as StateChainId;
-use crate::state::Erc20Identifier;
+use crate::address::Address;
+use crate::state::types::{ChainId as StateChainId, Erc20Identifier};
 use candid::{CandidType, Deserialize, Nat, Principal};
-use ic_ethereum_types::Address;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromError;
 
 use super::EvmIcpBridgePairs;

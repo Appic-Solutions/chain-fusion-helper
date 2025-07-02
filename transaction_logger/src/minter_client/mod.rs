@@ -11,9 +11,7 @@ use ic_cdk::api::call::RejectionCode;
 use serde::de::DeserializeOwned;
 use std::fmt::Debug;
 
-use crate::state::Operator;
-
-use crate::state::Minter;
+use crate::state::types::{Minter, Operator};
 
 use appic_minter_types::{
     events::GetEventsArg as AppicGetEventsArg, events::GetEventsResult as AppicGetEventsResult,

@@ -2,11 +2,10 @@ use crate::endpoints::InitArgs;
 use crate::endpoints::UpgradeArg;
 use crate::logs::INFO;
 use crate::state::nat_to_erc20_amount;
-use crate::state::ChainId;
-use crate::state::Minter;
+use crate::state::nat_to_u64;
+use crate::state::types::{ChainId, Minter, MinterKey};
 
 use crate::state::mutate_state;
-use crate::state::MinterKey;
 use ic_canister_log::log;
 
 pub fn init(init_args: InitArgs) {
@@ -48,13 +47,16 @@ pub fn post_upgrade(upgrade_arg: Option<UpgradeArg>) {
                     minter_key,
                     update_minter_args
                 );
-                mutate_state(|s| {
-                    s.update_minter_fees(
-                        &minter_key,
-                        nat_to_erc20_amount(update_minter_args.evm_to_icp_fee),
-                        nat_to_erc20_amount(update_minter_args.icp_to_evm_fee),
-                    )
-                });
+                if let Some(last_observed) = &update_minter_args.last_observed_event {
+                    mutate_state(|s| {
+                        s.update_last_observed_event(&minter_key, nat_to_u64(last_observed))
+                    })
+                }
+                if let Some(last_scraped) = &update_minter_args.last_observed_event {
+                    mutate_state(|s| {
+                        s.update_last_scraped_event(&minter_key, nat_to_u64(last_scraped))
+                    })
+                }
             }
         }
     }

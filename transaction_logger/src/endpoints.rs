@@ -1,13 +1,15 @@
 use std::str::FromStr;
 
+use crate::address::Address;
 use crate::state::{
-    checked_nat_to_erc20_amount, nat_to_u128, read_state, ChainId, Erc20Identifier,
-    Erc20TwinLedgerSuiteFee, Erc20TwinLedgerSuiteRequest, Erc20TwinLedgerSuiteStatus,
-    EvmToIcpStatus, EvmToIcpTx, EvmToken, IcpToEvmStatus, IcpToEvmTx, IcpToken, IcpTokenType,
-    Operator,
+    checked_nat_to_erc20_amount, nat_to_u128, read_state,
+    types::{
+        ChainId, Erc20Identifier, Erc20TwinLedgerSuiteFee, Erc20TwinLedgerSuiteRequest,
+        Erc20TwinLedgerSuiteStatus, EvmToIcpStatus, EvmToIcpTx, EvmToken, IcpToEvmStatus,
+        IcpToEvmTx, IcpToken, IcpTokenType, Operator,
+    },
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
-use ic_ethereum_types::Address;
 use serde::Serialize;
 
 #[derive(Debug, CandidType, Deserialize)]
@@ -73,17 +75,15 @@ pub struct MinterArgs {
     pub operator: Operator,
     pub last_observed_event: Nat,
     pub last_scraped_event: Nat,
-    pub evm_to_icp_fee: Nat,
-    pub icp_to_evm_fee: Nat,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 pub struct UpdateMinterArgs {
     pub chain_id: CandidChainId,
     pub minter_id: Principal,
-    pub evm_to_icp_fee: Nat,
-    pub icp_to_evm_fee: Nat,
     pub operator: Operator,
+    pub last_observed_event: Option<Nat>,
+    pub last_scraped_event: Option<Nat>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -187,7 +187,7 @@ impl From<IcpToEvmTx> for CandidIcpToEvm {
 
         Self {
             transaction_hash,
-            native_ledger_burn_index: native_ledger_burn_index.get().into(),
+            native_ledger_burn_index: native_ledger_burn_index.into(),
             withdrawal_amount: withdrawal_amount.into(),
             actual_received: actual_received.map(|actual_received| actual_received.into()),
             destination: destination.to_string(),
@@ -200,7 +200,7 @@ impl From<IcpToEvmTx> for CandidIcpToEvm {
                 .map(|effective_gas_price| effective_gas_price.into()),
             gas_used: gas_used.map(|gas_used| gas_used.into()),
             total_gas_spent: total_gas_spent.map(|total_gas_spent| total_gas_spent.into()),
-            erc20_ledger_burn_index: erc20_ledger_burn_index.map(|index| index.get().into()),
+            erc20_ledger_burn_index: erc20_ledger_burn_index.map(|index| index.into()),
             erc20_contract_address: erc20_contract_address.to_string(),
             icrc_ledger_id,
             verified,
@@ -258,8 +258,7 @@ impl From<EvmToIcpTx> for CandidEvmToIcp {
             transaction_hash,
             value: value.into(),
             block_number: block_number.map(|block_number| block_number.into()),
-            ledger_mint_index: ledger_mint_index
-                .map(|ledger_mint_index| ledger_mint_index.get().into()),
+            ledger_mint_index: ledger_mint_index.map(|ledger_mint_index| ledger_mint_index.into()),
             actual_received: actual_received.map(|actual_received| actual_received.into()),
             principal,
             subaccount,
@@ -289,6 +288,7 @@ pub struct CandidEvmToken {
     pub decimals: u8,
     pub symbol: String,
     pub logo: String,
+    pub is_wrapped_icrc: bool,
 }
 
 impl From<EvmToken> for CandidEvmToken {
@@ -300,6 +300,7 @@ impl From<EvmToken> for CandidEvmToken {
             decimals: value.decimals,
             symbol: value.symbol,
             logo: value.logo,
+            is_wrapped_icrc: value.is_wrapped_icrc,
         }
     }
 }
@@ -314,6 +315,7 @@ impl From<CandidEvmToken> for EvmToken {
             decimals: value.decimals,
             symbol: value.symbol,
             logo: value.logo,
+            is_wrapped_icrc: value.is_wrapped_icrc,
         }
     }
 }

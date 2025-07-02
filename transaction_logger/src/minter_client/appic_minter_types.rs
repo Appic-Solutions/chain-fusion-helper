@@ -23,6 +23,8 @@ pub struct InitArg {
     pub last_scraped_block_number: Nat,
     pub min_max_priority_fee_per_gas: Nat,
     pub ledger_suite_manager_id: Principal,
+    pub deposit_native_fee: Nat,
+    pub withdrawal_native_fee: Nat,
 }
 #[derive(
     CandidType, Clone, Copy, Deserialize, Debug, Eq, PartialEq, Hash, Serialize, PartialOrd, Ord,
@@ -77,9 +79,7 @@ impl TryFrom<u64> for EvmNetwork {
     }
 }
 
-#[derive(
-    CandidType, Deserialize, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Serialize,
-)]
+#[derive(CandidType, Deserialize, Clone, Debug, Default, PartialEq, Eq, Ord, PartialOrd)]
 pub struct UpgradeArg {
     pub next_transaction_nonce: Option<Nat>,
     pub native_minimum_withdrawal_amount: Option<Nat>,
@@ -89,6 +89,8 @@ pub struct UpgradeArg {
     pub evm_rpc_id: Option<Principal>,
     pub native_ledger_transfer_fee: Option<Nat>,
     pub min_max_priority_fee_per_gas: Option<Nat>,
+    pub deposit_native_fee: Option<Nat>,
+    pub withdrawal_native_fee: Option<Nat>,
 }
 
 pub mod events {
@@ -148,13 +150,13 @@ pub mod events {
                 }
                 ReimbursementIndex::Erc20 {
                     native_ledger_burn_index,
-                    ledger_id,
-                    erc20_ledger_burn_index,
+                    ledger_id: _,
+                    erc20_ledger_burn_index: _,
                 } => nat_to_ledger_burn_index(&native_ledger_burn_index),
                 ReimbursementIndex::IcrcWrap {
                     native_ledger_burn_index,
-                    icrc_token,
-                    icrc_ledger_lock_index,
+                    icrc_token: _,
+                    icrc_ledger_lock_index: _,
                 } => nat_to_ledger_burn_index(&native_ledger_burn_index),
             }
         }

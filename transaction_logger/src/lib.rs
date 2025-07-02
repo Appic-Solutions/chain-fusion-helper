@@ -1,7 +1,9 @@
 use std::time::Duration;
 
 pub mod add_evm_tokens;
+pub mod address;
 pub mod appic_dex_types;
+pub mod cbor;
 pub mod checked_amount;
 pub mod endpoints;
 pub mod guard;

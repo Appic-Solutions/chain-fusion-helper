@@ -8,7 +8,7 @@ use crate::minter_client::{AppicGetEventsResult, DfinityCkGetEventsResult};
 use super::appic_minter_types::events::EventSource as AppicEventSource;
 
 // standard type for events returned from minters
-#[derive(PartialEq, PartialOrd, Ord, Eq)]
+#[derive(PartialEq, PartialOrd, Ord, Eq, Debug)]
 pub struct Events {
     pub events: Vec<AppicEvent>,
 }
@@ -34,7 +34,9 @@ impl Reduce for AppicGetEventsResult {
             .filter(|event| {
                 matches!(
                     event.payload,
-                    AppicEventPayload::AcceptedDeposit { .. }
+                    AppicEventPayload::Init(..)
+                        | AppicEventPayload::Upgrade(..)
+                        | AppicEventPayload::AcceptedDeposit { .. }
                         | AppicEventPayload::AcceptedErc20Deposit { .. }
                         | AppicEventPayload::MintedNative { .. }
                         | AppicEventPayload::MintedErc20 { .. }
@@ -50,6 +52,12 @@ impl Reduce for AppicGetEventsResult {
                         | AppicEventPayload::InvalidDeposit { .. }
                         | AppicEventPayload::QuarantinedDeposit { .. }
                         | AppicEventPayload::QuarantinedReimbursement { .. }
+                        | AppicEventPayload::DeployedWrappedIcrcToken { .. }
+                        | AppicEventPayload::AcceptedWrappedIcrcBurn { .. }
+                        | AppicEventPayload::QuarantinedRelease { .. }
+                        | AppicEventPayload::FailedIcrcLockRequest { .. }
+                        | AppicEventPayload::ReleasedIcrcToken { .. }
+                        | AppicEventPayload::ReimbursedIcrcWrap { .. }
                 )
             })
             .collect();

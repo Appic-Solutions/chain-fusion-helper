@@ -12,7 +12,10 @@ const POLYGON_TOKENS: &str = include_str!("../../evm_tokens/polygon_tokens.json"
 
 use crate::{
     logs::INFO,
-    state::{mutate_state, Erc20Identifier, EvmToken},
+    state::{
+        mutate_state,
+        types::{Erc20Identifier, EvmToken},
+    },
 };
 
 pub fn add_evm_tokens_to_state() {
@@ -52,14 +55,14 @@ mod tests {
 
     use std::str::FromStr;
 
-    use ic_ethereum_types::Address;
+    use crate::address::Address;
 
     use crate::{
         add_evm_tokens::{
             deserialize_all_tokens, deserialize_json_into_evm_token, ETHEREUM_TOKENS,
         },
         scrape_events::NATIVE_ERC20_ADDRESS,
-        state::{ChainId, EvmToken},
+        state::types::{ChainId, EvmToken},
     };
 
     #[test]
@@ -70,7 +73,8 @@ mod tests {
             name: "Ethereum".to_string(),
             decimals: 18,
             symbol: "ETH".to_string().to_string(),
-            logo:"https://github.com/trustwallet/assets/blob/master/blockchains/ethereum/info/logo.png".to_string(),
+            logo:"https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/ethereum/info/logo.png".to_string(),
+            is_wrapped_icrc:false,
         };
 
         assert_eq!(
@@ -98,7 +102,9 @@ mod tests {
                 name: "Ethereum".to_string(),
                 decimals: 18,
                 symbol: "ETH".to_string(),
-                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/ethereum/info/logo.png".to_string()
+                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/ethereum/info/logo.png".to_string(),
+                            is_wrapped_icrc:false,
+
             },
             EvmToken {
                 chain_id: ChainId(42161),
@@ -106,7 +112,9 @@ mod tests {
                 name: "Arbitrum One".to_string(),
                 decimals: 18,
                 symbol: "ETH".to_string(),
-                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/arbitrum/info/logo.png".to_string()
+                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/arbitrum/info/logo.png".to_string(),
+                            is_wrapped_icrc:false,
+
             },
             EvmToken {
                 chain_id: ChainId(43114),
@@ -114,7 +122,9 @@ mod tests {
                 name: "Avalanche".to_string(),
                 decimals: 18,
                 symbol: "AVAX".to_string(),
-                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/avalanchec/info/logo.png".to_string()
+                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/avalanchec/info/logo.png".to_string(),
+                            is_wrapped_icrc:false,
+
             },
             EvmToken {
                 chain_id: ChainId(8453),
@@ -122,7 +132,9 @@ mod tests {
                 name: "Base".to_string(),
                 decimals: 18,
                 symbol: "ETH".to_string(),
-                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/base/info/logo.png".to_string()
+                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/base/info/logo.png".to_string(),
+                            is_wrapped_icrc:false,
+
             },
             EvmToken {
                 chain_id: ChainId(56),
@@ -130,7 +142,9 @@ mod tests {
                 name: "Binance Smart Chain".to_string(),
                 decimals: 18,
                 symbol: "BNB".to_string(),
-                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/smartchain/info/logo.png".to_string()
+                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/smartchain/info/logo.png".to_string(),
+                            is_wrapped_icrc:false,
+
             },
             EvmToken {
                 chain_id: ChainId(250),
@@ -138,7 +152,9 @@ mod tests {
                 name: "Fantom".to_string(),
                 decimals: 18,
                 symbol: "FTM".to_string(),
-                logo: "https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/fantom/info/logo.png".to_string()
+                logo: "https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/fantom/info/logo.png".to_string(),
+                            is_wrapped_icrc:false,
+
             },
             EvmToken {
                 chain_id: ChainId(10),
@@ -146,7 +162,9 @@ mod tests {
                 name: "Optimism".to_string(),
                 decimals: 18,
                 symbol: "ETH".to_string(),
-                logo: "https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/optimism/info/logo.png".to_string()
+                logo: "https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/optimism/info/logo.png".to_string(),
+                            is_wrapped_icrc:false,
+
             },
             EvmToken {
                 chain_id: ChainId(137),
@@ -154,7 +172,9 @@ mod tests {
                 name: "Polygon".to_string(),
                 decimals: 18,
                 symbol: "POL".to_string(),
-                logo: "https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/polygon/info/logo.png".to_string()
+                logo: "https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/polygon/info/logo.png".to_string(),
+                            is_wrapped_icrc:false,
+
             },
         ];
 

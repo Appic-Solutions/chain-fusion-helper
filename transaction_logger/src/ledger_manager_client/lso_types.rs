@@ -1,13 +1,13 @@
-use crate::state::ChainId as StateChainId;
+use crate::state::types::ChainId as StateChainId;
 use std::str::FromStr;
 
 use super::EvmIcpBridgePairs;
+use crate::address::Address;
 use crate::{
     scrape_events::NATIVE_ERC20_ADDRESS,
-    state::{ChainId, Erc20Identifier},
+    state::types::{ChainId, Erc20Identifier},
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
-use ic_ethereum_types::Address;
 
 // Dfinity ckEth ledger suite orchestrator types
 

@@ -3,13 +3,13 @@ use candid::Principal;
 use ic_canister_log::log;
 use ic_cdk::{init, post_upgrade, query, update};
 use ic_cdk_timers;
-use ic_ethereum_types::Address;
 use ic_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use std::borrow::Borrow;
 use std::collections::HashSet;
 use std::str::FromStr;
 use std::time::Duration;
 use transaction_logger::add_evm_tokens::add_evm_tokens_to_state;
+use transaction_logger::address::Address;
 use transaction_logger::endpoints::{
     AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError,
     CandidAddErc20TwinLedgerSuiteRequest, CandidEvmToken, CandidIcpToken, CandidLedgerSuiteRequest,
@@ -19,9 +19,11 @@ use transaction_logger::endpoints::{
 use transaction_logger::guard::{TaskType, TimerGuard};
 use transaction_logger::lifecycle::{self, init as initialize};
 use transaction_logger::state::{
-    mutate_state, nat_to_erc20_amount, nat_to_ledger_burn_index, read_state, ChainId,
-    Erc20Identifier, Erc20TwinLedgerSuiteRequest, EvmToIcpStatus, EvmToIcpTx, EvmToIcpTxIdentifier,
-    EvmToken, IcpToEvmIdentifier, IcpToEvmStatus, IcpToEvmTx, IcpToken,
+    mutate_state, nat_to_erc20_amount, nat_to_ledger_burn_index, read_state,
+    types::{
+        ChainId, Erc20Identifier, Erc20TwinLedgerSuiteRequest, EvmToIcpStatus, EvmToIcpTx,
+        EvmToIcpTxIdentifier, EvmToken, IcpToEvmIdentifier, IcpToEvmStatus, IcpToEvmTx, IcpToken,
+    },
 };
 use transaction_logger::update_bridge_pairs::APPIC_LEDGER_MANAGER_ID;
 use transaction_logger::update_icp_tokens::{update_icp_tokens, update_usd_price, validate_tokens};
@@ -115,6 +117,8 @@ fn post_upgrade(upgrade_args: Option<LoggerArgs>) {
         Some(LoggerArgs::Upgrade(upgrade_args)) => lifecycle::post_upgrade(Some(upgrade_args)),
         None => lifecycle::post_upgrade(None),
     }
+
+    add_evm_tokens_to_state();
 
     // Set up timers
     setup_timers();

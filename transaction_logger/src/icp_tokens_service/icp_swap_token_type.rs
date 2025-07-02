@@ -10,7 +10,8 @@ use crate::{
     numeric::Erc20TokenAmount,
     state::{
         checked_nat_to_erc20_amount, checked_nat_to_u64, checked_nat_to_u8, nat_to_erc20_amount,
-        nat_to_u64, nat_to_u8, IcpToken, IcpTokenType,
+        nat_to_u64, nat_to_u8,
+        types::{IcpToken, IcpTokenType},
     },
 };
 

@@ -5,7 +5,10 @@ use crate::{
     guard::TimerGuard,
     ledger_manager_client::LsClient,
     logs::{DEBUG, INFO},
-    state::{mutate_state, BridgePair, MinterKey},
+    state::{
+        mutate_state,
+        types::{BridgePair, Erc20Identifier, MinterKey, Operator},
+    },
 };
 
 pub const LEDGER_SUITE_ORCHESTRATOR_ID: &str = "vxkom-oyaaa-aaaar-qafda-cai";
@@ -21,14 +24,10 @@ pub async fn update_bridge_pairs() {
     };
 
     let managers = [
-        (
-            APPIC_LEDGER_MANAGER_ID,
-            crate::state::Operator::AppicMinter,
-            "Appic LSM",
-        ),
+        (APPIC_LEDGER_MANAGER_ID, Operator::AppicMinter, "Appic LSM"),
         (
             LEDGER_SUITE_ORCHESTRATOR_ID,
-            crate::state::Operator::DfinityCkEthMinter,
+            Operator::DfinityCkEthMinter,
             "Dfinity LSO",
         ),
     ];
@@ -59,9 +58,9 @@ pub async fn update_bridge_pairs() {
 }
 
 // Processes bridge pairs
-fn process_bridge_pairs<I>(bridge_pairs: I, operator: crate::state::Operator, source_name: &str)
+fn process_bridge_pairs<I>(bridge_pairs: I, operator: Operator, source_name: &str)
 where
-    I: Iterator<Item = (crate::state::Erc20Identifier, candid::Principal)>,
+    I: Iterator<Item = (Erc20Identifier, candid::Principal)>,
 {
     mutate_state(|state| {
         for (erc20_identifier, principal_id) in bridge_pairs {
@@ -84,12 +83,12 @@ where
                         source_name
                     );
                     match operator {
-                        crate::state::Operator::DfinityCkEthMinter => {
+                        Operator::DfinityCkEthMinter => {
                             state
                                 .supported_ckerc20_tokens
                                 .insert(erc20_identifier, bridge_pair);
                         }
-                        crate::state::Operator::AppicMinter => {
+                        Operator::AppicMinter => {
                             state
                                 .supported_twin_appic_tokens
                                 .insert(erc20_identifier, bridge_pair);

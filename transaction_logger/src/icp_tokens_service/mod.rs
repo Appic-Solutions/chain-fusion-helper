@@ -16,7 +16,10 @@ use crate::{
     logs::INFO,
     minter_client::{CallError, IcRunTime, Reason, Runtime},
     numeric::Erc20TokenAmount,
-    state::{read_state, IcpToken, IcpTokenType},
+    state::{
+        read_state,
+        types::{IcpToken, IcpTokenType},
+    },
 };
 
 #[derive(CandidType, Deserialize, Debug)]
@@ -347,7 +350,7 @@ pub fn convert_to_icp_token(
         decimals: decimals.ok_or("Missing icrc1:decimals")?,
         symbol: symbol.ok_or("Missing icrc1:symbol")?,
         usd_price: String::from("0"), // Not provided in metadata, set as empty
-        logo: logo.ok_or("Missing icrc1:logo")?,
+        logo: logo.ok_or("Missing icrc1:logo").unwrap_or("".to_string()),
         fee: fee.ok_or("Missing icrc1:fee")?,
         token_type: IcpTokenType::ICRC2,
         rank,

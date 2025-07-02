@@ -3,17 +3,22 @@ use std::str::FromStr;
 use crate::{
     guard::TimerGuard,
     logs::{DEBUG, INFO},
-    minter_client::MinterClient,
+    minter_client::{
+        appic_minter_types::{InitArg, UpgradeArg},
+        MinterClient,
+    },
     state::{
         mutate_state, nat_to_erc20_amount, nat_to_ledger_burn_index, nat_to_ledger_mint_index,
-        read_state, ChainId, Erc20Identifier, EvmToIcpTxIdentifier, IcpToEvmIdentifier, MinterKey,
-        Operator,
+        read_state,
+        types::{
+            ChainId, Erc20Identifier, EvmToIcpTxIdentifier, IcpToEvmIdentifier, MinterKey, Operator,
+        },
     },
 };
 
+use crate::address::Address;
 use crate::minter_client::appic_minter_types::events::EventPayload as AppicEventPayload;
 use ic_canister_log::log;
-use ic_ethereum_types::Address;
 
 use crate::minter_client::event_conversion::Events;
 const MAX_EVENTS_PER_RESPONSE: u64 = 100;
@@ -100,6 +105,8 @@ pub async fn scrape_events_range(
             let events_result = minter_client.scrape_events(start, 100).await;
             match events_result {
                 Ok(events) => {
+                    log!(INFO, "[Scraping Events] Received Event {:?}", events);
+
                     apply_state_transition(events, minter_key.operator(), minter_key.chain_id());
                     mutate_state(|s| s.update_last_scraped_event(&minter_key, chunk_end));
                     success = true; // Mark as successful
@@ -148,8 +155,55 @@ fn apply_state_transition(events: Events, operator: Operator, chain_id: ChainId)
     for event in events.events.into_iter() {
         // Applying the state transition
         mutate_state(|s| match event.payload {
-            AppicEventPayload::Init(_init_arg) => {}
-            AppicEventPayload::Upgrade(_upgrade_arg) => {}
+            AppicEventPayload::Init(InitArg {
+                evm_network: _,
+                ecdsa_key_name: _,
+                helper_contract_address: _,
+                native_ledger_id,
+                native_index_id: _,
+                native_symbol,
+                block_height: _,
+                native_minimum_withdrawal_amount: _,
+                native_ledger_transfer_fee,
+                next_transaction_nonce: _,
+                last_scraped_block_number: _,
+                min_max_priority_fee_per_gas: _,
+                ledger_suite_manager_id: _,
+                deposit_native_fee: _,
+                withdrawal_native_fee,
+            }) => {
+                s.update_minter_fees(
+                    &MinterKey(chain_id, operator),
+                    nat_to_erc20_amount(withdrawal_native_fee),
+                );
+
+                s.record_native_icrc_ledger(
+                    native_ledger_id,
+                    native_symbol,
+                    nat_to_erc20_amount(native_ledger_transfer_fee),
+                    chain_id,
+                );
+            }
+            AppicEventPayload::Upgrade(UpgradeArg {
+                next_transaction_nonce: _,
+                native_minimum_withdrawal_amount: _,
+                helper_contract_address: _,
+                block_height: _,
+                last_scraped_block_number: _,
+                evm_rpc_id: _,
+                native_ledger_transfer_fee: _,
+                min_max_priority_fee_per_gas: _,
+                deposit_native_fee: _,
+                withdrawal_native_fee,
+            }) => match withdrawal_native_fee {
+                Some(new_fee) => {
+                    s.update_minter_fees(
+                        &MinterKey(chain_id, operator),
+                        nat_to_erc20_amount(new_fee),
+                    );
+                }
+                None => {}
+            },
             AppicEventPayload::AcceptedDeposit {
                 transaction_hash,
                 block_number,

@@ -2,7 +2,7 @@ use crate::{
     guard::TimerGuard,
     icp_tokens_service::TokenService,
     logs::INFO,
-    state::{mutate_state, read_state, IcpToken},
+    state::{mutate_state, read_state, types::IcpToken},
 };
 
 use ic_canister_log::log;
@@ -142,8 +142,7 @@ pub async fn validate_tokens() {
 #[cfg(test)]
 mod tests {
     use crate::numeric::Erc20TokenAmount;
-    use crate::state::IcpToken;
-    use crate::state::IcpTokenType;
+    use crate::state::types::{IcpToken, IcpTokenType};
 
     use super::*;
     use candid::Principal;

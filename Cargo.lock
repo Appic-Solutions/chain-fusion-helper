@@ -497,18 +497,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ic-ethereum-types"
-version = "1.0.0"
-source = "git+https://github.com/dfinity/ic.git#313268652881c097abd0b34cc89a6131ec500abf"
-dependencies = [
- "hex",
- "ic-sha3",
- "minicbor",
- "minicbor-derive",
- "serde",
-]
-
-[[package]]
 name = "ic-http-types"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -562,7 +550,7 @@ version = "0.1.0"
 source = "git+https://github.com/dfinity/ic.git#313268652881c097abd0b34cc89a6131ec500abf"
 dependencies = [
  "candid",
- "minicbor",
+ "minicbor 0.19.1",
  "num-bigint",
  "num-traits",
 ]
@@ -579,7 +567,7 @@ dependencies = [
  "ic-stable-structures",
  "icrc-cbor",
  "itertools",
- "minicbor",
+ "minicbor 0.19.1",
  "num-bigint",
  "num-traits",
  "serde",
@@ -656,7 +644,16 @@ version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7005aaf257a59ff4de471a9d5538ec868a21586534fff7f85dd97d4043a6139"
 dependencies = [
- "minicbor-derive",
+ "minicbor-derive 0.13.0",
+]
+
+[[package]]
+name = "minicbor"
+version = "0.26.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8a309f581ade7597820083bc275075c4c6986e57e53f8d26f88507cfefc8c987"
+dependencies = [
+ "minicbor-derive 0.16.2",
 ]
 
 [[package]]
@@ -668,6 +665,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "minicbor-derive"
+version = "0.16.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a9882ef5c56df184b8ffc107fc6c61e33ee3a654b021961d790a78571bb9d67a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.90",
 ]
 
 [[package]]
@@ -1178,12 +1186,12 @@ dependencies = [
  "ic-canister-log",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-ethereum-types",
  "ic-http-types",
+ "ic-sha3",
  "ic-stable-structures",
  "icrc-ledger-types",
- "minicbor",
- "minicbor-derive",
+ "minicbor 0.26.5",
+ "minicbor-derive 0.13.0",
  "num-bigint",
  "num-traits",
  "phantom_newtype",

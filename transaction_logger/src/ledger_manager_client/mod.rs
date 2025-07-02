@@ -4,7 +4,7 @@ use lso_types::OrchestratorInfo;
 
 use crate::{
     minter_client::{IcRunTime, Runtime},
-    state::{Erc20Identifier, Operator},
+    state::types::{Erc20Identifier, Operator},
 };
 
 // Appic

@@ -1,5 +1,4 @@
 use crate::checked_amount::CheckedAmountOf;
-use phantom_newtype::Id;
 
 pub enum WeiTag {}
 pub type Wei = CheckedAmountOf<WeiTag>;
@@ -18,7 +17,7 @@ pub enum BlockNumberTag {}
 pub type BlockNumber = CheckedAmountOf<BlockNumberTag>;
 
 pub enum BurnIndexTag {}
-pub type LedgerBurnIndex = Id<BurnIndexTag, u64>;
+pub type LedgerBurnIndex = u64;
 
 pub enum MintIndexTag {}
-pub type LedgerMintIndex = Id<BurnIndexTag, u64>;
+pub type LedgerMintIndex = u64;

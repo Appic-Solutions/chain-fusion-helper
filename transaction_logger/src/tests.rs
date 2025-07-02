@@ -7,7 +7,7 @@ mod tests {
 
     use crate::{
         numeric::Erc20TokenAmount,
-        state::{IcpToken, IcpTokenType},
+        state::types::{IcpToken, IcpTokenType},
     };
 
     // Helper function to create a mock IcpToken
