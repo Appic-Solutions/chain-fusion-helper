@@ -1,5 +1,6 @@
 [workspace]
 members = [
-    "transaction_logger"
+    "transaction_logger",
+    "proxy_canister"
 ]
 resolver = "2"

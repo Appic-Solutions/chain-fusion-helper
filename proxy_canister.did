@@ -1,0 +1,22 @@
+type CallError = record { method : text; reason : Reason };
+type CandidIcpToken = record {
+  fee : nat;
+  decimals : nat8;
+  usd_price : text;
+  logo : text;
+  name : text;
+  rank : opt nat32;
+  ledger_id : principal;
+  token_type : IcpTokenType;
+  symbol : text;
+};
+type IcpTokenType = variant { ICRC1; ICRC2; ICRC3; DIP20; Other : text };
+type Reason = variant {
+  CanisterError : text;
+  TransientInternalError : text;
+  OutOfCycles;
+  Rejected : text;
+  InternalError : text;
+};
+type Result = variant { Ok : CandidIcpToken; Err : CallError };
+service : { get_icp_token : (principal) -> (Result) }

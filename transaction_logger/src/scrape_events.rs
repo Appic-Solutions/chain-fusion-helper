@@ -84,7 +84,7 @@ pub async fn scrape_events_range(
         return;
     }
 
-    let mut start = last_scraped_event + 1; // Start from the next event after the last scraped
+    let mut start = last_scraped_event; // Start from the next event after the last scraped
     let end = last_observed_event; // Scrape up to the last observed event
     const MAX_RETRIES: u32 = 5; // Maximum retry attempts
 

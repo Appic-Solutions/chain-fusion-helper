@@ -4,7 +4,18 @@
       "candid": "transaction_logger.did",
       "wasm": "target/wasm32-unknown-unknown/release/transaction_logger.wasm",
       "type": "custom",
-      "build": ["make build"],
+      "build": ["make build_transaction_logger"],
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
+    },
+     "proxy_canister": {
+      "candid": "proxy_canister.did",
+      "wasm": "target/wasm32-unknown-unknown/release/proxy_canister.wasm",
+      "type": "custom",
+      "build": ["make build_proxy_canister"],
       "metadata": [
         {
           "name": "candid:service"

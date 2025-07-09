@@ -26,6 +26,7 @@ pub struct InitArg {
     pub deposit_native_fee: Nat,
     pub withdrawal_native_fee: Nat,
 }
+
 #[derive(
     CandidType, Clone, Copy, Deserialize, Debug, Eq, PartialEq, Hash, Serialize, PartialOrd, Ord,
 )]

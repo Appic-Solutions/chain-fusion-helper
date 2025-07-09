@@ -158,7 +158,7 @@ impl MinterClient {
 
 /// Represents an error from a management canister call, such as
 /// `sign_with_ecdsa`.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, CandidType)]
 pub struct CallError {
     pub method: String,
     pub reason: Reason,
@@ -186,7 +186,7 @@ impl fmt::Display for CallError {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, CandidType)]
 /// The reason for the management call failure.
 pub enum Reason {
     /// The canister does not have enough cycles to submit the request.

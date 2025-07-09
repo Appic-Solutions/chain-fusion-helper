@@ -439,6 +439,13 @@ impl State {
         transfer_fee: Erc20TokenAmount,
         chain_id: ChainId,
     ) {
+        log!(
+            INFO,
+            "Recieved native ledger for chain_id:{:?} with principal:{:?}",
+            chain_id,
+            ledger.to_text()
+        );
+
         let evm_token = self
             .get_evm_token_by_identifier(&Erc20Identifier(Address::ZERO, chain_id))
             .expect("Native token should already be available");

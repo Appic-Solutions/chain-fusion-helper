@@ -1,5 +1,8 @@
 {
   "transaction_logger": {
     "ic": "zjydy-zyaaa-aaaaj-qnfka-cai"
+  },
+  "proxy_canister":{
+    "ic": "epulg-riaaa-aaaaj-a2erq-cai"
   }
 }

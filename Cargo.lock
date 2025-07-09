@@ -805,6 +805,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "proxy_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ic-cdk",
+ "serde",
+ "transaction_logger",
+]
+
+[[package]]
 name = "psm"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"

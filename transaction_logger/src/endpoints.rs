@@ -340,15 +340,20 @@ pub struct CandidIcpToken {
 
 impl From<IcpToken> for CandidIcpToken {
     fn from(value: IcpToken) -> Self {
+        let logo = if value.logo.starts_with("https://") {
+            value.logo
+        } else {
+            format!(
+                "https://zjydy-zyaaa-aaaaj-qnfka-cai.raw.icp0.io/logo/{}",
+                value.ledger_id
+            )
+        };
         Self {
             ledger_id: value.ledger_id,
             name: value.name,
             decimals: value.decimals,
             symbol: value.symbol,
-            logo: format!(
-                "https://zjydy-zyaaa-aaaaj-qnfka-cai.raw.icp0.io/logo/{}",
-                value.ledger_id
-            ),
+            logo,
             usd_price: value.usd_price,
             token_type: value.token_type,
             fee: value.fee.into(),

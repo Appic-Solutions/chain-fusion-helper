@@ -1,0 +1,19 @@
+
+[package]
+name = "proxy_canister"
+version = "0.1.0"
+edition = "2021"
+
+[profile.release]
+lto = true
+opt-level = 'z'
+
+[dependencies]
+candid = "0.10"
+ic-cdk = "0.16"
+serde = { version = "1.0.203", features = ["derive"] }
+transaction_logger = { path="../transaction_logger" }
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+

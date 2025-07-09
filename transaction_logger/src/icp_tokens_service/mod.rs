@@ -3,7 +3,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use candid::{CandidType, Principal};
+use candid::{CandidType, Nat, Principal};
 use ethnum::U256;
 use ic_canister_log::log;
 use icp_swap_token_type::TokensListResult;
@@ -250,15 +250,17 @@ impl TokenService {
         let mut results = Vec::new();
 
         for (pool_id, pool_state, other_token) in relevant_pools {
-            let usd_price = claculate_usd_price_based_on_ck_usdc(
-                &pool_id,
-                pool_state,
-                &other_token,
-                &ck_usdc,
-                &decimals_cache,
-            );
-            // Format the price as a string with 8 decimal places
-            results.push((other_token, usd_price));
+            if pool_state.liquidity != Nat::from(0_u8) {
+                let usd_price = claculate_usd_price_based_on_ck_usdc(
+                    &pool_id,
+                    pool_state,
+                    &other_token,
+                    &ck_usdc,
+                    &decimals_cache,
+                );
+                // Format the price as a string with 8 decimal places
+                results.push((other_token, usd_price));
+            }
         }
 
         Ok(results)
