@@ -1,7 +1,10 @@
 use ic_stable_structures::{storable::Bound, storable::Storable};
 use std::borrow::Cow;
 
-use crate::state::types::*;
+use crate::state::{
+    dex::types::{DexAction, SwapType, UserDexActions},
+    types::*,
+};
 
 macro_rules! impl_storable_minicbor {
     ($type:ty ) => {
@@ -38,3 +41,7 @@ impl_storable_minicbor!(IcpToken);
 impl_storable_minicbor!(EvmToken);
 impl_storable_minicbor!(BridgePair);
 impl_storable_minicbor!(Erc20TwinLedgerSuiteRequest);
+impl_storable_minicbor!(DexAction);
+impl_storable_minicbor!(SwapType);
+impl_storable_minicbor!(UserDexActions);
+impl_storable_minicbor!(DexInfo);

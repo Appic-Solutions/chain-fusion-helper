@@ -12,6 +12,7 @@ pub enum TaskType {
     UpdateIcpTokens,
     RemoveInvalidTokens,
     UpdateUsdPrice,
+    ScrapeDexEvents,
 }
 
 thread_local! {

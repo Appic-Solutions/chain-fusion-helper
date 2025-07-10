@@ -1,13 +1,15 @@
 use crate::address::Address;
 use crate::logs::INFO;
 use crate::numeric::LedgerMintIndex;
+use crate::state::config::dex_info_id;
+use crate::state::dex::types::{DexAction, UserDexActions};
 use crate::state::types::*;
 
 use candid::{CandidType, Nat, Principal};
 use ic_canister_log::log;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
-use ic_stable_structures::BTreeMap;
 use ic_stable_structures::DefaultMemoryImpl;
+use ic_stable_structures::{BTreeMap, Cell};
 use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -28,12 +30,13 @@ use std::fmt::Debug;
 use crate::minter_client::appic_minter_types::events::{TransactionReceipt, TransactionStatus};
 
 mod config;
+pub mod dex;
 mod storable_impl;
 pub mod types;
 
 use config::{
-    erc20_twin_ledger_requests_id, evm_to_icp_memory, evm_token_list_id, icp_to_evm_memory,
-    icp_token_list_id, minter_memory, supported_appic_tokens_memory_id,
+    dex_actions_list, erc20_twin_ledger_requests_id, evm_to_icp_memory, evm_token_list_id,
+    icp_to_evm_memory, icp_token_list_id, minter_memory, supported_appic_tokens_memory_id,
     supported_ckerc20_tokens_memory_id,
 };
 
@@ -57,6 +60,11 @@ pub struct State {
 
     // List of new erc20 -> icERC20 requests
     pub twin_erc20_requests: BTreeMap<Erc20Identifier, Erc20TwinLedgerSuiteRequest, StableMemory>,
+
+    // list of operations by users in the dex
+    pub dex_actions_list: BTreeMap<Principal, UserDexActions, StableMemory>,
+
+    pub dex_info: Cell<DexInfo, StableMemory>,
 }
 
 impl State {
@@ -100,6 +108,24 @@ impl State {
         }
     }
 
+    pub fn update_last_observed_dex_event(&mut self, last_observed_event: u64) {
+        let info = self.dex_info.get();
+        let new_info = DexInfo {
+            last_observed_event,
+            ..info.clone()
+        };
+        let _ = self.dex_info.set(new_info);
+    }
+
+    pub fn update_last_scraped_dex_event(&mut self, last_scraped_event: u64) {
+        let info = self.dex_info.get();
+        let new_info = DexInfo {
+            last_scraped_event,
+            ..info.clone()
+        };
+        let _ = self.dex_info.set(new_info);
+    }
+
     pub fn get_minters(&self) -> Vec<(MinterKey, Minter)> {
         self.minters.iter().collect()
     }
@@ -107,7 +133,7 @@ impl State {
     pub fn get_active_minters(&self) -> Vec<(MinterKey, Minter)> {
         self.minters
             .iter()
-            .filter(|minter| minter.1.enabled == true)
+            .filter(|minter| minter.1.enabled)
             .collect()
     }
 
@@ -181,6 +207,10 @@ impl State {
                 erc20_contract_address: parsed_erc20_address,
                 subaccount,
                 status: EvmToIcpStatus::Accepted,
+                icrc_ledger_id: self.get_icrc_twin_for_erc20(
+                    &Erc20Identifier(parsed_erc20_address, chain_id),
+                    &operator,
+                ),
                 ..tx
             };
             self.record_new_evm_to_icp(identifier, new_tx);
@@ -303,6 +333,9 @@ impl State {
             .map(|burn_index| LedgerBurnIndex::from(nat_to_u64(&burn_index)));
 
         if let Some(tx) = self.icp_to_evm_txs.get(&identifier) {
+            let icrc_ledger_id =
+                self.get_icrc_twin_for_erc20(&Erc20Identifier(erc20_address, chain_id), &operator);
+
             let new_tx = IcpToEvmTx {
                 verified: true,
                 max_transaction_fee: Some(total_transaction_fee),
@@ -314,6 +347,7 @@ impl State {
                 from,
                 from_subaccount,
                 status: IcpToEvmStatus::Accepted,
+                icrc_ledger_id,
                 ..tx
             };
 
@@ -453,7 +487,7 @@ impl State {
             ledger_id: ledger,
             name: symbol.clone(),
             decimals: 18,
-            symbol: symbol,
+            symbol,
             usd_price: "0.01".to_string(),
             logo: evm_token.logo,
             fee: transfer_fee,
@@ -473,29 +507,26 @@ impl State {
             "Recieved deployed wrapped_icrc event {:?}",
             icrc_token.to_text()
         );
-        match self.get_icp_token_by_principal(&icrc_token) {
-            Some(token) => {
-                let evm_token = EvmToken {
-                    chain_id: wrapped_token.chain_id(),
-                    erc20_contract_address: wrapped_token.erc20_address(),
-                    name: token.name.clone(),
-                    decimals: token.decimals,
-                    symbol: token.symbol.clone(),
-                    logo: token.logo.clone(),
-                    is_wrapped_icrc: true,
-                };
-                self.evm_token_list
-                    .insert(wrapped_token.clone(), evm_token.clone());
+        if let Some(token) = self.get_icp_token_by_principal(&icrc_token) {
+            let evm_token = EvmToken {
+                chain_id: wrapped_token.chain_id(),
+                erc20_contract_address: wrapped_token.erc20_address(),
+                name: token.name.clone(),
+                decimals: token.decimals,
+                symbol: token.symbol.clone(),
+                logo: token.logo.clone(),
+                is_wrapped_icrc: true,
+            };
+            self.evm_token_list
+                .insert(wrapped_token.clone(), evm_token.clone());
 
-                self.supported_twin_appic_tokens.insert(
-                    wrapped_token,
-                    BridgePair {
-                        icp_token: token,
-                        evm_token,
-                    },
-                );
-            }
-            None => {}
+            self.supported_twin_appic_tokens.insert(
+                wrapped_token,
+                BridgePair {
+                    icp_token: token,
+                    evm_token,
+                },
+            );
         };
     }
 
@@ -563,24 +594,24 @@ impl State {
     pub fn get_supported_bridge_pairs(&self) -> Vec<TokenPair> {
         self.supported_ckerc20_tokens
             .values()
-            .filter_map(|bridge_pair| {
+            .map(|bridge_pair| {
                 // Update usd price
-                let icp_token_with_new_usd_price = IcpToken {
+                let icp_token_with_new_usd_price: IcpToken = IcpToken {
                     usd_price: self
                         .get_icp_token_price(&bridge_pair.icp_token.ledger_id)
                         .unwrap_or("0".to_string()),
                     ..bridge_pair.icp_token
                 };
-                Some(TokenPair {
+                TokenPair {
                     evm_token: CandidEvmToken::from(bridge_pair.evm_token),
                     icp_token: CandidIcpToken::from(icp_token_with_new_usd_price),
                     operator: Operator::DfinityCkEthMinter,
-                })
+                }
             })
             .chain(
                 self.supported_twin_appic_tokens
                     .values()
-                    .filter_map(|bridge_pair| {
+                    .map(|bridge_pair| {
                         // Update usd price
                         let icp_token_with_new_usd_price = IcpToken {
                             usd_price: self
@@ -588,11 +619,11 @@ impl State {
                                 .unwrap_or("0".to_string()),
                             ..bridge_pair.icp_token
                         };
-                        Some(TokenPair {
+                        TokenPair {
                             evm_token: CandidEvmToken::from(bridge_pair.evm_token),
                             icp_token: CandidIcpToken::from(icp_token_with_new_usd_price),
                             operator: Operator::AppicMinter,
-                        })
+                        }
                     }),
             )
             .collect()
@@ -647,7 +678,7 @@ impl State {
         search_param: TransactionSearchParam,
         chain_id: ChainId,
     ) -> Option<Transaction> {
-        let search_result = match search_param {
+        match search_param {
             TransactionSearchParam::TxHash(tx_hash) => {
                 self.get_transaction_by_hash(&tx_hash, chain_id)
             }
@@ -658,9 +689,7 @@ impl State {
             TransactionSearchParam::TxMintId(mint_id) => {
                 self.get_transaction_by_mint_id(nat_to_ledger_mint_index(&mint_id), chain_id)
             }
-        };
-
-        search_result
+        }
     }
 
     // Records a single evm token
@@ -730,12 +759,30 @@ impl State {
             .iter()
             .filter_map(|(_identifier, request)| {
                 if request.creator == principal {
-                    return Some(request);
+                    Some(request)
                 } else {
-                    return None;
+                    None
                 }
             })
             .collect()
+    }
+
+    pub fn record_dex_action_for_principal(&mut self, principal: Principal, dex_action: DexAction) {
+        if let Some(previous_actions) = self.dex_actions_list.get(&principal) {
+            let mut new_user_actions = previous_actions;
+            new_user_actions.0.push(dex_action);
+            self.dex_actions_list.insert(principal, new_user_actions);
+        } else {
+            self.dex_actions_list
+                .insert(principal, UserDexActions(vec![dex_action]));
+        }
+    }
+
+    pub fn get_dex_actions_for_principal(&self, principal: Principal) -> Vec<DexAction> {
+        self.dex_actions_list
+            .get(&principal)
+            .unwrap_or(UserDexActions(vec![]))
+            .0
     }
 }
 
@@ -811,6 +858,8 @@ where
 // State configuration
 pub type StableMemory = VirtualMemory<DefaultMemoryImpl>;
 
+pub const DEX_CANISTER_ID: &str = "nbepk-iyaaa-aaaad-qhlma-cai";
+
 thread_local! {
     pub static STATE: RefCell<Option<State>> = RefCell::new(
         Some(State {
@@ -821,8 +870,8 @@ thread_local! {
                 supported_twin_appic_tokens:BTreeMap::init(supported_appic_tokens_memory_id()),
                 evm_token_list:BTreeMap::init(evm_token_list_id()),
                 icp_token_list:BTreeMap::init(icp_token_list_id()),
-                twin_erc20_requests: BTreeMap::init(erc20_twin_ledger_requests_id())
-
-            })
+                twin_erc20_requests: BTreeMap::init(erc20_twin_ledger_requests_id()),
+                dex_actions_list:BTreeMap::init(dex_actions_list()),
+                dex_info:Cell::init(dex_info_id(),DexInfo{ id: Principal::from_text(DEX_CANISTER_ID).unwrap(), last_observed_event: 0, last_scraped_event: 0 }).expect("DEX_INFO initiaion failed")}),
     );
 }

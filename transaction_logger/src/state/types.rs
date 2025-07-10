@@ -469,3 +469,13 @@ impl From<ChainId> for Nat {
         Nat::from(value.0)
     }
 }
+
+#[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug, Encode, Decode)]
+pub struct DexInfo {
+    #[cbor(n(0), with = "crate::cbor::principal")]
+    pub id: Principal,
+    #[n(1)]
+    pub last_observed_event: u64,
+    #[n(2)]
+    pub last_scraped_event: u64,
+}

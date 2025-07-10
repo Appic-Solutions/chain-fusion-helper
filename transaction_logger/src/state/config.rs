@@ -54,3 +54,15 @@ const TWIN_LEDGER_REQUESTS: MemoryId = MemoryId::new(7);
 pub fn erc20_twin_ledger_requests_id() -> StableMemory {
     MEMORY_MANAGER.with(|m| m.borrow().get(TWIN_LEDGER_REQUESTS))
 }
+
+const DEX_OPERATIONS_LIST: MemoryId = MemoryId::new(8);
+
+pub fn dex_actions_list() -> StableMemory {
+    MEMORY_MANAGER.with(|m| m.borrow().get(DEX_OPERATIONS_LIST))
+}
+
+const DEX_INFO: MemoryId = MemoryId::new(9);
+
+pub fn dex_info_id() -> StableMemory {
+    MEMORY_MANAGER.with(|m| m.borrow().get(DEX_INFO))
+}

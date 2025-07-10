@@ -2,6 +2,7 @@ use std::time::Duration;
 
 pub mod add_evm_tokens;
 pub mod address;
+pub mod appic_dex_client;
 pub mod appic_dex_types;
 pub mod cbor;
 pub mod checked_amount;
@@ -14,6 +15,7 @@ pub mod logs;
 pub mod minter_client;
 pub mod numeric;
 pub mod remove_unverified_tx;
+pub mod scrape_dex_events;
 pub mod scrape_events;
 pub mod state;
 pub mod update_bridge_pairs;

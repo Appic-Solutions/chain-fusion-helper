@@ -4,6 +4,8 @@
 use candid::{self, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_cdk::api::call::CallResult as Result;
 
+use crate::cbor::principal;
+
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct CandidPoolId {
     pub fee: candid::Nat,
@@ -54,7 +56,7 @@ pub enum Result_ {
     Err(BurnPositionError),
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct CandidPositionKey {
     pub owner: Principal,
     pub pool: CandidPoolId,
@@ -172,13 +174,13 @@ pub struct CandidTickInfo {
     pub fee_growth_outside_0_x128: candid::Nat,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct GetEventsArg {
     pub start: u64,
     pub length: u64,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum SwapType {
     ExactOutput(Vec<CandidPoolId>),
     ExactInput(Vec<CandidPoolId>),
@@ -186,7 +188,7 @@ pub enum SwapType {
     ExactInputSingle(CandidPoolId),
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum CandidEventType {
     Swap {
         principal: Principal,
@@ -237,13 +239,67 @@ pub enum CandidEventType {
     },
 }
 
-#[derive(CandidType, Deserialize)]
+impl CandidEventType {
+    pub fn get_principal(&self) -> Principal {
+        match self {
+            CandidEventType::Swap {
+                principal,
+                token_in,
+                final_amount_in,
+                final_amount_out,
+                token_out,
+                swap_type,
+            } => *principal,
+            CandidEventType::CreatedPool {
+                token0,
+                token1,
+                pool_fee,
+            } => Principal::anonymous(),
+            CandidEventType::BurntPosition {
+                amount0_received,
+                principal,
+                burnt_position,
+                liquidity,
+                amount1_received,
+            } => *principal,
+            CandidEventType::IncreasedLiquidity {
+                principal,
+                amount0_paid,
+                liquidity_delta,
+                amount1_paid,
+                modified_position,
+            } => *principal,
+            CandidEventType::CollectedFees {
+                principal,
+                amount1_collected,
+                position,
+                amount0_collected,
+            } => *principal,
+            CandidEventType::DecreasedLiquidity {
+                amount0_received,
+                principal,
+                liquidity_delta,
+                amount1_received,
+                modified_position,
+            } => *principal,
+            CandidEventType::MintedPosition {
+                principal,
+                amount0_paid,
+                liquidity,
+                created_position,
+                amount1_paid,
+            } => *principal,
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Debug)]
 pub struct CandidEvent {
     pub timestamp: u64,
     pub payload: CandidEventType,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct GetEventsResult {
     pub total_event_count: u64,
     pub events: Vec<CandidEvent>,

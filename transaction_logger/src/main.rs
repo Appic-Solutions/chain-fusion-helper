@@ -2,7 +2,6 @@ use base64::{engine::general_purpose, Engine as _};
 use candid::Principal;
 use ic_canister_log::log;
 use ic_cdk::{init, post_upgrade, query, update};
-use ic_cdk_timers;
 use ic_http_types::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use std::borrow::Borrow;
 use std::collections::HashSet;
@@ -10,6 +9,7 @@ use std::str::FromStr;
 use std::time::Duration;
 use transaction_logger::add_evm_tokens::add_evm_tokens_to_state;
 use transaction_logger::address::Address;
+use transaction_logger::appic_dex_types::CandidEvent;
 use transaction_logger::endpoints::{
     AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError,
     CandidAddErc20TwinLedgerSuiteRequest, CandidEvmToken, CandidIcpToken, CandidLedgerSuiteRequest,
@@ -18,6 +18,7 @@ use transaction_logger::endpoints::{
 };
 use transaction_logger::guard::{TaskType, TimerGuard};
 use transaction_logger::lifecycle::{self, init as initialize};
+use transaction_logger::scrape_dex_events::scrape_dex_events;
 use transaction_logger::state::{
     mutate_state, nat_to_erc20_amount, nat_to_ledger_burn_index, read_state,
     types::{
@@ -41,11 +42,13 @@ fn setup_timers() {
     // Start scraping events.
     ic_cdk_timers::set_timer_interval(SCRAPE_EVENTS, || ic_cdk::spawn(scrape_events()));
 
+    ic_cdk_timers::set_timer_interval(SCRAPE_EVENTS, || ic_cdk::spawn(scrape_dex_events()));
+
     // Update usd price of icp tokens
     ic_cdk_timers::set_timer_interval(UPDATE_USD_PRICE, || ic_cdk::spawn(update_usd_price()));
 
     // Remove unverified transactions
-    ic_cdk_timers::set_timer_interval(REMOVE_UNVERIFIED_TX, || remove_unverified_tx());
+    ic_cdk_timers::set_timer_interval(REMOVE_UNVERIFIED_TX, remove_unverified_tx);
 
     // Check new supported twin tokens
     ic_cdk_timers::set_timer_interval(UPDATE_BRIDGE_PAIRS, || ic_cdk::spawn(update_bridge_pairs()));
@@ -130,11 +133,11 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
     let tx_identifier = IcpToEvmIdentifier::from(&tx);
     let chain_id = ChainId::from(&tx.chain_id);
 
-    if let true = read_state(|s| s.if_icp_to_evm_tx_exists(&tx_identifier)) {
+    if read_state(|s| s.if_icp_to_evm_tx_exists(&tx_identifier)) {
         return Err(AddIcpToEvmTxError::TxAlreadyExists);
     };
 
-    if let false = read_state(|s| s.if_chain_id_exists(chain_id)) {
+    if !read_state(|s| s.if_chain_id_exists(chain_id)) {
         return Err(AddIcpToEvmTxError::ChainNotSupported);
     };
 
@@ -150,7 +153,7 @@ fn new_icp_to_evm_tx(tx: AddIcpToEvmTx) -> Result<(), AddIcpToEvmTxError> {
             &tx.operator,
         ) {
             Some(icrc_id) => Ok(icrc_id),
-            None => return Err(AddIcpToEvmTxError::InvalidTokenPairs),
+            None => Err(AddIcpToEvmTxError::InvalidTokenPairs),
         }
     })?;
 
@@ -191,11 +194,11 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
     let tx_identifier = EvmToIcpTxIdentifier::from(&tx);
     let chain_id = ChainId::from(&tx.chain_id);
 
-    if let true = read_state(|s| s.if_evm_to_icp_tx_exists(&tx_identifier)) {
+    if read_state(|s| s.if_evm_to_icp_tx_exists(&tx_identifier)) {
         return Err(AddEvmToIcpTxError::TxAlreadyExists);
     };
 
-    if let false = read_state(|s| s.if_chain_id_exists(chain_id)) {
+    if !read_state(|s| s.if_chain_id_exists(chain_id)) {
         return Err(AddEvmToIcpTxError::ChainNotSupported);
     };
 
@@ -211,7 +214,7 @@ fn new_evm_to_icp_tx(tx: AddEvmToIcpTx) -> Result<(), AddEvmToIcpTxError> {
             &tx.operator,
         ) {
             Some(icrc_id) => Ok(icrc_id),
-            None => return Err(AddEvmToIcpTxError::InvalidTokenPairs),
+            None => Err(AddEvmToIcpTxError::InvalidTokenPairs),
         }
     })?;
 
@@ -293,10 +296,7 @@ pub fn get_transaction(params: GetTxParams) -> Option<Transaction> {
         return None;
     }
 
-    let search_result =
-        read_state(|s| s.get_transaction_by_search_params(params.search_param, chain_id));
-
-    search_result
+    read_state(|s| s.get_transaction_by_search_params(params.search_param, chain_id))
 }
 
 #[query]
@@ -356,10 +356,7 @@ pub fn get_icp_tokens() -> Vec<CandidIcpToken> {
     let tokens = read_state(|s| s.get_icp_tokens());
 
     // Return Tokens
-    tokens
-        .into_iter()
-        .map(|token| CandidIcpToken::from(token))
-        .collect()
+    tokens.into_iter().map(CandidIcpToken::from).collect()
 }
 
 // Can only be called by lsm
@@ -416,6 +413,14 @@ pub fn get_minters() -> Vec<MinterArgs> {
         .collect()
 }
 
+#[query]
+pub fn get_dex_actions_for_principal(principal_id: Principal) -> Vec<CandidEvent> {
+    read_state(|s| s.get_dex_actions_for_principal(principal_id))
+        .into_iter()
+        .map(|dex_action| CandidEvent::from((principal_id, dex_action)))
+        .collect()
+}
+
 #[query(hidden = true)]
 fn http_request(request: HttpRequest) -> HttpResponse {
     let path = request.url.trim_start_matches('/');
@@ -426,7 +431,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             Ok(ledger_id) => match read_state(|s| s.get_icp_token_by_principal(&ledger_id)) {
                 Some(token) => {
                     let parts: Vec<&str> = token.logo.splitn(2, ';').collect();
-                    let content_type = if parts.len() > 0 && parts[0].starts_with("data:") {
+                    let content_type = if !parts.is_empty() && parts[0].starts_with("data:") {
                         parts[0].strip_prefix("data:").unwrap_or("image/png")
                     } else {
                         "image/png" // Fallback
@@ -479,7 +484,7 @@ fn icrc28_trusted_origins() -> Icrc28TrustedOriginsResponse {
         String::from("https://test.appicdao.com"),
     ];
 
-    return Icrc28TrustedOriginsResponse { trusted_origins };
+    Icrc28TrustedOriginsResponse { trusted_origins }
 }
 
 fn main() {}

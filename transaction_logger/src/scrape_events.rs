@@ -108,7 +108,7 @@ pub async fn scrape_events_range(
                     log!(INFO, "[Scraping Events] Received Event {:?}", events);
 
                     apply_state_transition(events, minter_key.operator(), minter_key.chain_id());
-                    mutate_state(|s| s.update_last_scraped_event(&minter_key, chunk_end));
+                    mutate_state(|s| s.update_last_scraped_event(minter_key, chunk_end));
                     success = true; // Mark as successful
                     break; // Exit retry loop
                 }
@@ -195,15 +195,14 @@ fn apply_state_transition(events: Events, operator: Operator, chain_id: ChainId)
                 min_max_priority_fee_per_gas: _,
                 deposit_native_fee: _,
                 withdrawal_native_fee,
-            }) => match withdrawal_native_fee {
-                Some(new_fee) => {
+            }) => {
+                if let Some(new_fee) = withdrawal_native_fee {
                     s.update_minter_fees(
                         &MinterKey(chain_id, operator),
                         nat_to_erc20_amount(new_fee),
                     );
                 }
-                None => {}
-            },
+            }
             AppicEventPayload::AcceptedDeposit {
                 transaction_hash,
                 block_number,
