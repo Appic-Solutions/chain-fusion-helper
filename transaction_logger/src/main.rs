@@ -13,8 +13,8 @@ use transaction_logger::appic_dex_types::CandidEvent;
 use transaction_logger::endpoints::{
     AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError,
     CandidAddErc20TwinLedgerSuiteRequest, CandidEvmToken, CandidIcpToken, CandidLedgerSuiteRequest,
-    GetEvmTokenArgs, GetIcpTokenArgs, GetTxParams, Icrc28TrustedOriginsResponse, MinterArgs,
-    TokenPair, Transaction,
+    EvmSearchQuery, GetEvmTokenArgs, GetIcpTokenArgs, GetTxParams, Icrc28TrustedOriginsResponse,
+    MinterArgs, TokenPair, TopVolumeTokens, Transaction,
 };
 use transaction_logger::guard::{TaskType, TimerGuard};
 use transaction_logger::lifecycle::{self, init as initialize};
@@ -36,13 +36,14 @@ use transaction_logger::{
 use transaction_logger::{REMOVE_INVALID_ICP_TOKENS, UPDATE_ICP_TOKENS, UPDATE_USD_PRICE};
 
 const ADMIN_ID: &str = "tb3vi-54bcb-4oudm-fmp2s-nntjp-rmhd3-ukvnq-lawfq-vk5vy-mnlc7-pae";
+const DATA_PROVIDER_ID: &str = "o74ab-rm2co-uhvn6-6ec2d-3kkvk-bwlcw-356yj-lbma2-m4qew-l4ett-wae";
 
 // Setup timers
 fn setup_timers() {
     // Start scraping events.
     ic_cdk_timers::set_timer_interval(SCRAPE_EVENTS, || ic_cdk::spawn(scrape_events()));
 
-    ic_cdk_timers::set_timer_interval(SCRAPE_EVENTS, || ic_cdk::spawn(scrape_dex_events()));
+    //ic_cdk_timers::set_timer_interval(SCRAPE_EVENTS, || ic_cdk::spawn(scrape_dex_events()));
 
     // Update usd price of icp tokens
     ic_cdk_timers::set_timer_interval(UPDATE_USD_PRICE, || ic_cdk::spawn(update_usd_price()));
@@ -67,7 +68,10 @@ fn is_authorized_caller(caller: Principal) -> bool {
         Principal::from_text(APPIC_LEDGER_MANAGER_ID).expect("Invalid APPIC_LEDGER_MANAGER_ID");
     let admin_id = Principal::from_text(ADMIN_ID).expect("Invalid ADMIN_ID");
 
-    caller == appic_ledger_manager_id || caller == admin_id
+    let appic_data_provider_id =
+        Principal::from_text(DATA_PROVIDER_ID).expect("Invalid DATA_PROVIDER_ID");
+
+    caller == appic_ledger_manager_id || caller == admin_id || caller == appic_data_provider_id
 }
 
 #[init]
@@ -335,7 +339,7 @@ pub fn add_icp_token(token: CandidIcpToken) {
 }
 
 #[update]
-// Can only be called by lsm
+// Can only be called by admin
 pub fn add_evm_token(token: CandidEvmToken) {
     if !is_authorized_caller(ic_cdk::caller()) {
         panic!("Only admins can change icp tokens details")
@@ -348,6 +352,37 @@ pub fn add_evm_token(token: CandidEvmToken) {
             token,
         )
     })
+}
+
+#[update]
+// can only be called by
+// arguments: (Vec<(cmc_id,volume,price)>)
+pub fn update_evm_token_price_volume(data: Vec<(u64, String, String)>) {
+    if !is_authorized_caller(ic_cdk::caller()) {
+        panic!("Only admins can change icp tokens details")
+    }
+
+    mutate_state(|s| s.update_evm_price_volume_by_cmc_id(data))
+}
+
+#[query]
+pub fn get_top_100_tokens_by_volume_per_chain() -> Vec<TopVolumeTokens> {
+    read_state(|s| s.get_top_100_tokens_by_volume_per_chain())
+        .into_iter()
+        .map(|(chain, tokens)| TopVolumeTokens {
+            chain,
+            tokens: tokens.into_iter().map(|token| token.into()).collect(),
+        })
+        .collect()
+}
+
+#[query]
+// either symbol, name or the contract address of that token
+pub fn search_evm_token(query: EvmSearchQuery) -> Vec<CandidEvmToken> {
+    read_state(|s| s.search_evm_token(query.chain_id, query.query))
+        .into_iter()
+        .map(|token| token.into())
+        .collect()
 }
 
 #[query]
@@ -449,8 +484,8 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                             .build(),
 
                         Err(e) => {
-                            HttpResponseBuilder::server_error(format!("Base64 decode error: {}", e))
-                                .body(format!("Base64 decode error: {}", e))
+                            HttpResponseBuilder::server_error(format!("Base64 decode error: {e}"))
+                                .body(format!("Base64 decode error: {e}"))
                                 .build()
                         }
                     }

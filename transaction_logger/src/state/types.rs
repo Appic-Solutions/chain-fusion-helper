@@ -313,6 +313,12 @@ pub struct EvmToken {
     #[n(6)]
     #[serde(default)]
     pub is_wrapped_icrc: bool,
+    #[n(7)]
+    pub cmc_id: Option<u64>,
+    #[n(8)]
+    pub usd_price: Option<String>,
+    #[n(9)]
+    pub volume_usd_24h: Option<String>,
 }
 
 #[derive(

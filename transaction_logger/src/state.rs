@@ -5,6 +5,9 @@ use crate::state::config::dex_info_id;
 use crate::state::dex::types::{DexAction, UserDexActions};
 use crate::state::types::*;
 
+use std::cmp::{Ordering, Reverse};
+use std::collections::{BTreeMap as STDBTreeMap, BinaryHeap};
+
 use candid::{CandidType, Nat, Principal};
 use ic_canister_log::log;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
@@ -516,6 +519,9 @@ impl State {
                 symbol: token.symbol.clone(),
                 logo: token.logo.clone(),
                 is_wrapped_icrc: true,
+                cmc_id: None,
+                usd_price: None,
+                volume_usd_24h: None,
             };
             self.evm_token_list
                 .insert(wrapped_token.clone(), evm_token.clone());
@@ -695,6 +701,101 @@ impl State {
     // Records a single evm token
     pub fn record_evm_token(&mut self, identifier: Erc20Identifier, token: EvmToken) {
         self.evm_token_list.insert(identifier, token);
+    }
+
+    // update evm tokens price and volume based on cmc_id
+    // (cmc_id,volume,price)
+    pub fn update_evm_price_volume_by_cmc_id(&mut self, updates: Vec<(u64, String, String)>) {
+        use std::collections::HashMap;
+
+        // Build a lookup map for quick access to updates by cmc_id
+        let update_map: HashMap<u64, (String, String)> = updates
+            .into_iter()
+            .map(|(cmc_id, volume_usd_24h, usd_price)| (cmc_id, (volume_usd_24h, usd_price)))
+            .collect();
+
+        // Collect updates to apply after iteration to avoid borrowing issues
+        let mut updates_to_apply = Vec::new();
+
+        for (key, token) in self.evm_token_list.iter() {
+            if let Some(cmc_id) = token.cmc_id {
+                if let Some((volume_usd_24h, usd_price)) = update_map.get(&cmc_id) {
+                    let mut new_token = token.clone();
+                    new_token.volume_usd_24h = Some(volume_usd_24h.clone());
+                    new_token.usd_price = Some(usd_price.clone());
+                    updates_to_apply.push((key.clone(), new_token));
+                }
+            }
+        }
+
+        // Apply the updates
+        for (key, new_token) in updates_to_apply {
+            self.evm_token_list.insert(key, new_token);
+        }
+    }
+
+    pub fn get_top_100_tokens_by_volume_per_chain(&self) -> STDBTreeMap<ChainId, Vec<EvmToken>> {
+        // Group references to tokens by chain_id to avoid cloning all tokens upfront
+        let mut groups: STDBTreeMap<ChainId, Vec<EvmToken>> = STDBTreeMap::new();
+        for (_, token) in self.evm_token_list.iter() {
+            groups.entry(token.chain_id).or_default().push(token);
+        }
+
+        // For each group, compute top 100
+        let mut result: STDBTreeMap<ChainId, Vec<EvmToken>> = STDBTreeMap::new();
+        for (chain_id, tokens) in groups {
+            // Precompute (volume_f64, &token) pairs, parsing once per token
+            let mut token_values: Vec<(f64, EvmToken)> = tokens
+                .into_iter()
+                .map(|token| {
+                    let volume = token
+                        .volume_usd_24h
+                        .as_ref()
+                        .and_then(|s| s.parse::<f64>().ok())
+                        .unwrap_or(0.0);
+                    (volume, token)
+                })
+                .collect();
+
+            // Sort descending by volume
+            token_values.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(Ordering::Equal));
+
+            // Truncate to top 100 (or fewer if <100)
+            token_values.truncate(100);
+
+            // Clone only the selected tokens
+            let top_tokens: Vec<EvmToken> = token_values
+                .into_iter()
+                .map(|(_, token)| token.clone())
+                .collect();
+
+            result.insert(chain_id, top_tokens);
+        }
+
+        result
+    }
+
+    pub fn search_evm_token(&self, chain_id: ChainId, query: String) -> Vec<EvmToken> {
+        let query_lower = query.to_lowercase();
+
+        if query_lower.starts_with("0x") {
+            if let Ok(addr) = Address::from_str(&query_lower) {
+                let key = Erc20Identifier(addr, chain_id);
+                if let Some(token) = self.evm_token_list.get(&key) {
+                    return vec![token.clone()];
+                }
+                return vec![];
+            }
+        }
+
+        // If not an address or parse failed, search by symbol (case-insensitive)
+        let mut results = Vec::new();
+        for (key, token) in self.evm_token_list.iter() {
+            if key.chain_id() == chain_id && token.symbol.to_lowercase() == query_lower {
+                results.push(token.clone());
+            }
+        }
+        results
     }
 
     // Records all evm_tokens in bulk

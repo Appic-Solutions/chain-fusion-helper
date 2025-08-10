@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use crate::address::Address;
+use crate::state::nat_to_u64;
 use crate::state::{
     checked_nat_to_erc20_amount, nat_to_u128, read_state,
     types::{
@@ -289,6 +290,22 @@ pub struct CandidEvmToken {
     pub symbol: String,
     pub logo: String,
     pub is_wrapped_icrc: bool,
+    pub usd_price: Option<String>,
+    pub cmc_id: Option<Nat>,
+    pub volume_usd_24h: Option<String>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub struct TopVolumeTokens {
+    pub chain: ChainId,
+    pub tokens: Vec<CandidEvmToken>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub struct EvmSearchQuery {
+    // symbol, name or contract address
+    pub query: String,
+    pub chain_id: ChainId,
 }
 
 impl From<EvmToken> for CandidEvmToken {
@@ -301,6 +318,9 @@ impl From<EvmToken> for CandidEvmToken {
             symbol: value.symbol,
             logo: value.logo,
             is_wrapped_icrc: value.is_wrapped_icrc,
+            usd_price: value.usd_price,
+            cmc_id: value.cmc_id.map(Nat::from),
+            volume_usd_24h: value.volume_usd_24h,
         }
     }
 }
@@ -316,6 +336,9 @@ impl From<CandidEvmToken> for EvmToken {
             symbol: value.symbol,
             logo: value.logo,
             is_wrapped_icrc: value.is_wrapped_icrc,
+            usd_price: value.usd_price,
+            cmc_id: value.cmc_id.map(|id| nat_to_u64(&id)),
+            volume_usd_24h: value.volume_usd_24h,
         }
     }
 }

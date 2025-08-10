@@ -1,14 +1,7 @@
 use ic_canister_log::log;
 use serde_json;
 
-const ETHEREUM_TOKENS: &str = include_str!("../../evm_tokens/eth_tokens.json");
-const ARBITRUM_TOKENS: &str = include_str!("../../evm_tokens/arbitrum_tokens.json");
-const AVALANCHE_TOKENS: &str = include_str!("../../evm_tokens/avalanche_tokens.json");
-const BASE_TOKENS: &str = include_str!("../../evm_tokens/base_tokens.json");
-const BSC_TOKENS: &str = include_str!("../../evm_tokens/bsc_tokens.json");
-const FANTOM_TOKENS: &str = include_str!("../../evm_tokens/fantom_tokens.json");
-const OPTIMISM_TOKENS: &str = include_str!("../../evm_tokens/optimism_tokens.json");
-const POLYGON_TOKENS: &str = include_str!("../../evm_tokens/polygon_tokens.json");
+const SUPPORTED_EVM_TOKENS: &str = include_str!("../../evm_tokens/supported_tokens.json");
 
 use crate::{
     logs::INFO,
@@ -24,6 +17,11 @@ pub fn add_evm_tokens_to_state() {
         "[Add EVM Tokens] Adding new EVM tokens from json files",
     );
     mutate_state(|s| {
+        let tokens: Vec<(Erc20Identifier, EvmToken)> = s.evm_token_list.iter().collect();
+        for token in tokens {
+            s.evm_token_list.remove(&token.0);
+        }
+
         deserialize_all_tokens()
             .into_iter()
             .for_each(|token| s.record_evm_token(Erc20Identifier::from(&token), token))
@@ -34,14 +32,7 @@ pub fn deserialize_all_tokens() -> Vec<EvmToken> {
     // Parse each JSON into a Vec<Token>
     let mut all_tokens = Vec::new();
 
-    all_tokens.extend(deserialize_json_into_evm_token(ETHEREUM_TOKENS));
-    all_tokens.extend(deserialize_json_into_evm_token(ARBITRUM_TOKENS));
-    all_tokens.extend(deserialize_json_into_evm_token(AVALANCHE_TOKENS));
-    all_tokens.extend(deserialize_json_into_evm_token(BASE_TOKENS));
-    all_tokens.extend(deserialize_json_into_evm_token(BSC_TOKENS));
-    all_tokens.extend(deserialize_json_into_evm_token(FANTOM_TOKENS));
-    all_tokens.extend(deserialize_json_into_evm_token(OPTIMISM_TOKENS));
-    all_tokens.extend(deserialize_json_into_evm_token(POLYGON_TOKENS));
+    all_tokens.extend(deserialize_json_into_evm_token(SUPPORTED_EVM_TOKENS));
 
     all_tokens
 }
@@ -59,7 +50,7 @@ mod tests {
 
     use crate::{
         add_evm_tokens::{
-            deserialize_all_tokens, deserialize_json_into_evm_token, ETHEREUM_TOKENS,
+            deserialize_all_tokens, deserialize_json_into_evm_token, SUPPORTED_EVM_TOKENS,
         },
         scrape_events::NATIVE_ERC20_ADDRESS,
         state::types::{ChainId, EvmToken},
@@ -68,17 +59,21 @@ mod tests {
     #[test]
     fn should_deserialize_json_into_tokens() {
         let ethereum_token = EvmToken {
-            chain_id: ChainId(1),
-            erc20_contract_address: Address::from_str(NATIVE_ERC20_ADDRESS).unwrap(),
-            name: "Ethereum".to_string(),
+            chain_id: ChainId(56),
+            erc20_contract_address: Address::from_str("0x4338665cbb7b2485a8855a139b75d5e34ab0db94")
+                .unwrap(),
+            name: "Litecoin".to_string(),
             decimals: 18,
-            symbol: "ETH".to_string().to_string(),
-            logo:"https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/ethereum/info/logo.png".to_string(),
-            is_wrapped_icrc:false,
+            symbol: "LTC".to_string().to_string(),
+            logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/2.png".to_string(),
+            is_wrapped_icrc: false,
+            cmc_id: Some(2),
+            usd_price: None,
+            volume_usd_24h: None,
         };
 
         assert_eq!(
-            deserialize_json_into_evm_token(ETHEREUM_TOKENS)[0],
+            deserialize_json_into_evm_token(SUPPORTED_EVM_TOKENS)[0],
             ethereum_token
         )
     }
@@ -93,7 +88,7 @@ mod tests {
             })
             .collect();
 
-        assert_eq!(filtered_native_token_list.len(), 8);
+        assert_eq!(filtered_native_token_list.len(), 3);
 
         let expected_native_tokens = [
             EvmToken {
@@ -102,79 +97,35 @@ mod tests {
                 name: "Ethereum".to_string(),
                 decimals: 18,
                 symbol: "ETH".to_string(),
-                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/ethereum/info/logo.png".to_string(),
-                            is_wrapped_icrc:false,
-
-            },
-            EvmToken {
-                chain_id: ChainId(42161),
-                erc20_contract_address: Address::from_str(NATIVE_ERC20_ADDRESS).unwrap(),
-                name: "Arbitrum One".to_string(),
-                decimals: 18,
-                symbol: "ETH".to_string(),
-                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/arbitrum/info/logo.png".to_string(),
-                            is_wrapped_icrc:false,
-
-            },
-            EvmToken {
-                chain_id: ChainId(43114),
-                erc20_contract_address: Address::from_str(NATIVE_ERC20_ADDRESS).unwrap(),
-                name: "Avalanche".to_string(),
-                decimals: 18,
-                symbol: "AVAX".to_string(),
-                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/avalanchec/info/logo.png".to_string(),
-                            is_wrapped_icrc:false,
-
+                logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png".to_string(),
+                is_wrapped_icrc: false,
+                cmc_id: Some(1027),
+                usd_price: None,
+                volume_usd_24h: None,
             },
             EvmToken {
                 chain_id: ChainId(8453),
                 erc20_contract_address: Address::from_str(NATIVE_ERC20_ADDRESS).unwrap(),
-                name: "Base".to_string(),
+                name: "Ethereum".to_string(),
                 decimals: 18,
                 symbol: "ETH".to_string(),
-                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/base/info/logo.png".to_string(),
-                            is_wrapped_icrc:false,
-
+                logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png".to_string(),
+                is_wrapped_icrc: false,
+                cmc_id: Some(1027),
+                usd_price: None,
+                volume_usd_24h: None,
             },
             EvmToken {
                 chain_id: ChainId(56),
                 erc20_contract_address: Address::from_str(NATIVE_ERC20_ADDRESS).unwrap(),
-                name: "Binance Smart Chain".to_string(),
+                name: "BNB".to_string(),
                 decimals: 18,
                 symbol: "BNB".to_string(),
-                logo: "https://github.com/trustwallet/assets/blob/master/blockchains/smartchain/info/logo.png".to_string(),
-                            is_wrapped_icrc:false,
-
-            },
-            EvmToken {
-                chain_id: ChainId(250),
-                erc20_contract_address: Address::from_str(NATIVE_ERC20_ADDRESS).unwrap(),
-                name: "Fantom".to_string(),
-                decimals: 18,
-                symbol: "FTM".to_string(),
-                logo: "https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/fantom/info/logo.png".to_string(),
-                            is_wrapped_icrc:false,
-
-            },
-            EvmToken {
-                chain_id: ChainId(10),
-                erc20_contract_address: Address::from_str(NATIVE_ERC20_ADDRESS).unwrap(),
-                name: "Optimism".to_string(),
-                decimals: 18,
-                symbol: "ETH".to_string(),
-                logo: "https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/optimism/info/logo.png".to_string(),
-                            is_wrapped_icrc:false,
-
-            },
-            EvmToken {
-                chain_id: ChainId(137),
-                erc20_contract_address: Address::from_str(NATIVE_ERC20_ADDRESS).unwrap(),
-                name: "Polygon".to_string(),
-                decimals: 18,
-                symbol: "POL".to_string(),
-                logo: "https://raw.githubusercontent.com/trustwallet/assets/refs/heads/master/blockchains/polygon/info/logo.png".to_string(),
-                            is_wrapped_icrc:false,
-
+                logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png".to_string(),
+                is_wrapped_icrc: false,
+                cmc_id: Some(1839),
+                usd_price: None,
+                volume_usd_24h: None,
             },
         ];
 
