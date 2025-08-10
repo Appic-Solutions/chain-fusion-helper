@@ -53,6 +53,56 @@ type CandidErc20TwinLedgerSuiteStatus = variant {
   Created;
   Installed;
 };
+type CandidEvent = record { timestamp : nat64; payload : CandidEventType };
+type CandidEventType = variant {
+  Swap : record {
+    "principal" : principal;
+    token_in : principal;
+    final_amount_in : nat;
+    final_amount_out : nat;
+    token_out : principal;
+    swap_type : SwapType;
+  };
+  CreatedPool : record {
+    token0 : principal;
+    token1 : principal;
+    pool_fee : nat;
+  };
+  BurntPosition : record {
+    amount0_received : nat;
+    "principal" : principal;
+    burnt_position : CandidPositionKey;
+    liquidity : nat;
+    amount1_received : nat;
+  };
+  IncreasedLiquidity : record {
+    "principal" : principal;
+    amount0_paid : nat;
+    liquidity_delta : nat;
+    amount1_paid : nat;
+    modified_position : CandidPositionKey;
+  };
+  CollectedFees : record {
+    "principal" : principal;
+    amount1_collected : nat;
+    position : CandidPositionKey;
+    amount0_collected : nat;
+  };
+  DecreasedLiquidity : record {
+    amount0_received : nat;
+    "principal" : principal;
+    liquidity_delta : nat;
+    amount1_received : nat;
+    modified_position : CandidPositionKey;
+  };
+  MintedPosition : record {
+    "principal" : principal;
+    amount0_paid : nat;
+    liquidity : nat;
+    created_position : CandidPositionKey;
+    amount1_paid : nat;
+  };
+};
 type CandidEvmToIcp = record {
   status : EvmToIcpStatus;
   "principal" : principal;
@@ -73,10 +123,13 @@ type CandidEvmToIcp = record {
 };
 type CandidEvmToken = record {
   decimals : nat8;
+  usd_price : opt text;
   logo : text;
   name : text;
   erc20_contract_address : text;
   chain_id : nat;
+  cmc_id : opt nat;
+  volume_usd_24h : opt text;
   is_wrapped_icrc : bool;
   symbol : text;
 };
@@ -122,6 +175,18 @@ type CandidLedgerSuiteRequest = record {
   chain_id : nat;
   icp_token : opt CandidIcpToken;
 };
+type CandidPoolId = record {
+  fee : nat;
+  token0 : principal;
+  token1 : principal;
+};
+type CandidPositionKey = record {
+  owner : principal;
+  pool : CandidPoolId;
+  tick_lower : int;
+  tick_upper : int;
+};
+type EvmSearchQuery = record { "query" : text; chain_id : nat64 };
 type EvmToIcpStatus = variant {
   Invalid : text;
   PendingVerification;
@@ -160,11 +225,18 @@ type MinterArgs = record {
 type Operator = variant { AppicMinter; DfinityCkEthMinter };
 type Result = variant { Ok; Err : AddEvmToIcpTxError };
 type Result_1 = variant { Ok; Err : AddIcpToEvmTxError };
+type SwapType = variant {
+  ExactOutput : vec CandidPoolId;
+  ExactInput : vec CandidPoolId;
+  ExactOutputSingle : CandidPoolId;
+  ExactInputSingle : CandidPoolId;
+};
 type TokenPair = record {
   operator : Operator;
   evm_token : CandidEvmToken;
   icp_token : CandidIcpToken;
 };
+type TopVolumeTokens = record { chain : nat64; tokens : vec CandidEvmToken };
 type Transaction = variant {
   EvmToIcp : CandidEvmToIcp;
   IcpToEvm : CandidIcpToEvm;
@@ -189,6 +261,7 @@ service : (LoggerArgs) -> {
   add_evm_token : (CandidEvmToken) -> ();
   add_icp_token : (CandidIcpToken) -> ();
   get_bridge_pairs : () -> (vec TokenPair) query;
+  get_dex_actions_for_principal : (principal) -> (vec CandidEvent) query;
   get_erc20_twin_ls_requests_by_creator : (principal) -> (
       vec CandidLedgerSuiteRequest,
     ) query;
@@ -196,6 +269,7 @@ service : (LoggerArgs) -> {
   get_icp_token : (GetIcpTokenArgs) -> (opt CandidIcpToken) query;
   get_icp_tokens : () -> (vec CandidIcpToken) query;
   get_minters : () -> (vec MinterArgs) query;
+  get_top_100_tokens_by_volume_per_chain : () -> (vec TopVolumeTokens) query;
   get_transaction : (GetTxParams) -> (opt Transaction) query;
   get_txs_by_address : (text) -> (vec Transaction) query;
   get_txs_by_address_principal_combination : (text, principal) -> (
@@ -207,5 +281,7 @@ service : (LoggerArgs) -> {
   new_icp_to_evm_tx : (AddIcpToEvmTx) -> (Result_1);
   new_twin_ls_request : (CandidAddErc20TwinLedgerSuiteRequest) -> ();
   request_update_bridge_pairs : () -> ();
+  search_evm_token : (EvmSearchQuery) -> (vec CandidEvmToken) query;
+  update_evm_token_price_volume : (vec record { nat64; text; text }) -> ();
   update_twin_ls_request : (CandidAddErc20TwinLedgerSuiteRequest) -> ();
 }

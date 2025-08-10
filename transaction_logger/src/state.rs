@@ -791,7 +791,10 @@ impl State {
         // If not an address or parse failed, search by symbol (case-insensitive)
         let mut results = Vec::new();
         for (key, token) in self.evm_token_list.iter() {
-            if key.chain_id() == chain_id && token.symbol.to_lowercase() == query_lower {
+            if key.chain_id() == chain_id
+                && (token.symbol.to_lowercase().contains(&query_lower)
+                    || token.name.to_lowercase().contains(&query_lower))
+            {
                 results.push(token.clone());
             }
         }
