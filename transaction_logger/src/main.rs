@@ -125,7 +125,7 @@ fn post_upgrade(upgrade_args: Option<LoggerArgs>) {
         None => lifecycle::post_upgrade(None),
     }
 
-    add_evm_tokens_to_state();
+    //add_evm_tokens_to_state();
 
     // Set up timers
     setup_timers();
@@ -485,7 +485,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 
                         Err(e) => {
                             HttpResponseBuilder::server_error(format!("Base64 decode error: {e}"))
-                                .body(format!("Base64 decode error: {e}"))
+                                .body(format!("Base64 decode error: {}", e))
                                 .build()
                         }
                     }

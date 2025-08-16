@@ -28,7 +28,7 @@ pub mod tests;
 pub const SCRAPE_EVENTS: Duration = Duration::from_secs(1 * 60);
 
 // 5 Minutes
-pub const UPDATE_USD_PRICE: Duration = Duration::from_secs(10 * 60);
+pub const UPDATE_USD_PRICE: Duration = Duration::from_secs(1 * 60);
 
 // 1 Day
 pub const REMOVE_UNVERIFIED_TX: Duration = Duration::from_secs(24 * 60 * 60);
