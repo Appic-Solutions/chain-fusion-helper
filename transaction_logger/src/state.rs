@@ -5,8 +5,8 @@ use crate::state::config::dex_info_id;
 use crate::state::dex::types::{DexAction, UserDexActions};
 use crate::state::types::*;
 
-use std::cmp::{Ordering, Reverse};
-use std::collections::{BTreeMap as STDBTreeMap, BinaryHeap};
+use std::cmp::Ordering;
+use std::collections::BTreeMap as STDBTreeMap;
 
 use candid::{CandidType, Nat, Principal};
 use ic_canister_log::log;
@@ -496,6 +496,7 @@ impl State {
             fee: transfer_fee,
             token_type: IcpTokenType::ICRC2,
             rank: Some(1),
+            listed_on_appic_dex: Some(false),
         };
         self.record_icp_token(ledger, icp_token);
     }
@@ -590,6 +591,11 @@ impl State {
                     .iter()
                     .filter(|(_id, tx)| tx.from == principal_id)
                     .map(|(_id, tx)| Transaction::from(CandidIcpToEvm::from(tx))),
+            )
+            .chain(
+                self.get_dex_actions_for_principal(principal_id)
+                    .into_iter()
+                    .map(|action| Transaction::DexAction(action.into())),
             )
             .collect();
 
@@ -843,12 +849,25 @@ impl State {
         self.icp_token_list.remove(ledger_id);
     }
 
-    pub fn update_icp_token_usd_price(&mut self, ledger_id: Principal, new_usd_price: String) {
+    pub fn update_icp_token_usd_price(
+        &mut self,
+        ledger_id: Principal,
+        new_usd_price: String,
+        listed_on_appic_dex: bool,
+    ) {
         if let Some(token) = self.icp_token_list.get(&ledger_id) {
+            let rank = if listed_on_appic_dex { Some(1) } else { None };
+            let listed_on_appic_dex = if listed_on_appic_dex {
+                Some(true)
+            } else {
+                Some(false)
+            };
             self.icp_token_list.insert(
                 ledger_id,
                 IcpToken {
                     usd_price: new_usd_price,
+                    rank,
+                    listed_on_appic_dex,
                     ..token
                 },
             );

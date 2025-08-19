@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use crate::address::Address;
+use crate::state::dex::types::{DexAction, PoolId, PositionKey, SwapType};
 use crate::state::nat_to_u64;
 use crate::state::{
     checked_nat_to_erc20_amount, nat_to_u128, read_state,
@@ -10,7 +11,7 @@ use crate::state::{
         IcpToEvmTx, IcpToken, IcpTokenType, Operator,
     },
 };
-use candid::{CandidType, Deserialize, Nat, Principal};
+use candid::{CandidType, Deserialize, Int, Nat, Principal};
 use serde::Serialize;
 
 #[derive(Debug, CandidType, Deserialize)]
@@ -104,12 +105,11 @@ pub enum LoggerArgs {
     Upgrade(UpgradeArg),
 }
 
-#[derive(
-    CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Hash,
-)]
+#[derive(CandidType, Deserialize, Debug, Clone, Hash, Eq, PartialEq)]
 pub enum Transaction {
     IcpToEvm(CandidIcpToEvm),
     EvmToIcp(CandidEvmToIcp),
+    DexAction(CandidDexAction),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -359,6 +359,7 @@ pub struct CandidIcpToken {
     pub usd_price: String,
     pub fee: Nat,
     pub rank: Option<u32>,
+    pub listed_on_appic_dex: Option<bool>,
 }
 
 impl From<IcpToken> for CandidIcpToken {
@@ -381,6 +382,7 @@ impl From<IcpToken> for CandidIcpToken {
             token_type: value.token_type,
             fee: value.fee.into(),
             rank: value.rank,
+            listed_on_appic_dex: value.listed_on_appic_dex,
         }
     }
 }
@@ -397,6 +399,7 @@ impl From<CandidIcpToken> for IcpToken {
             token_type: value.token_type,
             fee: checked_nat_to_erc20_amount(value.fee).unwrap(),
             rank: value.rank,
+            listed_on_appic_dex: value.listed_on_appic_dex,
         }
     }
 }
@@ -514,4 +517,221 @@ pub struct CandidLedgerSuiteRequest {
     pub status: CandidErc20TwinLedgerSuiteStatus,
     pub created_at: u64,
     pub fee_charged: CandidErc20TwinLedgerSuiteFee,
+}
+
+#[derive(CandidType, Deserialize, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+pub struct CandidPoolId {
+    pub token0: Principal, // Token0 identifier
+    pub token1: Principal, // Token1 identifier
+    pub fee: Nat,          // Fee tier (e.g., 500 for 0.05%)
+}
+
+#[derive(CandidType, Hash, Deserialize, Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct CandidPositionKey {
+    pub owner: Principal,
+    pub pool_id: CandidPoolId,
+    pub tick_lower: Int,
+    pub tick_upper: Int,
+}
+
+#[derive(CandidType, Hash, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub enum CandidSwapType {
+    ExactOutput(Vec<CandidPoolId>),
+    ExactInput(Vec<CandidPoolId>),
+    ExactOutputSingle(CandidPoolId),
+    ExactInputSingle(CandidPoolId),
+}
+
+/// The event describing the  minter state transition.
+#[derive(CandidType, Hash, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum CandidDexAction {
+    CreatedPool {
+        token0: Principal,
+        token1: Principal,
+        pool_fee: u32,
+        timestamp: u64,
+    },
+    MintedPosition {
+        created_position: CandidPositionKey,
+        liquidity: Nat,
+        amount0_paid: Nat,
+        amount1_paid: Nat,
+        timestamp: u64,
+    },
+    IncreasedLiquidity {
+        modified_position: CandidPositionKey,
+        liquidity_delta: Nat,
+        amount0_paid: Nat,
+        amount1_paid: Nat,
+        timestamp: u64,
+    },
+    BurntPosition {
+        burnt_position: CandidPositionKey,
+        liquidity: Nat,
+        amount0_received: Nat,
+        amount1_received: Nat,
+        timestamp: u64,
+    },
+    DecreasedLiquidity {
+        modified_position: CandidPositionKey,
+        liquidity_delta: Nat,
+        amount0_received: Nat,
+        amount1_received: Nat,
+        timestamp: u64,
+    },
+    CollectedFees {
+        position: CandidPositionKey,
+        amount0_collected: Nat,
+        amount1_collected: Nat,
+        timestamp: u64,
+    },
+    Swap {
+        final_amount_in: Nat,
+        final_amount_out: Nat,
+        swap_type: CandidSwapType,
+        timestamp: u64,
+        token_in: Principal,
+        token_out: Principal,
+    },
+}
+
+impl From<PositionKey> for CandidPositionKey {
+    fn from(value: PositionKey) -> Self {
+        Self {
+            owner: value.owner,
+            pool_id: value.pool_id.into(),
+            tick_lower: value.tick_lower.into(),
+            tick_upper: value.tick_upper.into(),
+        }
+    }
+}
+impl From<PoolId> for CandidPoolId {
+    fn from(value: PoolId) -> Self {
+        Self {
+            token0: value.token0,
+            token1: value.token1,
+            fee: value.fee.into(),
+        }
+    }
+}
+
+impl From<SwapType> for CandidSwapType {
+    fn from(value: SwapType) -> Self {
+        match value {
+            SwapType::ExactOutput(candid_pool_ids) => CandidSwapType::ExactOutput(
+                candid_pool_ids
+                    .into_iter()
+                    .map(|pool_id| pool_id.into())
+                    .collect(),
+            ),
+            SwapType::ExactInput(candid_pool_ids) => CandidSwapType::ExactInput(
+                candid_pool_ids
+                    .into_iter()
+                    .map(|pool_id| pool_id.into())
+                    .collect(),
+            ),
+            SwapType::ExactOutputSingle(candid_pool_id) => {
+                CandidSwapType::ExactOutputSingle(candid_pool_id.into())
+            }
+            SwapType::ExactInputSingle(candid_pool_id) => {
+                CandidSwapType::ExactInputSingle(candid_pool_id.into())
+            }
+        }
+    }
+}
+
+impl From<DexAction> for CandidDexAction {
+    fn from(value: DexAction) -> Self {
+        match value {
+            DexAction::CreatedPool {
+                token0,
+                token1,
+                pool_fee,
+                timestamp,
+            } => CandidDexAction::CreatedPool {
+                token0,
+                token1,
+                pool_fee: pool_fee.into(),
+                timestamp,
+            },
+            DexAction::MintedPosition {
+                created_position,
+                liquidity,
+                amount0_paid,
+                amount1_paid,
+                timestamp,
+            } => CandidDexAction::MintedPosition {
+                created_position: created_position.into(),
+                liquidity: liquidity.into(),
+                amount0_paid: amount0_paid.into(),
+                amount1_paid: amount1_paid.into(),
+                timestamp,
+            },
+            DexAction::IncreasedLiquidity {
+                modified_position,
+                liquidity_delta,
+                amount0_paid,
+                amount1_paid,
+                timestamp,
+            } => CandidDexAction::IncreasedLiquidity {
+                modified_position: modified_position.into(),
+                liquidity_delta: liquidity_delta.into(),
+                amount0_paid: amount0_paid.into(),
+                amount1_paid: amount1_paid.into(),
+                timestamp,
+            },
+            DexAction::BurntPosition {
+                burnt_position,
+                liquidity,
+                amount0_received,
+                amount1_received,
+                timestamp,
+            } => CandidDexAction::BurntPosition {
+                burnt_position: burnt_position.into(),
+                liquidity: liquidity.into(),
+                amount0_received: amount0_received.into(),
+                amount1_received: amount1_received.into(),
+                timestamp,
+            },
+            DexAction::DecreasedLiquidity {
+                modified_position,
+                liquidity_delta,
+                amount0_received,
+                amount1_received,
+                timestamp,
+            } => CandidDexAction::DecreasedLiquidity {
+                modified_position: modified_position.into(),
+                liquidity_delta: liquidity_delta.into(),
+                amount0_received: amount0_received.into(),
+                amount1_received: amount1_received.into(),
+                timestamp,
+            },
+            DexAction::CollectedFees {
+                position,
+                amount0_collected,
+                amount1_collected,
+                timestamp,
+            } => CandidDexAction::CollectedFees {
+                position: position.into(),
+                amount0_collected: amount0_collected.into(),
+                amount1_collected: amount1_collected.into(),
+                timestamp,
+            },
+            DexAction::Swap {
+                final_amount_in,
+                final_amount_out,
+                swap_type,
+                timestamp,
+                token_in,
+                token_out,
+            } => CandidDexAction::Swap {
+                final_amount_in: final_amount_in.into(),
+                final_amount_out: final_amount_out.into(),
+                swap_type: swap_type.into(),
+                timestamp,
+                token_in,
+                token_out,
+            },
+        }
+    }
 }

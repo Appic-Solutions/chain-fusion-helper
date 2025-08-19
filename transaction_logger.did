@@ -47,61 +47,61 @@ type CandidAddErc20TwinLedgerSuiteRequest = record {
   evm_token_contract : text;
   evm_token_chain_id : nat;
 };
-type CandidErc20TwinLedgerSuiteFee = variant { Icp : nat; Appic : nat };
-type CandidErc20TwinLedgerSuiteStatus = variant {
-  PendingApproval;
-  Created;
-  Installed;
-};
-type CandidEvent = record { timestamp : nat64; payload : CandidEventType };
-type CandidEventType = variant {
+type CandidDexAction = variant {
   Swap : record {
-    "principal" : principal;
     token_in : principal;
     final_amount_in : nat;
     final_amount_out : nat;
+    timestamp : nat64;
     token_out : principal;
-    swap_type : SwapType;
+    swap_type : CandidSwapType;
   };
   CreatedPool : record {
     token0 : principal;
     token1 : principal;
-    pool_fee : nat;
+    timestamp : nat64;
+    pool_fee : nat32;
   };
   BurntPosition : record {
     amount0_received : nat;
-    "principal" : principal;
     burnt_position : CandidPositionKey;
     liquidity : nat;
+    timestamp : nat64;
     amount1_received : nat;
   };
   IncreasedLiquidity : record {
-    "principal" : principal;
     amount0_paid : nat;
     liquidity_delta : nat;
     amount1_paid : nat;
+    timestamp : nat64;
     modified_position : CandidPositionKey;
   };
   CollectedFees : record {
-    "principal" : principal;
     amount1_collected : nat;
+    timestamp : nat64;
     position : CandidPositionKey;
     amount0_collected : nat;
   };
   DecreasedLiquidity : record {
     amount0_received : nat;
-    "principal" : principal;
     liquidity_delta : nat;
+    timestamp : nat64;
     amount1_received : nat;
     modified_position : CandidPositionKey;
   };
   MintedPosition : record {
-    "principal" : principal;
     amount0_paid : nat;
     liquidity : nat;
     created_position : CandidPositionKey;
     amount1_paid : nat;
+    timestamp : nat64;
   };
+};
+type CandidErc20TwinLedgerSuiteFee = variant { Icp : nat; Appic : nat };
+type CandidErc20TwinLedgerSuiteStatus = variant {
+  PendingApproval;
+  Created;
+  Installed;
 };
 type CandidEvmToIcp = record {
   status : EvmToIcpStatus;
@@ -157,6 +157,7 @@ type CandidIcpToEvm = record {
 type CandidIcpToken = record {
   fee : nat;
   decimals : nat8;
+  listed_on_appic_dex : opt bool;
   usd_price : text;
   logo : text;
   name : text;
@@ -182,9 +183,15 @@ type CandidPoolId = record {
 };
 type CandidPositionKey = record {
   owner : principal;
-  pool : CandidPoolId;
   tick_lower : int;
+  pool_id : CandidPoolId;
   tick_upper : int;
+};
+type CandidSwapType = variant {
+  ExactOutput : vec CandidPoolId;
+  ExactInput : vec CandidPoolId;
+  ExactOutputSingle : CandidPoolId;
+  ExactInputSingle : CandidPoolId;
 };
 type EvmSearchQuery = record { "query" : text; chain_id : nat64 };
 type EvmToIcpStatus = variant {
@@ -225,12 +232,6 @@ type MinterArgs = record {
 type Operator = variant { AppicMinter; DfinityCkEthMinter };
 type Result = variant { Ok; Err : AddEvmToIcpTxError };
 type Result_1 = variant { Ok; Err : AddIcpToEvmTxError };
-type SwapType = variant {
-  ExactOutput : vec CandidPoolId;
-  ExactInput : vec CandidPoolId;
-  ExactOutputSingle : CandidPoolId;
-  ExactInputSingle : CandidPoolId;
-};
 type TokenPair = record {
   operator : Operator;
   evm_token : CandidEvmToken;
@@ -238,6 +239,7 @@ type TokenPair = record {
 };
 type TopVolumeTokens = record { chain : nat64; tokens : vec CandidEvmToken };
 type Transaction = variant {
+  DexAction : CandidDexAction;
   EvmToIcp : CandidEvmToIcp;
   IcpToEvm : CandidIcpToEvm;
 };
@@ -261,7 +263,7 @@ service : (LoggerArgs) -> {
   add_evm_token : (CandidEvmToken) -> ();
   add_icp_token : (CandidIcpToken) -> ();
   get_bridge_pairs : () -> (vec TokenPair) query;
-  get_dex_actions_for_principal : (principal) -> (vec CandidEvent) query;
+  get_dex_actions_for_principal : (principal) -> (vec CandidDexAction) query;
   get_erc20_twin_ls_requests_by_creator : (principal) -> (
       vec CandidLedgerSuiteRequest,
     ) query;

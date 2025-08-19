@@ -91,9 +91,13 @@ pub async fn update_usd_price() {
     icp_swap_tokens_usd_price
         .iter()
         .chain(appic_dex_token_usd_price.iter())
-        .for_each(|(ledger_id, usd_price)| {
+        .for_each(|(ledger_id, usd_price, listed_on_appic_dex)| {
             mutate_state(|s| {
-                s.update_icp_token_usd_price(*ledger_id, usd_price.to_string());
+                s.update_icp_token_usd_price(
+                    *ledger_id,
+                    usd_price.to_string(),
+                    *listed_on_appic_dex,
+                );
             })
         });
 }
@@ -115,7 +119,7 @@ pub async fn validate_tokens() {
 
     for token in tokens.iter() {
         let is_valid = tokens_service
-            .validate_token(token.ledger_id, token.rank)
+            .validate_token(token.ledger_id, token.rank, token.listed_on_appic_dex)
             .await
             .is_ok();
 
@@ -159,6 +163,7 @@ mod tests {
             rank: Some(1),
             usd_price: "0".to_string(),
             logo: "".to_string(),
+            listed_on_appic_dex: Some(true),
         };
 
         let token2 = IcpToken {
@@ -171,6 +176,7 @@ mod tests {
             rank: None,
             usd_price: "0".to_string(),
             logo: "".to_string(),
+            listed_on_appic_dex: Some(false),
         };
 
         let token3 = IcpToken {
@@ -183,6 +189,7 @@ mod tests {
             rank: Some(2),
             usd_price: "0".to_string(),
             logo: "".to_string(),
+            listed_on_appic_dex: Some(true),
         };
 
         assert_eq!(token1, token2); // Same ledger_id should mean equality
@@ -202,6 +209,7 @@ mod tests {
                 rank: Some(3),
                 usd_price: "0".to_string(),
                 logo: "".to_string(),
+                listed_on_appic_dex: Some(true),
             },
             IcpToken {
                 ledger_id: Principal::from_text("6fvyi-faaaa-aaaam-qbiga-cai").unwrap(),
@@ -213,6 +221,7 @@ mod tests {
                 rank: Some(2),
                 usd_price: "0".to_string(),
                 logo: "".to_string(),
+                listed_on_appic_dex: Some(true),
             },
         ];
 
@@ -227,6 +236,7 @@ mod tests {
                 rank: None,
                 usd_price: "0".to_string(),
                 logo: "".to_string(),
+                listed_on_appic_dex: Some(false),
             },
             IcpToken {
                 ledger_id: Principal::from_text("sr5fw-zqaaa-aaaak-qig5q-cai").unwrap(),
@@ -238,10 +248,11 @@ mod tests {
                 rank: Some(1),
                 usd_price: "0".to_string(),
                 logo: "".to_string(),
+                listed_on_appic_dex: Some(true),
             },
         ];
 
-        let combined: HashSet<_> = vec1.into_iter().chain(vec2.into_iter()).collect();
+        let combined: HashSet<_> = vec1.into_iter().chain(vec2).collect();
         let unique_tokens: Vec<IcpToken> = combined.into_iter().collect();
 
         assert_eq!(unique_tokens.len(), 3); // Should contain 3 unique tokens
@@ -269,6 +280,7 @@ mod tests {
                 rank: Some(2),
                 usd_price: "0".to_string(),
                 logo: "".to_string(),
+                listed_on_appic_dex: Some(true),
             },
             IcpToken {
                 ledger_id: Principal::from_text("dikjh-xaaaa-aaaak-afnba-cai").unwrap(), // Duplicate
@@ -280,6 +292,7 @@ mod tests {
                 rank: None,
                 usd_price: "0".to_string(),
                 logo: "".to_string(),
+                listed_on_appic_dex: Some(true),
             },
             IcpToken {
                 ledger_id: Principal::from_text("sr5fw-zqaaa-aaaak-qig5q-cai").unwrap(),
@@ -291,6 +304,7 @@ mod tests {
                 rank: Some(2),
                 usd_price: "0".to_string(),
                 logo: "".to_string(),
+                listed_on_appic_dex: Some(true),
             },
         ];
 

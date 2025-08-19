@@ -3,7 +3,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use candid::{CandidType, Nat, Principal};
+use candid::{CandidType, Principal};
 use ethnum::U256;
 use ic_canister_log::log;
 use icp_swap_token_type::TokensListResult;
@@ -46,6 +46,12 @@ pub struct TokenService {
     runtime: IcRunTime,
 }
 
+impl Default for TokenService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TokenService {
     pub fn new() -> Self {
         Self {
@@ -79,13 +85,15 @@ impl TokenService {
         };
 
         // Filter the tokens that already exist in the state
-        unique_tokens
-            .retain(|token| read_state(|s| s.get_icp_token_by_principal(&token).is_none()));
+        unique_tokens.retain(|token| read_state(|s| s.get_icp_token_by_principal(token).is_none()));
 
         let mut validated_icp_tokens = Vec::new();
 
         for ledger_id in unique_tokens.iter() {
-            match self.validate_token(*ledger_id, Some(1_u32)).await {
+            match self
+                .validate_token(*ledger_id, Some(1_u32), Some(true))
+                .await
+            {
                 Ok(token) => validated_icp_tokens.push(token),
                 Err(e) => {
                     log!(
@@ -123,7 +131,7 @@ impl TokenService {
                             || token.standard.as_str() == "ICRC3"
                             || token.rank < 5_u32
                         {
-                            return Some(ledger_id);
+                            Some(ledger_id)
                         } else {
                             None
                         }
@@ -145,13 +153,12 @@ impl TokenService {
         };
 
         //Filter the tokens that already exist in the state
-        unique_tokens
-            .retain(|token| read_state(|s| s.get_icp_token_by_principal(&token).is_none()));
+        unique_tokens.retain(|token| read_state(|s| s.get_icp_token_by_principal(token).is_none()));
 
         let mut validated_icp_tokens = Vec::new();
 
         for ledger_id in unique_tokens.iter() {
-            match self.validate_token(*ledger_id, Some(1_u32)).await {
+            match self.validate_token(*ledger_id, None, None).await {
                 Ok(token) => validated_icp_tokens.push(token),
                 Err(e) => {
                     log!(
@@ -179,6 +186,7 @@ impl TokenService {
         &self,
         ledger_id: Principal,
         rank: Option<u32>,
+        listed_on_appic_dex: Option<bool>,
     ) -> Result<IcpToken, CallError> {
         match self
             .runtime
@@ -187,24 +195,28 @@ impl TokenService {
         {
             // If error try again.
             Ok(metadata) => {
-                if let Some(icp_token) = convert_to_icp_token(ledger_id, metadata, rank).ok() {
-                    return Ok(icp_token);
+                if let Ok(icp_token) =
+                    convert_to_icp_token(ledger_id, metadata, rank, listed_on_appic_dex)
+                {
+                    Ok(icp_token)
                 } else {
-                    return Err(CallError {
+                    Err(CallError {
                         method: "icrc1_metadata".to_string(),
                         reason: Reason::InternalError(
                             "Token Does not have a valid metadata".to_string(),
                         ),
-                    });
+                    })
                 }
             }
-            Err(e) => return Err(e),
+            Err(e) => Err(e),
         }
     }
 
-    pub async fn get_appic_dex_tokens_usd_price(&self) -> Result<Vec<(Principal, f64)>, String> {
+    pub async fn get_appic_dex_tokens_usd_price(
+        &self,
+    ) -> Result<Vec<(Principal, f64, bool)>, String> {
         let ck_usdc = Principal::from_text(CKUSDC_LEDGER_ID)
-            .map_err(|e| format!("Invalid ckUSDC principal: {:?}", e))?;
+            .map_err(|e| format!("Invalid ckUSDC principal: {e:?}"))?;
 
         let pools = self
             .runtime
@@ -214,7 +226,7 @@ impl TokenService {
                 (),
             )
             .await
-            .map_err(|e| format!("Failed to fetch pools: {:?}", e))?;
+            .map_err(|e| format!("Failed to fetch pools: {e:?}"))?;
 
         // Filter pools with ckUSDC and collect tokens to query decimals
         let mut relevant_pools: Vec<(CandidPoolId, CandidPoolState, Principal)> = Vec::new();
@@ -242,7 +254,7 @@ impl TokenService {
             let decimals = self
                 .get_decimals(token)
                 .await
-                .map_err(|e| format!("Failed to get decimals for token {}: {}", token, e))?;
+                .map_err(|e| format!("Failed to get decimals for token {token}: {e}"))?;
             decimals_cache.insert(token, decimals);
         }
 
@@ -250,7 +262,7 @@ impl TokenService {
         let mut results = Vec::new();
 
         for (pool_id, pool_state, other_token) in relevant_pools {
-            if pool_state.liquidity != Nat::from(0_u8) {
+            if pool_state.liquidity != 0_u8 {
                 let usd_price = claculate_usd_price_based_on_ck_usdc(
                     &pool_id,
                     pool_state,
@@ -259,7 +271,7 @@ impl TokenService {
                     &decimals_cache,
                 );
                 // Format the price as a string with 8 decimal places
-                results.push((other_token, usd_price));
+                results.push((other_token, usd_price, true));
             }
         }
 
@@ -268,7 +280,7 @@ impl TokenService {
 
     pub async fn get_icp_swap_tokens_with_usd_price(
         &self,
-    ) -> Result<Vec<(Principal, f64)>, CallError> {
+    ) -> Result<Vec<(Principal, f64, bool)>, CallError> {
         self.runtime
             .call_canister::<(), Vec<PublicTokenOverview>>(
                 Principal::from_text(ICP_SWAP_NODE).unwrap(),
@@ -281,8 +293,8 @@ impl TokenService {
                     .into_iter()
                     .filter_map(|token| {
                         if token.priceUSD != 0_f64 && token.volumeUSD7d != 0_f64 {
-                            if let Some(ledger_id) = Principal::from_text(token.address).ok() {
-                                Some((ledger_id, token.priceUSD))
+                            if let Ok(ledger_id) = Principal::from_text(token.address) {
+                                Some((ledger_id, token.priceUSD, false))
                             } else {
                                 None
                             }
@@ -310,7 +322,7 @@ impl TokenService {
             .await
         {
             Ok(decimals) => Ok(decimals),
-            Err(e) => Err(format!("Failed to get decimals: {:?}", e)),
+            Err(e) => Err(format!("Failed to get decimals: {e:?}")),
         }
     }
 }
@@ -320,6 +332,7 @@ pub fn convert_to_icp_token(
     ledger_id: Principal,
     metadata: Vec<(String, MetadataValue)>,
     rank: Option<u32>,
+    listed_on_appic_dex: Option<bool>,
 ) -> Result<IcpToken, String> {
     let mut name = None;
     let mut decimals = None;
@@ -356,6 +369,7 @@ pub fn convert_to_icp_token(
         fee: fee.ok_or("Missing icrc1:fee")?,
         token_type: IcpTokenType::ICRC2,
         rank,
+        listed_on_appic_dex,
     })
 }
 
@@ -365,7 +379,7 @@ pub fn big_uint_to_u256(biguint: BigUint) -> Result<U256, String> {
     if value_bytes.len() <= 32 {
         value_u256[32 - value_bytes.len()..].copy_from_slice(&value_bytes);
     } else {
-        return Err(format!("does not fit in a U256: {}", biguint));
+        return Err(format!("does not fit in a U256: {biguint}"));
     }
     Ok(U256::from_be_bytes(value_u256))
 }
@@ -389,14 +403,10 @@ pub fn claculate_usd_price_based_on_ck_usdc(
 
     let p: f64 = (sqrt_price_x96 / q96).powi(2_i32);
 
-    println!("Q96: {}", q96);
-    println!(" sqrt_price_x96: {}", sqrt_price_x96);
-    println!(" calculated p: {}", p);
-
     let d_usdc = decimals_cache[ck_usdc_ledger_id] as i32;
     let d_other = decimals_cache[other_token] as i32;
 
-    let usd_price = if &pool_id.token0 == ck_usdc_ledger_id {
+    if &pool_id.token0 == ck_usdc_ledger_id {
         // Case 1: ckUSDC is token0, other_token is token1
         // USD price = 10^d_other / (P * 10^d_usdc)
         10.0_f64.powi(d_other) / (p * 10.0_f64.powi(d_usdc))
@@ -404,7 +414,5 @@ pub fn claculate_usd_price_based_on_ck_usdc(
         // Case 2: ckUSDC is token1, other_token is token0
         // USD price = (P * 10^d_other) / 10^d_usdc
         (p * 10.0_f64.powi(d_other)) / 10.0_f64.powi(d_usdc)
-    };
-
-    usd_price
+    }
 }

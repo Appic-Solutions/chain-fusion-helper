@@ -14,18 +14,18 @@ async fn get_icp_token(ledger_id: Principal) -> Result<CandidIcpToken, CallError
     match call_canister::<(), Vec<(String, MetadataValue)>>(ledger_id, "icrc1_metadata", ()).await {
         // If error try again.
         Ok(metadata) => {
-            if let Some(icp_token) = convert_to_icp_token(ledger_id, metadata, Some(1)).ok() {
-                return Ok(CandidIcpToken::from(icp_token));
+            if let Ok(icp_token) = convert_to_icp_token(ledger_id, metadata, Some(1), Some(false)) {
+                Ok(CandidIcpToken::from(icp_token))
             } else {
-                return Err(CallError {
+                Err(CallError {
                     method: "icrc1_metadata".to_string(),
                     reason: Reason::InternalError(
                         "Token Does not have a valid metadata".to_string(),
                     ),
-                });
+                })
             }
         }
-        Err(e) => return Err(e),
+        Err(e) => Err(e),
     }
 }
 

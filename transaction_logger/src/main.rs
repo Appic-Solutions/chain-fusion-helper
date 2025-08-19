@@ -9,12 +9,11 @@ use std::str::FromStr;
 use std::time::Duration;
 use transaction_logger::add_evm_tokens::add_evm_tokens_to_state;
 use transaction_logger::address::Address;
-use transaction_logger::appic_dex_types::CandidEvent;
 use transaction_logger::endpoints::{
     AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError,
-    CandidAddErc20TwinLedgerSuiteRequest, CandidEvmToken, CandidIcpToken, CandidLedgerSuiteRequest,
-    EvmSearchQuery, GetEvmTokenArgs, GetIcpTokenArgs, GetTxParams, Icrc28TrustedOriginsResponse,
-    MinterArgs, TokenPair, TopVolumeTokens, Transaction,
+    CandidAddErc20TwinLedgerSuiteRequest, CandidDexAction, CandidEvmToken, CandidIcpToken,
+    CandidLedgerSuiteRequest, EvmSearchQuery, GetEvmTokenArgs, GetIcpTokenArgs, GetTxParams,
+    Icrc28TrustedOriginsResponse, MinterArgs, TokenPair, TopVolumeTokens, Transaction,
 };
 use transaction_logger::guard::{TaskType, TimerGuard};
 use transaction_logger::lifecycle::{self, init as initialize};
@@ -43,7 +42,7 @@ fn setup_timers() {
     // Start scraping events.
     ic_cdk_timers::set_timer_interval(SCRAPE_EVENTS, || ic_cdk::spawn(scrape_events()));
 
-    //ic_cdk_timers::set_timer_interval(SCRAPE_EVENTS, || ic_cdk::spawn(scrape_dex_events()));
+    ic_cdk_timers::set_timer_interval(SCRAPE_EVENTS, || ic_cdk::spawn(scrape_dex_events()));
 
     // Update usd price of icp tokens
     ic_cdk_timers::set_timer_interval(UPDATE_USD_PRICE, || ic_cdk::spawn(update_usd_price()));
@@ -449,10 +448,10 @@ pub fn get_minters() -> Vec<MinterArgs> {
 }
 
 #[query]
-pub fn get_dex_actions_for_principal(principal_id: Principal) -> Vec<CandidEvent> {
+pub fn get_dex_actions_for_principal(principal_id: Principal) -> Vec<CandidDexAction> {
     read_state(|s| s.get_dex_actions_for_principal(principal_id))
         .into_iter()
-        .map(|dex_action| CandidEvent::from((principal_id, dex_action)))
+        .map(CandidDexAction::from)
         .collect()
 }
 
@@ -485,7 +484,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 
                         Err(e) => {
                             HttpResponseBuilder::server_error(format!("Base64 decode error: {e}"))
-                                .body(format!("Base64 decode error: {}", e))
+                                .body(format!("Base64 decode error: {e}"))
                                 .build()
                         }
                     }

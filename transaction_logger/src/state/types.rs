@@ -357,6 +357,8 @@ pub struct IcpToken {
     pub token_type: IcpTokenType,
     #[n(8)]
     pub rank: Option<u32>,
+    #[n(9)]
+    pub listed_on_appic_dex: Option<bool>,
 }
 
 // Custom implementation of Eq and Hash for IcpToken based only on ledger_id
