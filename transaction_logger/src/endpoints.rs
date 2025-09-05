@@ -97,6 +97,8 @@ pub struct InitArgs {
 pub struct UpgradeArg {
     pub new_minters: Option<Vec<MinterArgs>>,
     pub update_minters: Option<Vec<UpdateMinterArgs>>,
+    pub update_latest_observed_dex_event: Option<Nat>,
+    pub update_latest_scraped_dex_event: Option<Nat>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]

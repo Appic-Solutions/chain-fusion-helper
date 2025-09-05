@@ -275,6 +275,8 @@ impl TokenService {
             }
         }
 
+        results.push((ck_usdc, 1.0_f64, true));
+
         Ok(results)
     }
 

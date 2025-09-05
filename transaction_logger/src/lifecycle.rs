@@ -1,7 +1,6 @@
 use crate::endpoints::InitArgs;
 use crate::endpoints::UpgradeArg;
 use crate::logs::INFO;
-use crate::state::nat_to_erc20_amount;
 use crate::state::nat_to_u64;
 use crate::state::types::{ChainId, Minter, MinterKey};
 
@@ -9,10 +8,7 @@ use crate::state::mutate_state;
 use ic_canister_log::log;
 
 pub fn init(init_args: InitArgs) {
-    let minters_iter = init_args
-        .minters
-        .into_iter()
-        .map(|minter_arg| Minter::from_minter_args(minter_arg));
+    let minters_iter = init_args.minters.into_iter().map(Minter::from_minter_args);
 
     for minter in minters_iter {
         mutate_state(|s| s.record_minter(minter));
@@ -26,9 +22,7 @@ pub fn post_upgrade(upgrade_arg: Option<UpgradeArg>) {
         if let Some(new_minters) = args.new_minters {
             log!(INFO, "[init]: adding new minters: {:?}", new_minters);
 
-            let minters_iter = new_minters
-                .into_iter()
-                .map(|minter| Minter::from_minter_args(minter));
+            let minters_iter = new_minters.into_iter().map(Minter::from_minter_args);
             for minter in minters_iter {
                 mutate_state(|s| s.record_minter(minter))
             }
@@ -58,6 +52,13 @@ pub fn post_upgrade(upgrade_arg: Option<UpgradeArg>) {
                     })
                 }
             }
+        }
+        if let Some(latest_scraped_event) = args.update_latest_scraped_dex_event {
+            mutate_state(|s| s.update_last_scraped_dex_event(nat_to_u64(&latest_scraped_event)))
+        }
+
+        if let Some(latest_observed_event) = args.update_latest_observed_dex_event {
+            mutate_state(|s| s.update_last_observed_dex_event(nat_to_u64(&latest_observed_event)))
         }
     }
 }

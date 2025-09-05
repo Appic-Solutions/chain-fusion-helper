@@ -33,7 +33,7 @@ pub async fn update_bridge_pairs() {
     ];
 
     for (manager_id, operator, source_name) in managers {
-        let client = LsClient::new(Principal::from_text(manager_id).unwrap(), operator.clone());
+        let client = LsClient::new(Principal::from_text(manager_id).unwrap(), operator);
 
         log!(
             INFO,

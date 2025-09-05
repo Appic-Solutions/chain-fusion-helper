@@ -256,6 +256,8 @@ type UpdateMinterArgs = record {
   minter_id : principal;
 };
 type UpgradeArg = record {
+  update_latest_observed_dex_event : opt nat;
+  update_latest_scraped_dex_event : opt nat;
   new_minters : opt vec MinterArgs;
   update_minters : opt vec UpdateMinterArgs;
 };
