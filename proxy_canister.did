@@ -2,6 +2,7 @@ type CallError = record { method : text; reason : Reason };
 type CandidIcpToken = record {
   fee : nat;
   decimals : nat8;
+  listed_on_appic_dex : opt bool;
   usd_price : text;
   logo : text;
   name : text;

@@ -22,8 +22,8 @@ use std::str::FromStr;
 
 use crate::endpoints::{
     AddEvmToIcpTx, AddIcpToEvmTx, CandidErc20TwinLedgerSuiteFee, CandidErc20TwinLedgerSuiteStatus,
-    CandidEvmToIcp, CandidEvmToken, CandidIcpToEvm, CandidIcpToken, CandidLedgerSuiteRequest,
-    MinterArgs, TokenPair, Transaction, TransactionSearchParam,
+    CandidEvmToIcp, CandidEvmToken, CandidIcpToEvm, CandidIcpToken, MinterArgs, TokenPair,
+    Transaction, TransactionSearchParam,
 };
 use crate::numeric::{BlockNumber, Erc20TokenAmount, LedgerBurnIndex};
 use crate::scrape_events::NATIVE_ERC20_ADDRESS;
@@ -60,9 +60,6 @@ pub struct State {
 
     pub evm_token_list: BTreeMap<Erc20Identifier, EvmToken, StableMemory>,
     pub icp_token_list: BTreeMap<Principal, IcpToken, StableMemory>,
-
-    // List of new erc20 -> icERC20 requests
-    pub twin_erc20_requests: BTreeMap<Erc20Identifier, Erc20TwinLedgerSuiteRequest, StableMemory>,
 
     // list of operations by users in the dex
     pub dex_actions_list: BTreeMap<Principal, UserDexActions, StableMemory>,
@@ -874,22 +871,6 @@ impl State {
         };
     }
 
-    pub fn get_erc20_ls_requests_by_principal(
-        &self,
-        principal: Principal,
-    ) -> Vec<Erc20TwinLedgerSuiteRequest> {
-        self.twin_erc20_requests
-            .iter()
-            .filter_map(|(_identifier, request)| {
-                if request.creator == principal {
-                    Some(request)
-                } else {
-                    None
-                }
-            })
-            .collect()
-    }
-
     pub fn record_dex_action_for_principal(&mut self, principal: Principal, dex_action: DexAction) {
         if let Some(previous_actions) = self.dex_actions_list.get(&principal) {
             let mut new_user_actions = previous_actions;
@@ -906,6 +887,43 @@ impl State {
             .get(&principal)
             .unwrap_or(UserDexActions(vec![]))
             .0
+    }
+
+    pub fn record_icp_token_added_to_minter_by_lsm(
+        &mut self,
+        address: Address,
+        ledger_id: Principal,
+        symbol: String,
+        chain_id: ChainId,
+    ) {
+        if let Some(EvmToken {
+            chain_id: _,
+            erc20_contract_address: _,
+            name,
+            decimals,
+            symbol: _,
+            logo,
+            is_wrapped_icrc: _,
+            cmc_id: _,
+            usd_price,
+            volume_usd_24h: _,
+        }) = self.get_evm_token_by_identifier(&Erc20Identifier(address, chain_id))
+        {
+            let icp_token = IcpToken {
+                ledger_id,
+                name: format!("{} on ICP", name),
+                decimals,
+                symbol,
+                usd_price: usd_price.unwrap_or("0".to_string()),
+                logo,
+                fee: Erc20TokenAmount::from(0_u8),
+                token_type: IcpTokenType::ICRC2,
+                rank: Some(1),
+                listed_on_appic_dex: Some(false),
+            };
+
+            self.icp_token_list.insert(ledger_id, icp_token);
+        }
     }
 }
 
@@ -993,7 +1011,6 @@ thread_local! {
                 supported_twin_appic_tokens:BTreeMap::init(supported_appic_tokens_memory_id()),
                 evm_token_list:BTreeMap::init(evm_token_list_id()),
                 icp_token_list:BTreeMap::init(icp_token_list_id()),
-                twin_erc20_requests: BTreeMap::init(erc20_twin_ledger_requests_id()),
                 dex_actions_list:BTreeMap::init(dex_actions_list()),
                 dex_info:Cell::init(dex_info_id(),DexInfo{ id: Principal::from_text(DEX_CANISTER_ID).unwrap(), last_observed_event: 0, last_scraped_event: 0 }).expect("DEX_INFO initiaion failed")}),
     );

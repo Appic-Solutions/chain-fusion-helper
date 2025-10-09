@@ -10,9 +10,8 @@ use std::time::Duration;
 use transaction_logger::add_evm_tokens::add_evm_tokens_to_state;
 use transaction_logger::address::Address;
 use transaction_logger::endpoints::{
-    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError,
-    CandidAddErc20TwinLedgerSuiteRequest, CandidDexAction, CandidEvmToken, CandidIcpToken,
-    CandidLedgerSuiteRequest, EvmSearchQuery, GetEvmTokenArgs, GetIcpTokenArgs, GetTxParams,
+    AddEvmToIcpTx, AddEvmToIcpTxError, AddIcpToEvmTx, AddIcpToEvmTxError, CandidDexAction,
+    CandidEvmToken, CandidIcpToken, EvmSearchQuery, GetEvmTokenArgs, GetIcpTokenArgs, GetTxParams,
     Icrc28TrustedOriginsResponse, MinterArgs, TokenPair, TopVolumeTokens, Transaction,
 };
 use transaction_logger::guard::{TaskType, TimerGuard};
@@ -21,8 +20,8 @@ use transaction_logger::scrape_dex_events::scrape_dex_events;
 use transaction_logger::state::{
     mutate_state, nat_to_erc20_amount, nat_to_ledger_burn_index, read_state,
     types::{
-        ChainId, Erc20Identifier, Erc20TwinLedgerSuiteRequest, EvmToIcpStatus, EvmToIcpTx,
-        EvmToIcpTxIdentifier, EvmToken, IcpToEvmIdentifier, IcpToEvmStatus, IcpToEvmTx, IcpToken,
+        ChainId, Erc20Identifier, EvmToIcpStatus, EvmToIcpTx, EvmToIcpTxIdentifier, EvmToken,
+        IcpToEvmIdentifier, IcpToEvmStatus, IcpToEvmTx, IcpToken,
     },
 };
 use transaction_logger::update_bridge_pairs::APPIC_LEDGER_MANAGER_ID;
@@ -393,49 +392,13 @@ pub fn get_icp_tokens() -> Vec<CandidIcpToken> {
     tokens.into_iter().map(CandidIcpToken::from).collect()
 }
 
-// Can only be called by lsm
-#[update]
-pub fn new_twin_ls_request(request: CandidAddErc20TwinLedgerSuiteRequest) {
-    if !is_authorized_caller(ic_cdk::caller()) {
-        panic!("Only admins can change twin token details")
-    }
-    let erc20_identifier: Erc20Identifier = request.borrow().into();
-    let erc20_twin_ls_request: Erc20TwinLedgerSuiteRequest = request.into();
-
-    mutate_state(|s| {
-        s.twin_erc20_requests
-            .insert(erc20_identifier, erc20_twin_ls_request)
-    });
-}
-
-// Can only be called by lsm
-#[update]
-pub fn update_twin_ls_request(updated_request: CandidAddErc20TwinLedgerSuiteRequest) {
-    if !is_authorized_caller(ic_cdk::caller()) {
-        panic!("Only admins can change twin token details")
-    }
-    let erc20_identifier: Erc20Identifier = updated_request.borrow().into();
-    let erc20_twin_ls_request: Erc20TwinLedgerSuiteRequest = updated_request.into();
-
-    mutate_state(|s| {
-        s.twin_erc20_requests
-            .insert(erc20_identifier, erc20_twin_ls_request)
-    });
-}
-
-// Can only be called by lsm
+// Can only be called by controller
 #[update]
 pub async fn request_update_bridge_pairs() {
     if !is_authorized_caller(ic_cdk::caller()) {
         panic!("Only admins request update bride pairs")
     }
     update_bridge_pairs().await;
-}
-
-#[query]
-pub fn get_erc20_twin_ls_requests_by_creator(creator: Principal) -> Vec<CandidLedgerSuiteRequest> {
-    let requests = read_state(|s| s.get_erc20_ls_requests_by_principal(creator));
-    requests.into_iter().map(|request| request.into()).collect()
 }
 
 // Get minters

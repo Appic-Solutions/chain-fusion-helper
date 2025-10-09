@@ -36,17 +36,6 @@ type AddIcpToEvmTxError = variant {
   InvalidTokenContract;
   TxAlreadyExists;
 };
-type CandidAddErc20TwinLedgerSuiteRequest = record {
-  status : CandidErc20TwinLedgerSuiteStatus;
-  creator : principal;
-  icp_ledger_id : opt principal;
-  icp_token_name : text;
-  created_at : nat64;
-  fee_charged : CandidErc20TwinLedgerSuiteFee;
-  icp_token_symbol : text;
-  evm_token_contract : text;
-  evm_token_chain_id : nat;
-};
 type CandidDexAction = variant {
   Swap : record {
     token_in : principal;
@@ -96,12 +85,6 @@ type CandidDexAction = variant {
     amount1_paid : nat;
     timestamp : nat64;
   };
-};
-type CandidErc20TwinLedgerSuiteFee = variant { Icp : nat; Appic : nat };
-type CandidErc20TwinLedgerSuiteStatus = variant {
-  PendingApproval;
-  Created;
-  Installed;
 };
 type CandidEvmToIcp = record {
   status : EvmToIcpStatus;
@@ -165,16 +148,6 @@ type CandidIcpToken = record {
   ledger_id : principal;
   token_type : IcpTokenType;
   symbol : text;
-};
-type CandidLedgerSuiteRequest = record {
-  erc20_contract : text;
-  status : CandidErc20TwinLedgerSuiteStatus;
-  creator : principal;
-  evm_token : opt CandidEvmToken;
-  created_at : nat64;
-  fee_charged : CandidErc20TwinLedgerSuiteFee;
-  chain_id : nat;
-  icp_token : opt CandidIcpToken;
 };
 type CandidPoolId = record {
   fee : nat;
@@ -266,9 +239,6 @@ service : (LoggerArgs) -> {
   add_icp_token : (CandidIcpToken) -> ();
   get_bridge_pairs : () -> (vec TokenPair) query;
   get_dex_actions_for_principal : (principal) -> (vec CandidDexAction) query;
-  get_erc20_twin_ls_requests_by_creator : (principal) -> (
-      vec CandidLedgerSuiteRequest,
-    ) query;
   get_evm_token : (GetEvmTokenArgs) -> (opt CandidEvmToken) query;
   get_icp_token : (GetIcpTokenArgs) -> (opt CandidIcpToken) query;
   get_icp_tokens : () -> (vec CandidIcpToken) query;
@@ -283,9 +253,7 @@ service : (LoggerArgs) -> {
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
   new_evm_to_icp_tx : (AddEvmToIcpTx) -> (Result);
   new_icp_to_evm_tx : (AddIcpToEvmTx) -> (Result_1);
-  new_twin_ls_request : (CandidAddErc20TwinLedgerSuiteRequest) -> ();
   request_update_bridge_pairs : () -> ();
   search_evm_token : (EvmSearchQuery) -> (vec CandidEvmToken) query;
   update_evm_token_price_volume : (vec record { nat64; text; text }) -> ();
-  update_twin_ls_request : (CandidAddErc20TwinLedgerSuiteRequest) -> ();
 }

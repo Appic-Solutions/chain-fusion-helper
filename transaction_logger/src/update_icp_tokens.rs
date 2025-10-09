@@ -118,13 +118,26 @@ pub async fn validate_tokens() {
     let mut valid_tokens = 0;
 
     for token in tokens.iter() {
-        let is_valid = tokens_service
+        let validation_result = tokens_service
             .validate_token(token.ledger_id, token.rank, token.listed_on_appic_dex)
-            .await
-            .is_ok();
+            .await;
 
-        if is_valid {
+        if let Ok(updated_icp_token) = validation_result {
             valid_tokens += 1;
+
+            // update token with new metadata
+            mutate_state(|s| {
+                s.icp_token_list.insert(
+                    token.ledger_id,
+                    IcpToken {
+                        usd_price: token.usd_price.clone(),
+                        token_type: token.token_type.clone(),
+                        rank: token.rank,
+                        listed_on_appic_dex: token.listed_on_appic_dex,
+                        ..updated_icp_token
+                    },
+                )
+            });
         } else {
             log!(
                 INFO,

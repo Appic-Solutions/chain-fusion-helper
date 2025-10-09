@@ -40,7 +40,6 @@ impl_storable_minicbor!(IcpToEvmTx);
 impl_storable_minicbor!(IcpToken);
 impl_storable_minicbor!(EvmToken);
 impl_storable_minicbor!(BridgePair);
-impl_storable_minicbor!(Erc20TwinLedgerSuiteRequest);
 impl_storable_minicbor!(DexAction);
 impl_storable_minicbor!(SwapType);
 impl_storable_minicbor!(UserDexActions);

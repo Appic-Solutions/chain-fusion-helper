@@ -400,50 +400,6 @@ pub enum Erc20TwinLedgerSuiteFee {
     Appic(#[cbor(n(0), with = "crate::cbor::u128")] u128),
 }
 
-#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug, Encode, Decode)]
-pub struct Erc20TwinLedgerSuiteRequest {
-    #[cbor(n(0), with = "crate::cbor::principal")]
-    pub creator: Principal,
-    #[n(1)]
-    pub evm_token: Option<EvmToken>,
-    #[n(2)]
-    pub erc20_contract_address: Address,
-    #[n(3)]
-    pub chain_id: ChainId,
-    #[cbor(n(4), with = "crate::cbor::principal::option")]
-    pub ledger_id: Option<Principal>,
-    #[n(5)]
-    pub icp_token_name: String,
-    #[n(6)]
-    pub icp_token_symbol: String,
-    #[n(7)]
-    pub icp_token: Option<IcpToken>,
-    #[n(8)]
-    pub status: Erc20TwinLedgerSuiteStatus,
-    #[n(9)]
-    pub created_at: u64,
-    #[n(10)]
-    pub fee_charged: Erc20TwinLedgerSuiteFee,
-}
-
-impl From<Erc20TwinLedgerSuiteRequest> for CandidLedgerSuiteRequest {
-    fn from(value: Erc20TwinLedgerSuiteRequest) -> Self {
-        let status: CandidErc20TwinLedgerSuiteStatus = value.status.into();
-        let fee_charged: CandidErc20TwinLedgerSuiteFee = value.fee_charged.into();
-
-        Self {
-            creator: value.creator,
-            evm_token: value.evm_token.map(|token| token.into()),
-            icp_token: value.icp_token.map(|token| token.into()),
-            erc20_contract: value.erc20_contract_address.to_string(),
-            chain_id: value.chain_id.into(),
-            status,
-            created_at: value.created_at,
-            fee_charged,
-        }
-    }
-}
-
 #[derive(
     Clone,
     Copy,

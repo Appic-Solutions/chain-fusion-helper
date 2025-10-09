@@ -14,10 +14,13 @@ use crate::{
             ChainId, Erc20Identifier, EvmToIcpTxIdentifier, IcpToEvmIdentifier, MinterKey, Operator,
         },
     },
+    update_bridge_pairs::update_bridge_pairs,
+    update_icp_tokens::validate_tokens,
 };
 
 use crate::address::Address;
 use crate::minter_client::appic_minter_types::events::EventPayload as AppicEventPayload;
+use candid::Principal;
 use ic_canister_log::log;
 
 use crate::minter_client::event_conversion::Events;
@@ -321,7 +324,22 @@ fn apply_state_transition(events: Events, operator: Operator, chain_id: ChainId)
                     chain_id,
                 )),
             AppicEventPayload::SkippedBlock { .. } => {}
-            AppicEventPayload::AddedErc20Token { .. } => {}
+            AppicEventPayload::AddedErc20Token {
+                chain_id: _,
+                address,
+                erc20_token_symbol,
+                erc20_ledger_id,
+            } => {
+                s.record_icp_token_added_to_minter_by_lsm(
+                    Address::from_str(&address).unwrap(),
+                    erc20_ledger_id,
+                    erc20_token_symbol,
+                    chain_id,
+                );
+
+                ic_cdk::spawn(validate_tokens());
+                ic_cdk::spawn(update_bridge_pairs());
+            }
             AppicEventPayload::AcceptedErc20WithdrawalRequest {
                 max_transaction_fee,
                 withdrawal_amount,

@@ -4,11 +4,10 @@ use crate::address::Address;
 use crate::state::dex::types::{DexAction, PoolId, PositionKey, SwapType};
 use crate::state::nat_to_u64;
 use crate::state::{
-    checked_nat_to_erc20_amount, nat_to_u128, read_state,
+    checked_nat_to_erc20_amount, nat_to_u128,
     types::{
-        ChainId, Erc20Identifier, Erc20TwinLedgerSuiteFee, Erc20TwinLedgerSuiteRequest,
-        Erc20TwinLedgerSuiteStatus, EvmToIcpStatus, EvmToIcpTx, EvmToken, IcpToEvmStatus,
-        IcpToEvmTx, IcpToken, IcpTokenType, Operator,
+        ChainId, Erc20TwinLedgerSuiteFee, Erc20TwinLedgerSuiteStatus, EvmToIcpStatus, EvmToIcpTx,
+        EvmToken, IcpToEvmStatus, IcpToEvmTx, IcpToken, IcpTokenType, Operator,
     },
 };
 use candid::{CandidType, Deserialize, Int, Nat, Principal};
@@ -462,64 +461,6 @@ impl From<Erc20TwinLedgerSuiteFee> for CandidErc20TwinLedgerSuiteFee {
         }
     }
 }
-#[derive(CandidType, Clone, PartialEq, Eq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
-pub struct CandidAddErc20TwinLedgerSuiteRequest {
-    creator: Principal,
-    evm_token_contract: String,
-    evm_token_chain_id: CandidChainId,
-    icp_token_name: String,
-    icp_token_symbol: String,
-    icp_ledger_id: Option<Principal>,
-    status: CandidErc20TwinLedgerSuiteStatus,
-    created_at: u64,
-    fee_charged: CandidErc20TwinLedgerSuiteFee,
-}
-
-impl From<&CandidAddErc20TwinLedgerSuiteRequest> for Erc20Identifier {
-    fn from(value: &CandidAddErc20TwinLedgerSuiteRequest) -> Self {
-        let erc20_address = Address::from_str(&value.evm_token_contract).unwrap();
-        let chain_id = ChainId::from(&value.evm_token_chain_id);
-        Erc20Identifier::new(&erc20_address, chain_id)
-    }
-}
-
-impl From<CandidAddErc20TwinLedgerSuiteRequest> for Erc20TwinLedgerSuiteRequest {
-    fn from(value: CandidAddErc20TwinLedgerSuiteRequest) -> Self {
-        let erc20_address = Address::from_str(&value.evm_token_contract).unwrap();
-        let chain_id = ChainId::from(&value.evm_token_chain_id);
-        let identifier = Erc20Identifier::new(&erc20_address, chain_id);
-        let evm_token = read_state(|s| s.get_evm_token_by_identifier(&identifier));
-        let icp_token = read_state(|s| {
-            s.get_icp_token_by_principal(&value.icp_ledger_id.unwrap_or(Principal::anonymous()))
-        });
-
-        Self {
-            creator: value.creator,
-            evm_token,
-            ledger_id: value.icp_ledger_id,
-            icp_token_name: value.icp_token_name,
-            icp_token_symbol: value.icp_token_symbol,
-            icp_token,
-            status: value.status.into(),
-            created_at: value.created_at,
-            fee_charged: value.fee_charged.into(),
-            erc20_contract_address: erc20_address,
-            chain_id,
-        }
-    }
-}
-
-#[derive(CandidType, Clone, PartialEq, Eq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
-pub struct CandidLedgerSuiteRequest {
-    pub creator: Principal,
-    pub evm_token: Option<CandidEvmToken>,
-    pub icp_token: Option<CandidIcpToken>,
-    pub erc20_contract: String,
-    pub chain_id: CandidChainId,
-    pub status: CandidErc20TwinLedgerSuiteStatus,
-    pub created_at: u64,
-    pub fee_charged: CandidErc20TwinLedgerSuiteFee,
-}
 
 #[derive(CandidType, Deserialize, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 pub struct CandidPoolId {
@@ -653,7 +594,7 @@ impl From<DexAction> for CandidDexAction {
             } => CandidDexAction::CreatedPool {
                 token0,
                 token1,
-                pool_fee: pool_fee.into(),
+                pool_fee,
                 timestamp,
             },
             DexAction::MintedPosition {
