@@ -64,14 +64,14 @@ where
 {
     mutate_state(|state| {
         for (erc20_identifier, principal_id) in bridge_pairs {
+            let chain_id = erc20_identifier.chain_id();
+            let minter_key = MinterKey(chain_id, operator);
+
+            // enable minter
+            state.enable_minter(&minter_key);
+
             if let Some(evm_token) = state.get_evm_token_by_identifier(&erc20_identifier) {
                 if let Some(icp_token) = state.get_icp_token_by_principal(&principal_id) {
-                    let chain_id = erc20_identifier.chain_id();
-                    let minter_key = MinterKey(chain_id, operator);
-
-                    // enable minter
-                    state.enable_minter(&minter_key);
-
                     let bridge_pair = BridgePair {
                         icp_token,
                         evm_token,

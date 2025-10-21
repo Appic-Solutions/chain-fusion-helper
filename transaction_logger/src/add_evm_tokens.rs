@@ -18,6 +18,7 @@ pub fn add_evm_tokens_to_state() {
     );
     mutate_state(|s| {
         let tokens: Vec<(Erc20Identifier, EvmToken)> = s.evm_token_list.iter().collect();
+
         for token in tokens {
             s.evm_token_list.remove(&token.0);
         }

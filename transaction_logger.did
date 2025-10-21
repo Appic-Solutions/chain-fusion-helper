@@ -237,6 +237,9 @@ type UpgradeArg = record {
 service : (LoggerArgs) -> {
   add_evm_token : (CandidEvmToken) -> ();
   add_icp_token : (CandidIcpToken) -> ();
+  batch_update_evm_token_price_volume : (
+      vec record { GetEvmTokenArgs; text; text },
+    ) -> ();
   get_bridge_pairs : () -> (vec TokenPair) query;
   get_dex_actions_for_principal : (principal) -> (vec CandidDexAction) query;
   get_evm_token : (GetEvmTokenArgs) -> (opt CandidEvmToken) query;
@@ -256,4 +259,5 @@ service : (LoggerArgs) -> {
   request_update_bridge_pairs : () -> ();
   search_evm_token : (EvmSearchQuery) -> (vec CandidEvmToken) query;
   update_evm_token_price_volume : (vec record { nat64; text; text }) -> ();
+  validate_all_icp_token : () -> ();
 }

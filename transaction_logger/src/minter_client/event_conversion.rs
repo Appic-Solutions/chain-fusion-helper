@@ -43,6 +43,7 @@ impl Reduce for AppicGetEventsResult {
                         | AppicEventPayload::AcceptedNativeWithdrawalRequest { .. }
                         | AppicEventPayload::CreatedTransaction { .. }
                         | AppicEventPayload::SignedTransaction { .. }
+                        | AppicEventPayload::AddedErc20Token { .. }
                         | AppicEventPayload::ReplacedTransaction { .. }
                         | AppicEventPayload::FinalizedTransaction { .. }
                         | AppicEventPayload::ReimbursedNativeWithdrawal { .. }

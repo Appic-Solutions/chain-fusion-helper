@@ -20,7 +20,6 @@ use crate::{
 
 use crate::address::Address;
 use crate::minter_client::appic_minter_types::events::EventPayload as AppicEventPayload;
-use candid::Principal;
 use ic_canister_log::log;
 
 use crate::minter_client::event_conversion::Events;
@@ -157,6 +156,11 @@ pub async fn scrape_events_range(
 fn apply_state_transition(events: Events, operator: Operator, chain_id: ChainId) {
     for event in events.events.into_iter() {
         // Applying the state transition
+        let is_new_twin_added = match event.payload {
+            AppicEventPayload::AddedErc20Token { .. } => true,
+            _ => false,
+        };
+
         mutate_state(|s| match event.payload {
             AppicEventPayload::Init(InitArg {
                 evm_network: _,
@@ -336,9 +340,6 @@ fn apply_state_transition(events: Events, operator: Operator, chain_id: ChainId)
                     erc20_token_symbol,
                     chain_id,
                 );
-
-                ic_cdk::spawn(validate_tokens());
-                ic_cdk::spawn(update_bridge_pairs());
             }
             AppicEventPayload::AcceptedErc20WithdrawalRequest {
                 max_transaction_fee,
@@ -471,6 +472,11 @@ fn apply_state_transition(events: Events, operator: Operator, chain_id: ChainId)
                 nat_to_ledger_burn_index(&native_ledger_burn_index),
                 chain_id,
             )),
+            _ => {}
         });
+        if is_new_twin_added {
+            ic_cdk::spawn(validate_tokens());
+            ic_cdk::spawn(update_bridge_pairs());
+        }
     }
 }

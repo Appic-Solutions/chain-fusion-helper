@@ -7,6 +7,7 @@ use crate::state::types::*;
 
 use std::cmp::Ordering;
 use std::collections::BTreeMap as STDBTreeMap;
+use std::ops::Add;
 
 use candid::{CandidType, Nat, Principal};
 use ic_canister_log::log;
@@ -22,8 +23,8 @@ use std::str::FromStr;
 
 use crate::endpoints::{
     AddEvmToIcpTx, AddIcpToEvmTx, CandidErc20TwinLedgerSuiteFee, CandidErc20TwinLedgerSuiteStatus,
-    CandidEvmToIcp, CandidEvmToken, CandidIcpToEvm, CandidIcpToken, MinterArgs, TokenPair,
-    Transaction, TransactionSearchParam,
+    CandidEvmToIcp, CandidEvmToken, CandidIcpToEvm, CandidIcpToken, GetEvmTokenArgs, MinterArgs,
+    TokenPair, Transaction, TransactionSearchParam,
 };
 use crate::numeric::{BlockNumber, Erc20TokenAmount, LedgerBurnIndex};
 use crate::scrape_events::NATIVE_ERC20_ADDRESS;
@@ -723,11 +724,50 @@ impl State {
         for (key, token) in self.evm_token_list.iter() {
             if let Some(cmc_id) = token.cmc_id {
                 if let Some((volume_usd_24h, usd_price)) = update_map.get(&cmc_id) {
-                    let mut new_token = token.clone();
+                    let mut new_token = token;
                     new_token.volume_usd_24h = Some(volume_usd_24h.clone());
                     new_token.usd_price = Some(usd_price.clone());
-                    updates_to_apply.push((key.clone(), new_token));
+                    updates_to_apply.push((key, new_token));
                 }
+            }
+        }
+
+        // Apply the updates
+        for (key, new_token) in updates_to_apply {
+            self.evm_token_list.insert(key, new_token);
+        }
+    }
+
+    // update evm tokens price and volume based on cmc_id
+    // (cmc_id,volume,price)
+    pub fn update_evm_price_volume_by_token_identifier(
+        &mut self,
+        updates: Vec<(GetEvmTokenArgs, String, String)>,
+    ) {
+        use std::collections::HashMap;
+
+        // Build a lookup map for quick access to updates by cmc_id
+        let update_map: HashMap<Erc20Identifier, (String, String)> = updates
+            .into_iter()
+            .filter_map(|(args, volume_usd_24h, usd_price)| {
+                let address = Address::from_str(&args.address).ok()?;
+                let chain_id = ChainId::from(&args.chain_id);
+                Some((
+                    Erc20Identifier(address, chain_id),
+                    (volume_usd_24h, usd_price),
+                ))
+            })
+            .collect();
+
+        // Collect updates to apply after iteration to avoid borrowing issues
+        let mut updates_to_apply = Vec::new();
+
+        for (key, token) in self.evm_token_list.iter() {
+            if let Some((volume_usd_24h, usd_price)) = update_map.get(&key) {
+                let mut new_token = token;
+                new_token.volume_usd_24h = Some(volume_usd_24h.to_string());
+                new_token.usd_price = Some(usd_price.to_string());
+                updates_to_apply.push((key, new_token));
             }
         }
 

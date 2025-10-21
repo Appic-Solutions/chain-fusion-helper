@@ -198,6 +198,23 @@ pub mod events {
         pub transaction_hash: String,
     }
 
+    // candid file designed for operations sent by appic dex
+    #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+    pub struct DexOrderArgs {
+        pub tx_id: String,
+        pub amount_in: Nat,
+        pub min_amount_out: Nat,
+        pub commands: Vec<u8>,
+        pub commands_data: Vec<String>,
+        pub max_gas_fee_usd: Option<String>,
+        pub signing_fee: Option<String>,
+        pub gas_limit: Nat,
+        pub deadline: Nat,
+        pub recipient: String,
+        pub erc20_ledger_burn_index: Nat,
+        pub is_refund: bool,
+    }
+
     #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
     pub enum EventPayload {
         Init(InitArg),
@@ -362,6 +379,92 @@ pub mod events {
             reimbursed_amount: Nat,
             transaction_hash: Option<String>,
             transfer_fee: Option<Nat>,
+        },
+        AcceptedSwapActivationRequest,
+        SwapContractActivated {
+            swap_contract_address: String,
+            usdc_contract_address: String,
+            twin_usdc_ledger_id: Principal,
+            twin_usdc_decimals: Nat,
+            dex_canister_id: Principal,
+            canister_signing_fee_twin_usdc_value: Nat,
+        },
+        ReceivedSwapOrder {
+            transaction_hash: String,
+            block_number: Nat,
+            log_index: Nat,
+            from_address: String,
+            recipient: String,
+            token_in: String,
+            token_out: String,
+            amount_in: Nat,
+            amount_out: Nat,
+            bridged_to_minter: bool,
+            encoded_swap_data: String,
+        },
+        MintedToAppicDex {
+            event_source: EventSource,
+            mint_block_index: Nat,
+            minted_token: Principal,
+            erc20_contract_address: String,
+            tx_id: String,
+        },
+        NotifiedSwapEventOrderToAppicDex {
+            event_source: EventSource,
+            tx_id: String,
+        },
+
+        ReleasedGasFromGasTankWithUsdc {
+            usdc_amount: Nat,
+            gas_amount: Nat,
+            swap_tx_id: String,
+        },
+
+        AcceptedSwapRequest {
+            max_transaction_fee: Nat,
+            erc20_token_in: String,
+            erc20_amount_in: Nat,
+            min_amount_out: Nat,
+            recipient: String,
+            deadline: Nat,
+            swap_contract: String,
+            gas_limit: Nat,
+            native_ledger_burn_index: Nat,
+            erc20_ledger_id: Principal,
+            erc20_ledger_burn_index: Nat,
+            from: Principal,
+            from_subaccount: Option<[u8; 32]>,
+            created_at: u64,
+            l1_fee: Option<Nat>,
+            withdrawal_fee: Option<Nat>,
+            swap_tx_id: String,
+            is_refund: bool,
+        },
+
+        QuarantinedDexOrder(DexOrderArgs),
+        QuarantinedSwapRequest {
+            max_transaction_fee: Nat,
+            erc20_token_in: String,
+            erc20_amount_in: Nat,
+            min_amount_out: Nat,
+            recipient: String,
+            deadline: Nat,
+            swap_contract: String,
+            gas_limit: Nat,
+            native_ledger_burn_index: Nat,
+            erc20_ledger_id: Principal,
+            erc20_ledger_burn_index: Nat,
+            from: Principal,
+            from_subaccount: Option<[u8; 32]>,
+            created_at: u64,
+            l1_fee: Option<Nat>,
+            withdrawal_fee: Option<Nat>,
+            swap_tx_id: String,
+            is_refund: bool,
+        },
+        GasTankUpdate {
+            usdc_withdrawn: Nat,
+            native_deposited: Nat,
         },
     }
 }

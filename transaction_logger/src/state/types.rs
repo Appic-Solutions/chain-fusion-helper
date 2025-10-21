@@ -274,7 +274,7 @@ pub struct IcpToEvmTx {
     pub operator: Operator,
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, Hash)]
 pub struct Erc20Identifier(#[n(0)] pub Address, #[n(1)] pub ChainId);
 
 impl Erc20Identifier {
@@ -413,6 +413,7 @@ pub enum Erc20TwinLedgerSuiteFee {
     Encode,
     Decode,
     CandidType,
+    Hash,
 )]
 pub struct ChainId(#[n(0)] pub u64);
 

@@ -337,6 +337,15 @@ pub fn add_icp_token(token: CandidIcpToken) {
 }
 
 #[update]
+async fn validate_all_icp_token() {
+    if !is_authorized_caller(ic_cdk::caller()) {
+        panic!("Only admins can change icp tokens details")
+    }
+
+    validate_tokens().await;
+}
+
+#[update]
 // Can only be called by admin
 pub fn add_evm_token(token: CandidEvmToken) {
     if !is_authorized_caller(ic_cdk::caller()) {
@@ -355,12 +364,22 @@ pub fn add_evm_token(token: CandidEvmToken) {
 #[update]
 // can only be called by
 // arguments: (Vec<(cmc_id,volume,price)>)
+// updates based on cmc_id
 pub fn update_evm_token_price_volume(data: Vec<(u64, String, String)>) {
     if !is_authorized_caller(ic_cdk::caller()) {
         panic!("Only admins can change icp tokens details")
     }
 
     mutate_state(|s| s.update_evm_price_volume_by_cmc_id(data))
+}
+
+#[update]
+// updates based on token address and chain id in a batch
+pub fn batch_update_evm_token_price_volume(data: Vec<(GetEvmTokenArgs, String, String)>) {
+    if !is_authorized_caller(ic_cdk::caller()) {
+        panic!("Only admins can change icp tokens details")
+    }
+    mutate_state(|s| s.update_evm_price_volume_by_token_identifier(data))
 }
 
 #[query]
